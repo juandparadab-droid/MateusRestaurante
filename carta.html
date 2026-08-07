@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta — Restaurante Mateus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:        #0f0e09;
+    --bg2:       #161510;
+    --bg3:       #1e1c14;
+    --gold:      #d4a94a;
+    --gold2:     #e8c472;
+    --gold-dim:  rgba(212,169,74,0.15);
+    --gold-glow: rgba(212,169,74,0.08);
+    --text:      #f0edd8;
+    --text-muted:#9e9880;
+    --text-dim:  #6b6850;
+    --border:    rgba(212,169,74,0.18);
+    --card-bg:   rgba(30,28,20,0.85);
+    --radius:    4px;
+    --serif:     'Cormorant Garamond', Georgia, serif;
+    --sans:      'DM Sans', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRAIN OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .5;
+  }
+
+  /* ── HERO HEADER ── */
+  header {
+    position: relative;
+    text-align: center;
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(212,169,74,0.09) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .logo-rule {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .logo-rule::before,
+  .logo-rule::after {
+    content: '';
+    flex: 1;
+    max-width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold));
+  }
+
+  .logo-rule::after {
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  .logo-diamond {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.4rem, 7vw, 4rem);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  header h1 span {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .header-sub {
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  .header-city {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ── STATUS BAR ── */
+  #status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    min-height: 38px;
+    transition: all .3s;
+  }
+
+  .pulse-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #4caf7d;
+    box-shadow: 0 0 0 0 rgba(76,175,125,.5);
+    animation: pulse 2.5s infinite;
+    flex-shrink: 0;
+  }
+
+  .pulse-dot.loading { background: var(--gold); }
+  .pulse-dot.error   { background: #c0392b; animation: none; }
+
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(76,175,125,.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(76,175,125,0); }
+    100% { box-shadow: 0 0 0 0 rgba(76,175,125,0); }
+  }
+
+  /* ── FILTER PILLS ── */
+  #filter-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  #filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 14px 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  #filters::-webkit-scrollbar { display: none; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 400;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .2s;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .pill:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-glow);
+  }
+
+  .pill.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg);
+    font-weight: 500;
+  }
+
+  .pill .ico { font-size: 15px; }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 16px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── CATEGORY SECTION ── */
+  .category-section {
+    margin-bottom: 52px;
+    animation: fadeUp .4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cat-ico {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .cat-title {
+    font-family: var(--serif);
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: 0.03em;
+  }
+
+  .cat-count {
+    margin-left: auto;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  /* ── GRID ── */
+  .items-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 560px) {
+    .items-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 800px) {
+    .items-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .25s, transform .25s, box-shadow .25s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: fadeUp .35s ease both;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0;
+    transition: opacity .25s;
+  }
+
+  .card:hover {
+    border-color: rgba(212,169,74,0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card-name {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .card-price {
+    font-family: var(--serif);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--gold2);
+    letter-spacing: 0.02em;
+  }
+
+  .card-price sup {
+    font-size: .65em;
+    font-weight: 300;
+    color: var(--text-muted);
+    margin-right: 1px;
+  }
+
+  /* ── CHIPS ── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 100px;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .chip-low {
+    background: rgba(212,169,74,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(212,169,74,0.3);
+  }
+
+  .chip-ok {
+    background: rgba(76,175,125,0.1);
+    color: #6ee7b7;
+    border: 1px solid rgba(76,175,125,0.2);
+  }
+
+  .chip-zero {
+    background: rgba(150,80,60,0.12);
+    color: #f87171;
+    border: 1px solid rgba(248,113,113,0.2);
+    text-decoration: line-through;
+    opacity: .7;
+  }
+
+  /* ── ORNAMENTAL DIVIDER ── */
+  .ornament {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 18px;
+    letter-spacing: 12px;
+    margin: 0 0 52px;
+    opacity: .5;
+  }
+
+  /* ── EMPTY / LOADING ── */
+  #loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    gap: 20px;
+    color: var(--text-muted);
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    font-style: italic;
+  }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px 24px 40px;
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-brand {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── REALTIME TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 22px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-family: var(--sans);
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── CARD IMAGE (a la carta) ── */
+  .card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 4px 4px 0 0;
+    margin: -20px -20px 0;
+    width: calc(100% + 40px);
+    display: block;
+  }
+
+  /* ── NO ITEMS ── */
+  .empty {
+    grid-column: 1 / -1;
+    padding: 40px;
+    text-align: center;
+    color: var(--text-dim);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-rule">
+    <div class="logo-diamond"></div>
+  </div>
+  <h1>Restaurante <span>Mateus</span></h1>
+  <p class="header-sub">Carta del día</p>
+  <p class="header-city">Bucaramanga, Colombia</p>
+</header>
+
+<!-- STATUS -->
+<div id="status-bar">
+  <span class="pulse-dot loading" id="dot"></span>
+  <span id="status-txt">Cargando carta…</span>
+</div>
+
+<!-- FILTROS -->
+<div id="filter-wrap">
+  <div id="filters">
+    <!-- pills generadas dinámicamente -->
+  </div>
+</div>
+
+<!-- CARTA -->
+<main id="main-content">
+  <div id="loader">
+    <div class="spinner"></div>
+    <span>Preparando la carta…</span>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p class="footer-brand">Restaurante Mateus</p>
+  <p class="footer-note">Precios en pesos colombianos · IVA incluido</p>
+</footer>
+
+<!-- TOAST -->
+<div id="toast">✦ Carta actualizada</div>
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+/* ── CONFIG ── */
+const SUPABASE_URL      = "https://guqgyuefsdedstfbhxvo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_zSGT_1Qr1QVI3aTPWOMwdQ_jqMqxnA-";
+
+const CATS = {
+  executive_lunch: { lbl: 'Proteínas',   ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M18 6c0-2.2-2.7-4-6-4S6 3.8 6 6c0 1.7 1 3.1 2.4 3.8L6 22h12l-2.4-12.2C16.9 9.1 18 7.7 18 6z"/></svg>', ord: 1 },
+  protein:         { lbl: 'Proteínas',   ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M18 6c0-2.2-2.7-4-6-4S6 3.8 6 6c0 1.7 1 3.1 2.4 3.8L6 22h12l-2.4-12.2C16.9 9.1 18 7.7 18 6z"/></svg>', ord: 1 },
+  side:            { lbl: 'Principios',  ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"/><path d="M6 22h12"/><path d="M12 12v10"/></svg>', ord: 2 },
+  drink:           { lbl: 'Bebidas',     ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M8 2h8l1 10H7L8 2z"/><path d="M7 12c0 5 2 8 5 8s5-3 5-8"/></svg>', ord: 3 },
+  a_la_carte:      { lbl: 'A la Carta',  ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e8c472" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', ord: 4 },
+  dessert:         { lbl: 'Postres',     ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e8c472" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M6 2h12l2 6H4L6 2z"/><path d="M4 8c0 8 2 12 8 12s8-4 8-12"/></svg>', ord: 5 },
+  sauce:           { lbl: 'Salsas',      ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M8 2h8"/><path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2"/><path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/></svg>', ord: 6 },
+};
+
+/* ── SUPABASE CLIENT ── */
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ── STATE ── */
+let allItems   = [];
+let activeFilter = 'all';
+
+/* ── DOM REFS ── */
+const filtersEl    = document.getElementById('filters');
+const mainEl       = document.getElementById('main-content');
+const statusTxt    = document.getElementById('status-txt');
+const dot          = document.getElementById('dot');
+const toast        = document.getElementById('toast');
+let toastTimer;
+
+/* ── FORMAT PRICE ── */
+function fmt(price) {
+  if (!price && price !== 0) return '—';
+  return new Intl.NumberFormat('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+/* ── AVAILABILITY CHIP ── */
+function portionChip(portions) {
+  if (portions === 0) {
+    return `<span class="chip chip-zero"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Agotado</span>`;
+  }
+  if (portions === null || portions === undefined) {
+    return `<span class="chip chip-ok"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4caf7d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg> Disponible</span>`;
+  }
+  if (portions <= 5) {
+    return `<span class="chip chip-low"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-1px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ${portions} restantes</span>`;
+  }
+  return `<span class="chip chip-ok"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4caf7d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg> Disponible</span>`;
+}
+
+/* ── BUILD UNIQUE LABELS → avoid duplicates (executive_lunch + protein both = Proteínas) ── */
+function getUniqCategories(items) {
+  const seen  = new Map(); // ord → first matching CATS entry
+  const types = new Set(items.map(i => i.item_type));
+
+  types.forEach(t => {
+    const cat = CATS[t];
+    if (!cat) return;
+    if (!seen.has(cat.ord)) seen.set(cat.ord, { ...cat, types: [t] });
+    else seen.get(cat.ord).types.push(t);
+  });
+
+  return [...seen.values()].sort((a, b) => a.ord - b.ord);
+}
+
+/* ── GROUP ITEMS BY LABEL (merge executive_lunch + protein) ── */
+function groupItems(items) {
+  const groups = new Map(); // ord → { meta, items[] }
+
+  items.forEach(item => {
+    const cat = CATS[item.item_type];
+    if (!cat) return;
+    if (!groups.has(cat.ord)) groups.set(cat.ord, { meta: cat, items: [] });
+    groups.get(cat.ord).items.push(item);
+  });
+
+  return [...groups.values()].sort((a, b) => a.meta.ord - b.meta.ord);
+}
+
+/* ── RENDER FILTERS ── */
+function renderFilters(cats) {
+  const allBtn = `<button class="pill ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">
+    <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d4a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-2px;"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></span> Todo
+  </button>`;
+
+  const pills = cats.map(c => `
+    <button class="pill ${activeFilter === c.lbl ? 'active' : ''}" data-filter="${c.lbl}">
+      <span class="ico">${c.ico}</span> ${c.lbl}
+    </button>
+  `).join('');
+
+  filtersEl.innerHTML = allBtn + pills;
+
+  filtersEl.querySelectorAll('.pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      renderFilters(cats);
+      renderCarta();
+    });
+  });
+}
+
+/* ── CARD HTML ── */
+function cardHTML(item, idx) {
+  const name  = item.name  || 'Sin nombre';
+  const desc  = item.description || '';
+  const price = fmt(item.price);
+  const chip  = portionChip(item.portions_today);
+  const isAlaCarte = item.item_type === 'a_la_carte';
+  const imgUrl = isAlaCarte && item.image_url ? item.image_url : null;
+
+  return `
+    <article class="card" style="animation-delay:${idx * 0.04}s">
+      ${imgUrl ? `<img class="card-img" src="${imgUrl}" alt="${name}" loading="lazy">` : ''}
+      <h3 class="card-name">${name}</h3>
+      ${desc ? `<p class="card-desc">${desc}</p>` : ''}
+      <div class="card-footer">
+        <span class="card-price"><sup>$</sup>${price}</span>
+        ${chip}
+      </div>
+    </article>
+  `;
+}
+
+/* ── RENDER CARTA ── */
+function renderCarta() {
+  const filtered = activeFilter === 'all'
+    ? allItems
+    : allItems.filter(i => CATS[i.item_type]?.lbl === activeFilter);
+
+  if (!filtered.length) {
+    mainEl.innerHTML = `<p class="empty">No hay platos disponibles en esta categoría.</p>`;
+    return;
+  }
+
+  const groups = groupItems(filtered);
+  let html = '';
+
+  groups.forEach((group, gi) => {
+    const { meta, items } = group;
+    html += `
+      <section class="category-section" id="cat-${meta.ord}">
+        <div class="category-header">
+          <span class="cat-ico">${meta.ico}</span>
+          <h2 class="cat-title">${meta.lbl}</h2>
+          <span class="cat-count">${items.length} ${items.length === 1 ? 'plato' : 'platos'}</span>
+        </div>
+        <div class="items-grid">
+          ${items.map((item, i) => cardHTML(item, i)).join('')}
+        </div>
+      </section>
+      ${gi < groups.length - 1 ? '<div class="ornament">· · ·</div>' : ''}
+    `;
+  });
+
+  mainEl.innerHTML = html;
+}
+
+/* ── TOAST ── */
+function showToast(msg = '✦ Carta actualizada') {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ── SET STATUS ── */
+function setStatus(state, msg) {
+  statusTxt.textContent = msg;
+  dot.className = 'pulse-dot ' + (state || '');
+}
+
+/* ── FETCH DATA ── */
+async function fetchItems() {
+  try {
+    const { data, error } = await db
+      .from('menu_items')
+      .select('id, name, price, item_type, description, portions_today, image_url')
+      .eq('is_active', true);
+
+    if (error) throw error;
+
+    // Sort & filter in JS
+    allItems = (data || [])
+      .filter(i => CATS[i.item_type])
+      .sort((a, b) => {
+        const oa = CATS[a.item_type]?.ord ?? 99;
+        const ob = CATS[b.item_type]?.ord ?? 99;
+        if (oa !== ob) return oa - ob;
+        return (a.name || '').localeCompare(b.name || '', 'es');
+      });
+
+    const cats = getUniqCategories(allItems);
+    renderFilters(cats);
+    renderCarta();
+
+    setStatus('', `${allItems.length} platos disponibles · en vivo`);
+  } catch (err) {
+    console.error(err);
+    mainEl.innerHTML = `<div id="loader"><p style="color:#f87171;font-style:italic">Error al cargar la carta. Intenta refrescar la página.</p></div>`;
+    setStatus('error', 'Error de conexión');
+  }
+}
+
+/* ── REALTIME ── */
+function subscribeRealtime() {
+  db.channel('menu-public')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'menu_items' },
+      () => {
+        fetchItems().then(() => showToast('✦ Carta actualizada'));
+      }
+    )
+    .subscribe();
+}
+
+/* ── INIT ── */
+(async () => {
+  await fetchItems();
+  subscribeRealtime();
+})();
+</script>
+</body>
+</html>

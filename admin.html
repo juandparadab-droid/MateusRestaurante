@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Restaurante Mateus — Panel Administrativo</title>
+        <link rel="icon" type="image/png" href="logo.png">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap"
+            rel="stylesheet">
+        <!-- Tailwind cargado ANTES que Supabase para evitar conflictos -->
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <!-- Supabase -->
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <!-- jsPDF — cargado con crossorigin para evitar el warning de Tracking Prevention -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+            crossorigin="anonymous"></script>
+        <!-- Lucide Icons — librería de iconos SVG vía CDN -->
+        <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+        <!-- Anime.js — animaciones del módulo de estadísticas mensuales -->
+        <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+        <style>
+            :root {
+                --olive: #4a6741;
+                --olive-h: #3a5233;
+                --olive-lt: rgba(74, 103, 65, 0.09);
+                --olive-bd: rgba(74, 103, 65, 0.28);
+                --olive-soft: #e8ede7;
+                --surface: #ffffff;
+                --surface-2: #f7f8f6;
+                --surface-3: #f0f2ef;
+                --border: #e4e7e2;
+                --border-2: #d4d9d2;
+                --text-1: #1a1f18;
+                --text-2: #4a5248;
+                --text-3: #8a9388;
+                --red: #c0392b;
+                --red-lt: rgba(192, 57, 43, 0.08);
+                --red-bd: rgba(192, 57, 43, 0.25);
+                --amber: #9a6c1a;
+                --amber-lt: rgba(154, 108, 26, 0.09);
+                --blue: #2563a8;
+                --blue-lt: rgba(37, 99, 168, 0.08);
+                --purple: #6644c0;
+                --purple-lt: rgba(102, 68, 192, 0.08);
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            body {
+                font-family: 'DM Sans', sans-serif;
+                background: var(--surface-2);
+                color: var(--text-1);
+                min-height: 100vh;
+            }
+
+            ::-webkit-scrollbar {
+                width: 5px;
+                height: 5px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: var(--border-2);
+                border-radius: 99px;
+            }
+
+            input,
+            select,
+            textarea {
+                font-family: 'DM Sans', sans-serif;
+                background: var(--surface);
+                color: var(--text-1);
+                border: 1.5px solid var(--border);
+                border-radius: 999px;
+                padding: 9px 16px;
+                font-size: 13px;
+                width: 100%;
+                transition: border-color .2s, box-shadow .2s;
+                outline: none;
+            }
+
+            select {
+                border-radius: 999px;
+            }
+
+            textarea {
+                border-radius: 14px;
+            }
+
+            input:focus,
+            select:focus,
+            textarea:focus {
+                border-color: var(--olive);
+                box-shadow: 0 0 0 3px var(--olive-lt);
+            }
+
+            input::placeholder {
+                color: var(--text-3);
+            }
+
+            label {
+                font-size: 11.5px;
+                font-weight: 600;
+                color: var(--text-2);
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .btn-olive {
+                background: var(--olive);
+                color: #fff;
+                border: none;
+                border-radius: 999px;
+                padding: 9px 22px;
+                font-size: 12.5px;
+                font-weight: 600;
+                letter-spacing: .3px;
+                cursor: pointer;
+                transition: background .2s, transform .15s, box-shadow .2s;
+                font-family: 'DM Sans', sans-serif;
+                white-space: nowrap;
+            }
+
+            .btn-olive:hover {
+                background: var(--olive-h);
+                box-shadow: 0 4px 14px rgba(74, 103, 65, .25);
+                transform: translateY(-1px);
+            }
+
+            .btn-olive:active {
+                transform: translateY(0);
+            }
+
+            .btn-ghost {
+                background: var(--surface);
+                color: var(--text-2);
+                border: 1.5px solid var(--border);
+                border-radius: 999px;
+                padding: 9px 20px;
+                font-size: 12.5px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: border-color .2s, background .2s;
+                font-family: 'DM Sans', sans-serif;
+                white-space: nowrap;
+            }
+
+            .btn-ghost:hover {
+                border-color: var(--olive);
+                background: var(--olive-lt);
+                color: var(--olive);
+            }
+
+            .btn-danger {
+                background: var(--red-lt);
+                color: var(--red);
+                border: 1.5px solid var(--red-bd);
+                border-radius: 999px;
+                padding: 5px 13px;
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background .2s;
+                font-family: 'DM Sans', sans-serif;
+                white-space: nowrap;
+            }
+
+            .btn-danger:hover {
+                background: rgba(192, 57, 43, .15);
+            }
+
+            .btn-amber {
+                background: var(--amber-lt);
+                color: var(--amber);
+                border: 1.5px solid rgba(154, 108, 26, .3);
+                border-radius: 999px;
+                padding: 6px 14px;
+                font-size: 11.5px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background .2s;
+                font-family: 'DM Sans', sans-serif;
+                white-space: nowrap;
+            }
+
+            .btn-amber:hover {
+                background: rgba(154, 108, 26, .16);
+            }
+
+            .card {
+                background: var(--surface);
+                border: 1.5px solid var(--border);
+                border-radius: 18px;
+                padding: 20px;
+                transition: border-color .2s, box-shadow .2s;
+            }
+
+            .card:hover {
+                border-color: var(--border-2);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, .05);
+            }
+
+            .tab-active {
+                background: var(--olive-lt) !important;
+                color: var(--olive) !important;
+                border: 1.5px solid var(--olive-bd) !important;
+                font-weight: 600 !important;
+            }
+
+            .tab-inactive {
+                background: transparent;
+                color: var(--text-2);
+                border: 1.5px solid transparent;
+            }
+
+            .tab-inactive:hover {
+                background: var(--surface-3);
+                color: var(--text-1);
+            }
+
+            .filter-active {
+                background: var(--olive) !important;
+                color: #fff !important;
+                border-color: var(--olive) !important;
+            }
+
+            .filter-btn {
+                background: var(--surface);
+                color: var(--text-2);
+                border: 1.5px solid var(--border);
+                border-radius: 999px;
+                padding: 6px 16px;
+                font-size: 12px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all .2s;
+                font-family: 'DM Sans', sans-serif;
+            }
+
+            .filter-btn:hover {
+                border-color: var(--olive);
+                color: var(--olive);
+            }
+
+            .kpi-card {
+                background: var(--surface);
+                border: 1.5px solid var(--border);
+                border-radius: 18px;
+                padding: 18px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                transition: box-shadow .2s;
+            }
+
+            .kpi-card:hover {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+            }
+
+            .kpi-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                flex-shrink: 0;
+            }
+
+            .sw-on {
+                background: rgba(74, 103, 65, .1);
+                color: var(--olive);
+                border: 1.5px solid var(--olive-bd);
+                border-radius: 999px;
+                padding: 5px 14px;
+                font-size: 11.5px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all .2s;
+                font-family: 'DM Sans', sans-serif;
+            }
+
+            .sw-on:hover {
+                background: rgba(74, 103, 65, .18);
+            }
+
+            .sw-off {
+                background: var(--red-lt);
+                color: var(--red);
+                border: 1.5px solid var(--red-bd);
+                border-radius: 999px;
+                padding: 5px 14px;
+                font-size: 11.5px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all .2s;
+                font-family: 'DM Sans', sans-serif;
+            }
+
+            .sw-off:hover {
+                background: rgba(192, 57, 43, .15);
+            }
+
+            .thead-row th {
+                padding: 10px 14px;
+                font-size: 10.5px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .8px;
+                color: var(--text-3);
+                border-bottom: 1.5px solid var(--border);
+                background: var(--surface-2);
+                white-space: nowrap;
+            }
+
+            .tbody-row td {
+                padding: 11px 14px;
+                font-size: 13px;
+                border-bottom: 1px solid var(--border);
+                vertical-align: middle;
+            }
+
+            .tbody-row:hover td {
+                background: var(--surface-2);
+            }
+
+            .tbody-row:last-child td {
+                border-bottom: none;
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 3px 9px;
+                border-radius: 999px;
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: .3px;
+                border: 1.5px solid;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            .badge-protein {
+                background: rgba(180, 60, 60, .08);
+                color: #b43c3c;
+                border-color: rgba(180, 60, 60, .25);
+            }
+
+            .badge-side {
+                background: rgba(154, 108, 26, .09);
+                color: #9a6c1a;
+                border-color: rgba(154, 108, 26, .28);
+            }
+
+            .badge-drink {
+                background: rgba(37, 99, 168, .08);
+                color: #2563a8;
+                border-color: rgba(37, 99, 168, .25);
+            }
+
+            .badge-carte {
+                background: rgba(100, 60, 160, .08);
+                color: #6644c0;
+                border-color: rgba(100, 60, 160, .25);
+            }
+
+            .badge-dessert {
+                background: rgba(180, 80, 120, .08);
+                color: #b45080;
+                border-color: rgba(180, 80, 120, .25);
+            }
+
+            .range-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 12px 4px 8px;
+                border-radius: 999px;
+                font-size: 10.5px;
+                font-weight: 600;
+                border: 1.5px solid;
+                cursor: default;
+            }
+
+            .range-01 {
+                background: rgba(74, 103, 65, .07);
+                color: var(--olive);
+                border-color: var(--olive-bd);
+            }
+
+            .range-11 {
+                background: rgba(180, 60, 60, .07);
+                color: #b43c3c;
+                border-color: rgba(180, 60, 60, .25);
+            }
+
+            .range-31 {
+                background: rgba(154, 108, 26, .08);
+                color: var(--amber);
+                border-color: rgba(154, 108, 26, .28);
+            }
+
+            .range-51 {
+                background: rgba(37, 99, 168, .07);
+                color: var(--blue);
+                border-color: rgba(37, 99, 168, .25);
+            }
+
+            .range-71 {
+                background: rgba(102, 68, 192, .07);
+                color: var(--purple);
+                border-color: rgba(102, 68, 192, .25);
+            }
+
+            .dian-panel {
+                background: var(--surface);
+                border: 1.5px solid var(--border);
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            .dian-header {
+                padding: 20px 24px;
+                border-bottom: 1.5px solid var(--border);
+                background: var(--surface-2);
+            }
+
+            .card-input {
+                background: var(--surface-2);
+                border: 1.5px solid var(--border);
+                border-radius: 999px;
+                padding: 6px 12px;
+                font-size: 12.5px;
+                font-weight: 600;
+                text-align: center;
+                width: 100%;
+                color: var(--text-1);
+                font-family: 'DM Mono', monospace;
+                transition: border-color .2s;
+            }
+
+            .card-input:focus {
+                outline: none;
+                border-color: var(--olive);
+                box-shadow: 0 0 0 3px var(--olive-lt);
+            }
+
+            @keyframes fadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .menu-card {
+                animation: fadeUp .25s ease both;
+            }
+
+            .mono {
+                font-family: 'DM Mono', monospace;
+            }
+
+            #global-nav {
+                background: var(--surface);
+                border-bottom: 1.5px solid var(--border);
+                padding: 0 24px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                height: 44px;
+            }
+
+            .gnav-btn {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 16px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-2);
+                background: transparent;
+                border: 1.5px solid transparent;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all .2s;
+                font-family: 'DM Sans', sans-serif;
+            }
+
+            .gnav-btn:hover {
+                background: var(--surface-3);
+                color: var(--text-1);
+                border-color: var(--border);
+            }
+
+            .gnav-btn.gnav-active {
+                background: var(--olive-lt);
+                color: var(--olive);
+                border-color: var(--olive-bd);
+                font-weight: 600;
+            }
+
+            .gnav-sep {
+                width: 1px;
+                height: 18px;
+                background: var(--border);
+                margin: 0 4px;
+            }
+
+            /* Modal factura DIAN */
+            #modal-factura-dian {
+                position: fixed;
+                inset: 0;
+                background: rgba(26, 31, 24, .5);
+                backdrop-filter: blur(6px);
+                z-index: 9999;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            #modal-factura-dian.visible {
+                display: flex;
+            }
+
+            /* Modal nómina */
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(26, 31, 24, .45);
+                backdrop-filter: blur(4px);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .modal-box {
+                background: var(--surface);
+                border: 1.5px solid var(--border);
+                border-radius: 22px;
+                padding: 28px;
+                max-width: 680px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, .12);
+            }
+
+            .chip-cargo {
+                display: inline-block;
+                padding: 2px 10px;
+                border-radius: 999px;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .4px;
+            }
+
+            .chip-mesero {
+                background: var(--blue-lt);
+                color: var(--blue);
+                border: 1px solid rgba(37, 99, 168, .22);
+            }
+
+            .chip-cocinero {
+                background: rgba(180, 60, 60, .08);
+                color: #b43c3c;
+                border: 1px solid rgba(180, 60, 60, .22);
+            }
+
+            .chip-cajero {
+                background: var(--amber-lt);
+                color: var(--amber);
+                border: 1px solid rgba(154, 108, 26, .22);
+            }
+
+            .chip-admin {
+                background: var(--olive-lt);
+                color: var(--olive);
+                border: 1px solid var(--olive-bd);
+            }
+
+            .nomina-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 9px 0;
+                border-bottom: 1px solid var(--border);
+                font-size: 12.5px;
+            }
+
+            .nomina-row:last-child {
+                border-bottom: none;
+            }
+
+            .nomina-label {
+                color: var(--text-2);
+            }
+
+            .nomina-value {
+                font-family: 'DM Mono', monospace;
+                font-weight: 600;
+                color: var(--text-1);
+            }
+
+            .nomina-value.deduccion {
+                color: var(--red);
+            }
+
+            .nomina-value.provision {
+                color: var(--amber);
+            }
+
+            .nomina-value.neto {
+                color: var(--olive);
+                font-size: 14px;
+            }
+
+            .section-sep {
+                font-size: 9.5px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1.2px;
+                color: var(--text-3);
+                padding: 10px 0 4px;
+            }
+
+            /* ── Bottom Navigation (solo móvil) ── */
+            #bottom-nav {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                aside {
+                    display: none !important;
+                }
+
+                #global-nav {
+                    display: none !important;
+                }
+
+                header {
+                    padding: 0 14px !important;
+                    height: 52px !important;
+                    width: 100% !important;
+                }
+
+                header h1 {
+                    font-size: 13px !important;
+                }
+
+                header p {
+                    display: none !important;
+                }
+
+                #btn-cierre-caja {
+                    padding: 6px 12px !important;
+                    font-size: 11px !important;
+                    white-space: nowrap;
+                }
+
+                .layout-wrapper {
+                    flex-direction: column;
+                    width: 100% !important;
+                }
+
+                main {
+                    flex: 1 1 auto !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    padding: 14px !important;
+                    padding-bottom: 90px !important;
+                    overflow-x: hidden !important;
+                    box-sizing: border-box !important;
+                }
+
+                main section {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+
+                .kpi-grid {
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 10px !important;
+                    width: 100% !important;
+                }
+
+                .tables-grid {
+                    grid-template-columns: 1fr !important;
+                    gap: 14px !important;
+                    width: 100% !important;
+                }
+
+                .card>div,
+                .dian-panel>div {
+                    overflow-x: auto !important;
+                    -webkit-overflow-scrolling: touch !important;
+                }
+
+                #form-nuevo-plato {
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 10px !important;
+                    width: 100% !important;
+                }
+
+                #form-nuevo-plato>div:nth-child(2) {
+                    grid-column: span 2;
+                }
+
+                #form-nuevo-plato>div:last-child {
+                    grid-column: span 2;
+                }
+
+                #contenedor-slots-menu {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                    gap: 12px !important;
+                }
+
+                .personal-grid {
+                    grid-template-columns: 1fr !important;
+                    width: 100% !important;
+                }
+
+                .gastos-grid {
+                    grid-template-columns: 1fr !important;
+                    width: 100% !important;
+                }
+
+                .dian-grid {
+                    grid-template-columns: 1fr !important;
+                    width: 100% !important;
+                }
+
+                #form-nuevo-insumo {
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 10px !important;
+                }
+
+                #form-nuevo-insumo>div:last-child {
+                    grid-column: span 2;
+                }
+
+                #bottom-nav {
+                    display: flex;
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    z-index: 9000;
+                    background: var(--surface);
+                    border-top: 1.5px solid var(--border);
+                    padding: 0;
+                    padding-bottom: env(safe-area-inset-bottom, 0px);
+                    box-shadow: 0 -4px 20px rgba(26, 31, 24, 0.08);
+                    height: 66px;
+                    align-items: stretch;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                }
+
+                #bottom-nav::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .bnav-item {
+                    flex: 0 0 72px;
+                    min-width: 72px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 3px;
+                    padding: 8px 4px;
+                    cursor: pointer;
+                    border: none;
+                    background: transparent;
+                    color: var(--text-3);
+                    font-family: 'DM Sans', sans-serif;
+                    font-size: 10px;
+                    font-weight: 500;
+                    text-decoration: none;
+                    transition: color .18s;
+                    position: relative;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                .bnav-item.bnav-active {
+                    color: var(--olive);
+                }
+
+                .bnav-item.bnav-active::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 20%;
+                    right: 20%;
+                    height: 2.5px;
+                    background: var(--olive);
+                    border-radius: 0 0 4px 4px;
+                }
+
+                .bnav-icon {
+                    width: 22px;
+                    height: 22px;
+                    line-height: 1;
+                    transition: transform .18s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+            .bnav-item.bnav-active .bnav-icon {
+                    transform: translateY(-1px);
+                }
+
+                .bnav-label {
+                    font-size: 9.5px;
+                    font-weight: 600;
+                    letter-spacing: .2px;
+                    white-space: nowrap;
+                }
+
+                .kpi-card {
+                    padding: 14px 14px !important;
+                }
+
+                .kpi-card h3 {
+                    font-size: 18px !important;
+                }
+
+                .card {
+                    padding: 16px !important;
+                    border-radius: 14px !important;
+                }
+
+                .modal-box {
+                    padding: 20px 16px !important;
+                    border-radius: 16px !important;
+                    max-height: 85vh !important;
+                }
+            }
+
+            @media (max-width: 400px) {
+                #contenedor-slots-menu {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+
+            /* ── Lucide Icons — estilos globales ── */
+            .ic {
+                display: inline-block;
+                vertical-align: middle;
+                flex-shrink: 0;
+                line-height: 1;
+            }
+            .ic svg {
+                display: block;
+            }
+            /* Tamaño por defecto inline (texto) */
+            .ic-sm svg { width: 14px; height: 14px; }
+            /* Tamaño para botones y labels */
+            .ic-md svg { width: 16px; height: 16px; }
+            /* Tamaño para KPI cards y banners */
+            .ic-lg svg { width: 20px; height: 20px; }
+            /* Tamaño para banners de sección */
+            .ic-xl svg { width: 26px; height: 26px; }
+            /* Tamaño para bottom-nav */
+            .ic-nav svg { width: 22px; height: 22px; }
+            /* Stroke heredado del color del contenedor */
+            .ic svg { stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        </style>
+    </head>
+
+<body>
+
+    <!-- ════ BARRA NAVEGACIÓN GLOBAL (solo escritorio/admin) ════ -->
+    <nav id="global-nav" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-right:12px;">
+            <div
+                style="width:30px;height:30px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);background:var(--olive-soft);display:flex;align-items:center;justify-content:center;">
+                <img src="logo.png" alt="Mateus" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <span style="font-size:12px;color:var(--text-2);font-weight:500;white-space:nowrap;">Restaurante Mateus —
+                Panel Administrativo</span>
+        </div>
+        <div class="gnav-sep"></div>
+        <a href="admin.html" class="gnav-btn gnav-active"><span class="ic ic-sm"><i data-lucide="layout-dashboard"></i></span> Panel Admin</a>
+        <a href="index.html" class="gnav-btn"><span class="ic ic-sm"><i data-lucide="utensils"></i></span> Pantalla Cocina</a>
+        <a href="menu.html" class="gnav-btn"><span class="ic ic-sm"><i data-lucide="smartphone"></i></span> Vista Cliente</a>
+        <div style="flex:1;"></div>
+        <span
+            style="font-size:10.5px;font-weight:700;color:var(--olive);background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="shield-check"></i></span>
+            Administrador</span>
+    </nav>
+
+    <!-- ════ HEADER ════ -->
+    <header
+        style="background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 24px;height:58px;display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div
+                style="background:var(--olive-soft);border-radius:11px;width:40px;height:40px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);">
+                <img src="logo.png" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div>
+                <h1 style="font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text-1);line-height:1.2;">
+                    Restaurante Mateus</h1>
+                <p style="font-size:10.5px;color:var(--text-3);">Panel Administrativo · Bucaramanga, Santander</p>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span id="fecha-actual" class="mono" style="font-size:12px;color:var(--text-3);">—</span>
+            <button id="btn-cierre-caja" onclick="ejecutarCierreCaja()"
+                style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;"
+                onmouseover="this.style.background='rgba(192,57,43,.16)'"
+                onmouseout="this.style.background='var(--red-lt)'">
+                <span class="ic ic-sm" style="margin-right:4px;"><i data-lucide="lock"></i></span> Cierre de Caja (Z)
+            </button>
+        </div>
+    </header>
+
+    <div style="display:flex;width:100%;overflow-x:hidden;" class="layout-wrapper">
+
+        <!-- ════ SIDEBAR ════ -->
+        <aside
+            style="width:236px;height:calc(100vh - 102px);background:var(--surface);border-right:1.5px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;overflow-y:auto;position:sticky;top:0;">
+            <p
+                style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.2px;padding:0 8px 10px;">
+                Control del Negocio</p>
+            <button onclick="cambiarTab('dashboard')" id="btn-tab-dashboard" class="tab-active w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid transparent;">
+                <span class="ic ic-md"><i data-lucide="layout-dashboard"></i></span> Dashboard Contable
+            </button>
+            <button onclick="cambiarTab('pedidos')" id="btn-tab-pedidos" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="shopping-bag"></i></span> Historial de Pedidos
+            </button>
+            <button onclick="cambiarTab('menu')" id="btn-tab-menu" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="book-open"></i></span> Control de Menú
+            </button>
+            <button onclick="cambiarTab('personal')" id="btn-tab-personal" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="users"></i></span> Control de Personal
+            </button>
+            <button onclick="cambiarTab('nomina')" id="btn-tab-nomina" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="banknote"></i></span> Gastos Operativos
+            </button>
+            <button onclick="cambiarTab('inventario')" id="btn-tab-inventario" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="package"></i></span> Inventario General
+            </button>
+            <div style="height:1.5px;background:var(--border);margin:6px 8px;"></div>
+            <button onclick="cambiarTab('dian')" id="btn-tab-dian" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="file-text"></i></span> Facturación DIAN
+            </button>
+            <div style="height:1.5px;background:var(--border);margin:6px 8px;"></div>
+            <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.2px;padding:4px 8px 2px;">Gestión Avanzada</p>
+            <button onclick="cambiarTab('calendario')" id="btn-tab-calendario" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="calendar"></i></span> Calendario de Cierres
+            </button>
+            <button onclick="cambiarTab('permisos')" id="btn-tab-permisos" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="shield"></i></span> Permisos de Acceso
+            </button>
+            <button onclick="cambiarTab('produccion')" id="btn-tab-produccion" class="tab-inactive w-full text-left"
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;">
+                <span class="ic ic-md"><i data-lucide="flask-conical"></i></span> Producción / Recetario
+            </button>
+
+        </aside>
+
+        <!-- ════ MAIN ════ -->
+        <main style="flex:1;padding:28px;overflow-y:auto;min-width:0;box-sizing:border-box;">
+
+            <!-- TAB: DASHBOARD -->
+            <section id="tab-dashboard" style="display:flex;flex-direction:column;gap:24px;">
+
+                <div id="panel-apertura-caja" class="card"
+                    style="background:var(--olive-soft);border-color:var(--olive-bd);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <p
+                                style="font-size:11px;font-weight:700;color:var(--olive);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;display:flex;align-items:center;gap:6px;">
+                                <span class="ic ic-sm"><i data-lucide="vault"></i></span> Apertura de Caja</p>
+                            <p style="font-size:12px;color:var(--text-2);">Registra el efectivo base con el que arranca
+                                la jornada.</p>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <input id="input-base-caja" type="number" placeholder="Ej: 50000" min="0"
+                                style="width:160px;border-radius:999px;background:#fff;">
+                            <button onclick="registrarAperturaCaja()" class="btn-olive" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="check-circle"></i></span>
+                                Registrar Base</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPIs fila 1 -->
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" class="kpi-grid">
+                    <div class="kpi-card">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;">
+                                Ventas Brutas</p>
+                            <h3 id="gros-ventas" class="mono"
+                                style="font-size:22px;font-weight:700;color:var(--olive);margin-top:4px;">$0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--olive-lt);color:var(--olive);"><span class="ic ic-lg"><i data-lucide="trending-up"></i></span></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;">
+                                Órdenes Hoy</p>
+                            <h3 id="total-pedidos" class="mono"
+                                style="font-size:22px;font-weight:700;color:var(--blue);margin-top:4px;">0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--blue-lt);color:var(--blue);"><span class="ic ic-lg"><i data-lucide="clipboard-list"></i></span></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;">
+                                Gastos del Día</p>
+                            <h3 id="total-gastos" class="mono"
+                                style="font-size:22px;font-weight:700;color:var(--red);margin-top:4px;">$0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--red-lt);color:var(--red);"><span class="ic ic-lg"><i data-lucide="trending-down"></i></span></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;">
+                                Provisión Rete-ICA</p>
+                            <h3 id="val-reteica" class="mono"
+                                style="font-size:22px;font-weight:700;color:var(--amber);margin-top:4px;">$0</h3>
+                            <p style="font-size:9.5px;color:var(--text-3);margin-top:2px;">Tarifa 6.9‰ — BGA</p>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--amber-lt);color:var(--amber);"><span class="ic ic-lg"><i data-lucide="landmark"></i></span></div>
+                    </div>
+                </div>
+
+                <!-- KPIs fila 2 -->
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" class="kpi-grid">
+                    <div class="kpi-card" style="border-color:var(--olive-bd);">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:5px;">
+                                <span class="ic ic-sm" style="color:var(--olive);"><i data-lucide="banknote"></i></span> Efectivo</p>
+                            <h3 id="kpi-efectivo" class="mono"
+                                style="font-size:20px;font-weight:700;color:var(--olive);margin-top:4px;">$0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--olive-lt);color:var(--olive);"><span class="ic ic-lg"><i data-lucide="vault"></i></span></div>
+                    </div>
+                    <div class="kpi-card" style="border-color:rgba(37,99,168,.22);">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:5px;">
+                                <span class="ic ic-sm" style="color:var(--blue);"><i data-lucide="smartphone"></i></span> Transferencia</p>
+                            <h3 id="kpi-transferencia" class="mono"
+                                style="font-size:20px;font-weight:700;color:var(--blue);margin-top:4px;">$0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--blue-lt);color:var(--blue);"><span class="ic ic-lg"><i data-lucide="send"></i></span></div>
+                    </div>
+                    <div class="kpi-card" style="border-color:rgba(154,108,26,.22);">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:5px;">
+                                <span class="ic ic-sm" style="color:var(--amber);"><i data-lucide="handshake"></i></span> Fiado (Pendiente)</p>
+                            <h3 id="kpi-fiado" class="mono"
+                                style="font-size:20px;font-weight:700;color:var(--amber);margin-top:4px;">$0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--amber-lt);color:var(--amber);"><span class="ic ic-lg"><i data-lucide="clock"></i></span></div>
+                    </div>
+                    <div class="kpi-card" style="border-color:var(--olive-bd);">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;">
+                                Saldo en Caja</p>
+                            <h3 id="kpi-saldo-caja" class="mono"
+                                style="font-size:20px;font-weight:700;color:var(--olive);margin-top:4px;">$0</h3>
+                            <p style="font-size:9.5px;color:var(--text-3);margin-top:2px;">Base + Efectivo + Transf.</p>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--olive-lt);color:var(--olive);"><span class="ic ic-lg"><i data-lucide="wallet"></i></span></div>
+                    </div>
+                </div>
+
+                <!-- Tablas -->
+                <!-- [v3.5] La tabla "Historial de Facturación" se movió a la pestaña Pedidos -->
+                <div style="display:grid;grid-template-columns:1fr;gap:20px;" class="tables-grid">
+                    <div class="card" style="padding:0;overflow:hidden;">
+                        <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);">
+                            <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md" style="color:var(--red);"><i data-lucide="flame"></i></span> Platos Más Solicitados
+                            </h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <thead>
+                                    <tr class="thead-row">
+                                        <th>Plato</th>
+                                        <th style="text-align:center;">Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-top-platos">
+                                    <tr>
+                                        <td colspan="2"
+                                            style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">
+                                            Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: HISTORIAL DE PEDIDOS -->
+            <section id="tab-pedidos" style="display:none;flex-direction:column;gap:20px;">
+
+                <!-- Filtros -->
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <button type="button" onclick="filtrarHistorialPedidos('pendientes')" id="btn-hp-pendientes"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:600;border-radius:999px;border:1.5px solid var(--amber);background:var(--amber-lt);color:var(--amber);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;">
+                        <span class="ic ic-sm"><i data-lucide="clock"></i></span> Por Cobrar
+                    </button>
+                    <button type="button" onclick="filtrarHistorialPedidos('pagados')" id="btn-hp-pagados"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:600;border-radius:999px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;">
+                        <span class="ic ic-sm"><i data-lucide="circle-check"></i></span> Historial de pagados
+                    </button>
+                </div>
+
+                <!-- Grid tarjetas -->
+                <div id="grid-historial-pedidos"
+                    style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+                    <p style="color:var(--text-3);font-size:12.5px;padding:28px 0;grid-column:1/-1;text-align:center;">
+                        Cargando pedidos…</p>
+                </div>
+
+            </section>
+
+            <!-- TAB: MENÚ -->
+            <section id="tab-menu" style="display:none;flex-direction:column;gap:20px;">
+                <div class="card" style="background:var(--surface-2);border-style:dashed;">
+                    <p
+                        style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                        <span class="ic ic-sm"><i data-lucide="hash"></i></span> Estructura de Códigos del Catálogo</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <span class="range-badge range-01"><span class="ic ic-sm"><i data-lucide="leaf"></i></span> 01–10 · Vegetales, Salsas e Ingredientes Base</span>
+                        <span class="range-badge range-11"><span class="ic ic-sm"><i data-lucide="beef"></i></span> 11–30 · Carnes, Proteínas y Cortes</span>
+                        <span class="range-badge range-31"><span class="ic ic-sm"><i data-lucide="soup"></i></span> 31–50 · Acompañamientos y Principios</span>
+                        <span class="range-badge range-51"><span class="ic ic-sm"><i data-lucide="cup-soda"></i></span> 51–70 · Bebidas y Jugos</span>
+                        <span class="range-badge range-71"><span class="ic ic-sm"><i data-lucide="star"></i></span> 71+ · Platos a la Carta y Especiales</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="margin-bottom:18px;">
+                        <h3 style="font-size:15px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="utensils-crossed"></i></span> Editor Modular del Catálogo
+                        </h3>
+                        <p style="font-size:12px;color:var(--text-3);margin-top:3px;">Asigna un código único según la
+                            estructura de rangos. Las proteínas ya incluyen su salsa. Porciones en 0 → se bloquea
+                            automáticamente.</p>
+                    </div>
+                    <form id="form-nuevo-plato"
+                        style="display:grid;grid-template-columns:80px 1fr 130px 140px 160px auto;gap:12px;align-items:end;">
+                        <div>
+                            <label>Código *</label>
+                            <input type="number" id="menu-codigo" placeholder="Ej: 12" min="1" max="999" required>
+                        </div>
+                        <div>
+                            <label>Nombre del Plato o Componente</label>
+                            <input type="text" id="menu-nombre"
+                                placeholder="Ej: Bagre en Salsa Criolla · Fríjoles · Limonada" required>
+                        </div>
+                        <div>
+                            <label>Precio / Valor ($)</label>
+                            <input type="number" id="menu-precio" placeholder="Ej: 16000" required>
+                        </div>
+                        <div>
+                            <label>Tipo de Componente</label>
+                            <select id="menu-tipo">
+                                <option value="executive_lunch">Proteína con Salsa</option>
+                                <option value="side">Principio / Acompañamiento</option>
+                                <option value="drink">Bebida / Refresco</option>
+                                <option value="a_la_carte">Plato a la Carta</option>
+                                <option value="dessert">Postre</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Porciones del Día</label>
+                            <input type="number" id="menu-porciones" placeholder="Ej: 30" min="0">
+                        </div>
+                        <div>
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn-olive" style="height:40px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span>
+                                Registrar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                    <button type="button" onclick="filtrarMenuComponente('todos')" id="btn-comp-todos"
+                        class="filter-btn filter-active btn-comp">Todo el Catálogo</button>
+                    <button type="button" onclick="filtrarMenuComponente('executive_lunch')"
+                        id="btn-comp-executive_lunch" class="filter-btn btn-comp" style="display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="beef"></i></span> Proteínas</button>
+                    <button type="button" onclick="filtrarMenuComponente('side')" id="btn-comp-side"
+                        class="filter-btn btn-comp" style="display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="soup"></i></span> Principios</button>
+                    <button type="button" onclick="filtrarMenuComponente('a_la_carte')" id="btn-comp-a_la_carte"
+                        class="filter-btn btn-comp" style="display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="star"></i></span> A la Carta</button>
+                    <button type="button" onclick="filtrarMenuComponente('drink')" id="btn-comp-drink"
+                        class="filter-btn btn-comp" style="display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="cup-soda"></i></span> Bebidas</button>
+                    <button type="button" onclick="filtrarMenuComponente('soup')" id="btn-comp-soup"
+                        class="filter-btn btn-comp" style="display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="soup"></i></span> Sopas</button>
+                </div>
+
+                <!-- Toggle activos / inactivos — solo admin -->
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button type="button" onclick="verProductosActivos()" id="btn-vista-activos"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:600;border-radius:999px;border:1.5px solid var(--olive-bd);background:var(--olive);color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;">
+                        <span class="ic ic-sm"><i data-lucide="circle-check"></i></span> Activos
+                    </button>
+                    <button type="button" onclick="verProductosInactivos()" id="btn-vista-inactivos"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:600;border-radius:999px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;">
+                        <span class="ic ic-sm"><i data-lucide="circle-x"></i></span> Inactivos
+                    </button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="contenedor-slots-menu">
+                    <p style="color:var(--text-3);font-size:12.5px;padding:16px 0;grid-column:span 3;">Cargando
+                        catálogo...</p>
+                </div>
+            </section>
+
+            <!-- TAB: PERSONAL -->
+            <section id="tab-personal" style="display:none;flex-direction:column;gap:24px;">
+                <div class="card" style="background:var(--olive-lt);border-color:var(--olive-bd);">
+                    <div style="display:flex;gap:12px;align-items:flex-start;">
+                        <span style="font-size:24px;margin-top:2px;color:var(--olive);"><span class="ic ic-xl"><i data-lucide="users"></i></span></span>
+                        <div>
+                            <h3 style="font-size:15px;font-weight:700;color:var(--olive);margin-bottom:4px;">Control de
+                                Personal y Nómina — Ley Laboral Colombiana 2026</h3>
+                            <p style="font-size:12px;color:var(--text-2);line-height:1.6;">
+                                SMMLV 2026: <strong>$1.423.500 COP</strong> · Auxilio de Transporte: <strong>$200.000
+                                    COP</strong> (aplica para salarios ≤ 2 SMMLV = $2.847.000).
+                                Salud empleado: 4% · Pensión empleado: 4% · Prestaciones empleador incluidas en costo
+                                total.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;"
+                    class="personal-grid">
+                    <div class="card" style="flex-shrink:0;">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:18px;display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="user-plus"></i></span> Registrar
+                            Empleado</h3>
+                        <form id="form-empleado" style="display:flex;flex-direction:column;gap:14px;">
+                            <div><label>Nombre Completo</label><input type="text" id="emp-nombre"
+                                    placeholder="Ej: Carlos Torres Ruiz" required></div>
+                            <div>
+                                <label>Cargo</label>
+                                <select id="emp-cargo">
+                                    <option value="Mesero">Mesero</option>
+                                    <option value="Cocinero">Cocinero</option>
+                                    <option value="Cajero">Cajero</option>
+                                    <option value="Administrador">Administrador</option>
+                                </select>
+                            </div>
+                            <div><label>Salario Base Mensual ($ COP)</label><input type="number" id="emp-salario"
+                                    placeholder="Ej: 1423500" required></div>
+                            <div><label>Días Trabajados (este mes)</label><input type="number" id="emp-dias"
+                                    placeholder="Ej: 26" min="1" max="30" value="30" required></div>
+                            <button type="submit" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span> Añadir al Personal</button>
+                        </form>
+                    </div>
+
+                    <div class="card" style="padding:0;overflow:hidden;">
+                        <div
+                            style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                            <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="clipboard-list"></i></span> Nómina del Personal</h3>
+                            <span id="emp-count-badge"
+                                style="background:var(--olive-lt);color:var(--olive);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;font-size:11px;font-weight:700;">0
+                                empleados</span>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <thead>
+                                    <tr class="thead-row">
+                                        <th>Empleado</th>
+                                        <th style="text-align:center;">Cargo</th>
+                                        <th style="text-align:right;">Salario Base</th>
+                                        <th style="text-align:center;">Días</th>
+                                        <th style="text-align:right;">Neto a Pagar</th>
+                                        <th style="text-align:center;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-empleados">
+                                    <tr>
+                                        <td colspan="6"
+                                            style="text-align:center;padding:32px;color:var(--text-3);font-size:12.5px;">
+                                            No hay empleados registrados.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="emp-costo-total"
+                            style="display:none;padding:16px 20px;border-top:1.5px solid var(--border);background:var(--surface-2);justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <span style="font-size:12px;font-weight:600;color:var(--text-2);display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="briefcase"></i></span> Costo total del
+                                restaurante (empleador)</span>
+                            <span id="emp-costo-total-valor" class="mono"
+                                style="font-size:16px;font-weight:700;color:var(--amber);">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: GASTOS OPERATIVOS -->
+            <section id="tab-nomina" style="display:none;grid-template-columns:1fr 2fr;gap:20px;align-items:start;"
+                class="gastos-grid">
+                <div class="card">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:18px;display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="file-pen-line"></i></span> Registrar
+                        Salida de Caja</h3>
+                    <form id="form-gasto" style="display:flex;flex-direction:column;gap:14px;">
+                        <div>
+                            <label>Categoría Contable</label>
+                            <select id="gasto-tipo">
+                                <option value="Nomina Cocina">Nómina — Operación Cocina</option>
+                                <option value="Nomina Mesero">Nómina — Pago Diario Mesero</option>
+                                <option value="Insumos Plaza">Insumos — Compras en Plaza</option>
+                                <option value="Otros">Gastos Varios Operativos</option>
+                            </select>
+                        </div>
+                        <div><label>Descripción</label><input type="text" id="gasto-descripcion"
+                                placeholder="Ej: Pago diario Carlos Torres" required></div>
+                        <div><label>Valor ($ COP)</label><input type="number" id="gasto-monto" placeholder="Ej: 60000"
+                                required></div>
+                        <button type="submit" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span> Registrar Movimiento</button>
+                    </form>
+                </div>
+
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md" style="color:var(--red);"><i data-lucide="arrow-down-circle"></i></span> Historial de Salidas de Caja
+                        </h3>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr class="thead-row">
+                                    <th>Categoría</th>
+                                    <th>Descripción</th>
+                                    <th style="text-align:right;">Monto</th>
+                                    <th style="text-align:center;">Hora</th>
+                                    <th style="text-align:center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-gastos">
+                                <tr>
+                                    <td colspan="5"
+                                        style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">Sin
+                                        movimientos.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: INVENTARIO -->
+            <section id="tab-inventario" style="display:none;flex-direction:column;gap:20px;">
+                <div class="card">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:18px;display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="plus-circle"></i></span> Registrar Nuevo
+                        Insumo</h3>
+                    <form id="form-nuevo-insumo"
+                        style="display:grid;grid-template-columns:1fr 1fr 120px 140px auto;gap:12px;align-items:end;">
+                        <div><label>Nombre del Insumo</label><input type="text" id="inv-nombre"
+                                placeholder="Ej: Pechuga de Pollo" required></div>
+                        <div>
+                            <label>Categoría</label>
+                            <select id="inv-categoria">
+                                <option value="Materia Prima / Alimento">Materia Prima / Alimento</option>
+                                <option value="Perecederos / Plaza">Perecederos / Plaza</option>
+                                <option value="Productos de Aseo">Productos de Aseo</option>
+                                <option value="Empaques y Desechables">Empaques y Desechables</option>
+                                <option value="Insumos Operativos">Insumos Operativos</option>
+                            </select>
+                        </div>
+                        <div><label>Stock Inicial</label><input type="number" step="0.01" id="inv-stock"
+                                placeholder="Ej: 10" required></div>
+                        <div>
+                            <label>Unidad</label>
+                            <select id="inv-unidad">
+                                <option value="Kg">Kilogramos (Kg)</option>
+                                <option value="Libras">Libras</option>
+                                <option value="Unidades">Unidades</option>
+                                <option value="Litros">Litros</option>
+                                <option value="Galón">Galón</option>
+                                <option value="Paquete">Paquete</option>
+                            </select>
+                        </div>
+                        <div><label>&nbsp;</label><button type="submit" class="btn-olive"
+                                style="height:40px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="plus"></i></span> Añadir</button></div>
+                    </form>
+                </div>
+
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="package-open"></i></span> Kárdex de Suministros</h3>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr class="thead-row">
+                                    <th>Insumo</th>
+                                    <th>Categoría</th>
+                                    <th style="text-align:center;">Stock</th>
+                                    <th style="text-align:center;">Unidad</th>
+                                    <th style="text-align:center;">Ajuste</th>
+                                    <th style="text-align:right;">Baja</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-inventario">
+                                <tr>
+                                    <td colspan="6"
+                                        style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">
+                                        Cargando inventario...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: DIAN -->
+            <section id="tab-dian" style="display:none;flex-direction:column;gap:16px;">
+                <div class="dian-panel">
+                    <div class="dian-header">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:var(--olive);flex-shrink:0;">
+                            </div>
+                            <h3 style="font-size:15px;font-weight:700;color:var(--text-1);">Factura Electrónica DIAN
+                            </h3>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-3);">Emitir cuando el cliente solicite documento
+                            equivalente</p>
+                    </div>
+                    <div style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div>
+                                <label>Tipo de Doc. *</label>
+                                <select id="dian-tipo-doc">
+                                    <option value="CC">CC — Cédula</option>
+                                    <option value="NIT">NIT — Empresa</option>
+                                    <option value="CE">CE — Extranjería</option>
+                                    <option value="PAS">Pasaporte</option>
+                                </select>
+                            </div>
+                            <div><label>Nro. Identificación *</label><input type="text" id="dian-num-doc"
+                                    placeholder="13 457 890"></div>
+                        </div>
+                        <div><label>Nombre o Razón Social *</label><input type="text" id="dian-nombre"
+                                placeholder="Juan Pérez  /  Empresa S.A.S."></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div><label>Correo *</label><input type="email" id="dian-email"
+                                    placeholder="cliente@correo.com"></div>
+                            <div><label>Valor Total ($ COP) *</label><input type="number" id="dian-valor"
+                                    placeholder="28000" oninput="calcularIVADian()" style="font-weight:600;"></div>
+                        </div>
+                        <div id="dian-resumen"
+                            style="display:none;background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:14px;">
+                            <p
+                                style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">
+                                Liquidación IVA Consumo</p>
+                            <div
+                                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+                                <span style="font-size:12px;color:var(--text-2);">Base gravable (sin IVA 8%)</span>
+                                <span class="mono" style="font-size:12px;font-weight:600;color:var(--text-1);"
+                                    id="dian-base">—</span>
+                            </div>
+                            <div
+                                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+                                <span style="font-size:12px;color:var(--text-2);">IVA al consumo (8%)</span>
+                                <span class="mono" style="font-size:12px;font-weight:600;color:var(--olive);"
+                                    id="dian-iva">—</span>
+                            </div>
+                            <div
+                                style="border-top:1.5px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:13px;font-weight:700;color:var(--text-1);">Total con IVA</span>
+                                <span class="mono" style="font-size:14px;font-weight:700;color:var(--olive);"
+                                    id="dian-total">—</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="emitirFacturaDian()" class="btn-olive"
+                            style="width:100%;height:46px;font-size:14px;letter-spacing:.3px;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                            <span class="ic ic-md"><i data-lucide="send"></i></span> Emitir Factura Electrónica
+                        </button>
+                        <div id="dian-resultado"
+                            style="display:none;background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:14px;padding:14px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div
+                        style="padding:16px 18px 12px;border-bottom:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="clipboard-check"></i></span> Facturas Emitidas Hoy</h3>
+                        <span id="dian-contador-badge"
+                            style="background:var(--olive-lt);color:var(--olive);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;font-size:11px;font-weight:700;">0
+                            facturas</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;min-width:340px;">
+                            <thead>
+                                <tr class="thead-row">
+                                    <th>Cliente / Razón Social</th>
+                                    <th>Doc.</th>
+                                    <th style="text-align:right;">Total c/IVA</th>
+                                    <th style="text-align:center;">Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-dian-historial">
+                                <tr>
+                                    <td colspan="4"
+                                        style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">Aún
+                                        no se han emitido facturas hoy.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <details class="card" style="padding:0;overflow:hidden;cursor:pointer;">
+                    <summary
+                        style="padding:16px 18px;display:flex;align-items:center;gap:10px;list-style:none;-webkit-appearance:none;">
+                        <span style="font-size:16px;color:var(--amber);display:inline-flex;align-items:center;"><span class="ic ic-lg"><i data-lucide="landmark"></i></span></span>
+                        <span style="font-size:13px;font-weight:700;color:var(--olive);flex:1;">Marco Legal —
+                            Facturación Electrónica</span>
+                        <span style="font-size:11px;color:var(--text-3);font-weight:500;">ver más ▾</span>
+                    </summary>
+                    <div style="padding:0 18px 16px;border-top:1.5px solid var(--border);">
+                        <p style="font-size:12px;color:var(--text-2);line-height:1.7;margin-top:12px;">
+                            Según la <strong>Resolución DIAN 000042 de 2020</strong>, los restaurantes deben emitir
+                            factura electrónica cuando el cliente la solicite.
+                            El IVA al consumo aplicable es del <strong>8%</strong> (Art. 512-1 E.T.). La tarifa de
+                            Rete-ICA para Bucaramanga es <strong>6.9 × 1000</strong>.
+                        </p>
+                    </div>
+                </details>
+            </section>
+
+
+            <!-- TAB: PERMISOS DE ACCESO ════════════════════════════════ -->
+            <section id="tab-permisos" style="display:none;flex-direction:column;gap:20px;">
+
+                <!-- Banner de estado global -->
+                <div class="card" style="background:var(--olive-lt);border-color:var(--olive-bd);">
+                    <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+                        <span style="font-size:28px;color:var(--olive);"><span class="ic ic-xl"><i data-lucide="shield-check"></i></span></span>
+                        <div style="flex:1;min-width:200px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
+                                <h3 style="font-size:15px;font-weight:700;color:var(--olive);">Gestión de Usuarios y Permisos</h3>
+                                <span id="badge-estado-sistema" style="background:var(--olive-lt);color:var(--olive);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;font-size:11px;font-weight:700;">Cargando…</span>
+                            </div>
+                            <p id="desc-estado-sistema" style="font-size:12.5px;color:var(--text-2);line-height:1.6;">Consultando estado del sistema…</p>
+                        </div>
+                        <button id="btn-toggle-sistema" data-estado="true"
+                            onclick="toggleEstadoSistema()" class="sw-on"
+                            style="flex-shrink:0;padding:10px 22px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">
+                            <span class="ic ic-sm"><i data-lucide="check-circle-2"></i></span> Pedidos Habilitados
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Explicación de la lógica -->
+                <div class="card" style="background:var(--surface-2);border-style:dashed;">
+                    <p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="lock"></i></span> ¿Cómo funciona el Cierre de Pedidos?</p>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" class="tables-grid">
+                        <div style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:14px;padding:14px;">
+                            <p style="font-size:13px;font-weight:700;color:var(--olive);margin-bottom:6px;">1 · Admin desactiva</p>
+                            <p style="font-size:12px;color:var(--text-2);line-height:1.6;">El admin mueve el toggle a <strong>"Pedidos Bloqueados"</strong>. El estado se guarda en Supabase (<code style="font-size:10px;">system_settings</code>).</p>
+                        </div>
+                        <div style="background:var(--red-lt);border:1.5px solid var(--red-bd);border-radius:14px;padding:14px;">
+                            <p style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px;">2 · Usuario intenta acceder</p>
+                            <p style="font-size:12px;color:var(--text-2);line-height:1.6;">Al ingresar a la toma de pedidos, la app lee <code style="font-size:10px;">orders_enabled</code> y muestra la pantalla de <strong>"Sistema fuera de servicio"</strong>.</p>
+                        </div>
+                        <div style="background:var(--blue-lt);border:1.5px solid rgba(37,99,168,.28);border-radius:14px;padding:14px;">
+                            <p style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:6px;">3 · Sin registros contables</p>
+                            <p style="font-size:12px;color:var(--text-2);line-height:1.6;">No se puede crear ningún pedido. Protege la contabilidad en días <strong>no laborables</strong> o fuera de horario.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- TAB: PRODUCCIÓN / RECETARIO ════════════════════════════ -->
+            <section id="tab-produccion" style="display:none;flex-direction:column;gap:20px;">
+
+                <!-- ═══ EXPLICACIÓN DEL SISTEMA ═══ -->
+                <div class="card" style="background:var(--olive-lt);border-color:var(--olive-bd);">
+                    <div style="display:flex;gap:14px;align-items:flex-start;">
+                        <span style="font-size:28px;flex-shrink:0;color:var(--olive);"><span class="ic ic-xl"><i data-lucide="flask-conical"></i></span></span>
+                        <div>
+                            <h3 style="font-size:15px;font-weight:700;color:var(--olive);margin-bottom:6px;">¿Cómo funciona el Recetario de Producción?</h3>
+                            <p style="font-size:12.5px;color:var(--text-2);line-height:1.8;">
+                                El sistema <strong>no cuenta platos exactos</strong> — eso es imposible en cocina real porque depende de la habilidad del cocinero, el merme y el tamaño de la porción.
+                                Lo que hace es darte una <strong>estimación máxima</strong> basada en la fórmula:
+                            </p>
+                            <div style="background:var(--surface);border:1.5px solid var(--olive-bd);border-radius:12px;padding:12px 16px;margin:10px 0;font-family:'DM Mono',monospace;font-size:13px;color:var(--olive);font-weight:700;">
+                                Platos ≈ PISO( MÍN( stock_insumo ÷ gramos_por_plato ) )
+                            </div>
+                            <p style="font-size:12px;color:var(--text-2);line-height:1.7;">
+                                El insumo que menos alcanza es el <strong>cuello de botella</strong>. Con ese número el admin decide cuántas porciones poner en el menú del día (campo "Porciones" en Control de Menú).
+                                Cuando se venden esas porciones, el inventario se descuenta automáticamente.
+                            </p>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px;" class="tables-grid">
+                        <div style="background:var(--surface);border:1.5px solid var(--olive-bd);border-radius:12px;padding:12px;">
+                            <p style="font-size:11px;font-weight:700;color:var(--olive);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="book-open"></i></span> Ejemplo real</p>
+                            <p style="font-size:11.5px;color:var(--text-2);line-height:1.6;">Stock: 5 Kg pollo · 24 Kg arroz<br>Receta: 200g pollo + 150g arroz por plato<br>→ Pollo: 25 platos · Arroz: 160 platos<br><strong>→ Estimado: ~25 platos</strong></p>
+                        </div>
+                        <div style="background:var(--surface);border:1.5px solid rgba(154,108,26,.3);border-radius:12px;padding:12px;">
+                            <p style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="alert-triangle"></i></span> Factor merme</p>
+                            <p style="font-size:11.5px;color:var(--text-2);line-height:1.6;">En cocina real se pierde un 10–20% por limpieza, cocción y porcionado. Ingresa la cantidad <strong>ya limpia y lista</strong> para cocinar, o define la receta incluyendo el merme.</p>
+                        </div>
+                        <div style="background:var(--surface);border:1.5px solid rgba(37,99,168,.25);border-radius:12px;padding:12px;">
+                            <p style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="git-merge"></i></span> Flujo completo</p>
+                            <p style="font-size:11.5px;color:var(--text-2);line-height:1.6;">Calcular → ver estimado → ir a Control de Menú → poner ese número en "Porciones del día" → al llegar a 0 el plato se bloquea automáticamente.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ FORMULARIO NUEVA RECETA ═══ -->
+                <div class="card">
+                    <div style="margin-bottom:16px;">
+                        <h3 style="font-size:15px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="notebook-pen"></i></span> Registrar Nueva Receta Base</h3>
+                        <p style="font-size:12px;color:var(--text-3);margin-top:3px;">
+                            Define cuánto insumo consume <strong>un solo plato</strong>. Usa gramos o la unidad más precisa posible.
+                        </p>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;" class="tables-grid">
+                        <div><label>Nombre de la Receta *</label><input type="text" id="rec-nombre" placeholder="Ej: Bandeja Corriente · Pollo"></div>
+                        <div><label>Descripción (opcional)</label><input type="text" id="rec-descripcion" placeholder="Ej: Menú del día con pechuga"></div>
+                    </div>
+
+                    <!-- Constructor dinámico de ingredientes -->
+                    <div style="border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;">
+                        <div style="padding:12px 16px;background:var(--surface-2);border-bottom:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <div>
+                                <p style="font-size:12px;font-weight:700;color:var(--text-2);display:flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="test-tube-2"></i></span> Ingredientes — consumo por <strong>1 plato</strong></p>
+                                <p style="font-size:11px;color:var(--text-3);">Usa la misma unidad que en el inventario (Kg, Libras, Unidades…)</p>
+                            </div>
+                            <button onclick="agregarFilaIngrediente()" class="btn-ghost" style="padding:5px 14px;font-size:12px;">+ Agregar</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;min-width:400px;">
+                                <thead>
+                                    <tr style="background:var(--surface-2);">
+                                        <th style="padding:9px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;text-align:left;">Insumo del Inventario</th>
+                                        <th style="padding:9px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;text-align:center;width:130px;">Cant. por plato</th>
+                                        <th style="padding:9px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;text-align:center;width:110px;">Unidad</th>
+                                        <th style="width:36px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-form-ingredientes"></tbody>
+                            </table>
+                        </div>
+                        <div style="padding:10px 16px;background:var(--surface-2);border-top:1.5px solid var(--border);">
+                            <p style="font-size:11px;color:var(--text-3);display:flex;align-items:flex-start;gap:5px;">
+                                <span class="ic ic-sm" style="margin-top:1px;flex-shrink:0;"><i data-lucide="info"></i></span>
+                                Selecciona del inventario para que el descuento sea automático. Si escribes un nombre manual no se descontará stock (solo aparece en el informe).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;">
+                        <button onclick="guardarReceta()" class="btn-olive" style="padding:10px 26px;display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span> Guardar Receta</button>
+                    </div>
+                </div>
+
+                <!-- ═══ CALCULADORA DE PRODUCCIÓN ═══ -->
+                <div class="card" style="border-color:var(--olive-bd);">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);flex:1;display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="calculator"></i></span> Calcular Producción del Día</h3>
+                        <span style="font-size:11px;color:var(--text-3);">Lee el stock actual del inventario</span>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <label>Receta a calcular</label>
+                            <select id="sel-receta-calculo" style="border-radius:999px;height:40px;font-size:13px;">
+                                <option value="">— Seleccionar receta —</option>
+                            </select>
+                        </div>
+                        <button onclick="calcularProduccion()" class="btn-olive" style="height:40px;padding:0 22px;font-size:13px;white-space:nowrap;">
+                            ▶ Calcular
+                        </button>
+                    </div>
+                    <div style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:12px;padding:10px 14px;margin-top:12px;">
+                        <p style="font-size:11.5px;color:var(--olive);">
+                            <strong>Fórmula:</strong> platos ≈ PISO( MÍN( stock_i ÷ cantidad_por_plato_i ) ) — el insumo con menor cobertura marca el límite.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Resultado del cálculo (dinámico) -->
+                <div id="panel-resultado-calculo" style="display:none;"></div>
+
+                <!-- ═══ TABLA DE RECETAS ═══ -->
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="list"></i></span> Recetas Registradas</h3>
+                        <span id="badge-recetas-count" style="background:var(--olive-lt);color:var(--olive);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;font-size:11px;font-weight:700;">0 recetas</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr class="thead-row">
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th style="text-align:left;">Ingredientes (por plato)</th>
+                                    <th style="text-align:center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-recetas">
+                                <tr><td colspan="4" style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">Sin recetas registradas.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- TAB: CALENDARIO DE CIERRES ════════════════════════════ -->
+            <section id="tab-calendario" style="display:none;flex-direction:column;gap:20px;">
+
+                <div class="card" style="background:var(--blue-lt);border-color:rgba(37,99,168,.25);">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span style="font-size:28px;color:var(--olive);"><span class="ic ic-xl"><i data-lucide="calendar-days"></i></span></span>
+                        <div style="flex:1;">
+                            <h3 style="font-size:15px;font-weight:700;color:var(--blue);margin-bottom:3px;">Historial de Cierres de Caja</h3>
+                            <p style="font-size:12px;color:var(--text-2);">Cada vez que ejecutas el Cierre de Caja (Z), el ciclo queda registrado aquí para auditoría contable.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen acumulado del mes (selector + tarjetas) -->
+                <div id="resumen-calendario"></div>
+
+                <!-- Estadísticas mensuales animadas -->
+                <div id="estadisticas-mensuales"></div>
+
+                <!-- Tabla de cierres -->
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);">
+                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="archive"></i></span> Registro de Ciclos Contables</h3>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;min-width:640px;">
+                            <thead>
+                                <tr class="thead-row">
+                                    <th>Fecha</th>
+                                    <th style="text-align:right;">Ingresos</th>
+                                    <th style="text-align:right;">Egresos</th>
+                                    <th style="text-align:right;">Utilidad Neta</th>
+                                    <th style="text-align:right;">Efectivo</th>
+                                    <th style="text-align:right;">Transferencia</th>
+                                    <th style="text-align:right;">Fiado</th>
+                                    <th style="text-align:center;width:50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-calendario-cierres">
+                                <tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text-3);">Cargando historial…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- ════ BOTTOM NAV (móvil) ════ -->
+    <nav id="bottom-nav" aria-label="Navegación principal">
+        <button class="bnav-item bnav-active" id="bnav-dashboard" onclick="cambiarTab('dashboard')">
+            <span class="bnav-icon ic-nav"><i data-lucide="layout-dashboard"></i></span><span class="bnav-label">Dashboard</span>
+        </button>
+        <button class="bnav-item" id="bnav-pedidos" onclick="cambiarTab('pedidos')">
+            <span class="bnav-icon ic-nav"><i data-lucide="shopping-bag"></i></span><span class="bnav-label">Pedidos</span>
+        </button>
+        <button class="bnav-item" id="bnav-menu" onclick="cambiarTab('menu')">
+            <span class="bnav-icon ic-nav"><i data-lucide="book-open"></i></span><span class="bnav-label">Productos</span>
+        </button>
+        <button class="bnav-item" id="bnav-personal" onclick="cambiarTab('personal')">
+            <span class="bnav-icon ic-nav"><i data-lucide="users"></i></span><span class="bnav-label">Nómina</span>
+        </button>
+        <button class="bnav-item" id="bnav-nomina" onclick="cambiarTab('nomina')">
+            <span class="bnav-icon ic-nav"><i data-lucide="banknote"></i></span><span class="bnav-label">Gastos</span>
+        </button>
+        <button class="bnav-item" id="bnav-inventario" onclick="cambiarTab('inventario')">
+            <span class="bnav-icon ic-nav"><i data-lucide="package"></i></span><span class="bnav-label">Inventario</span>
+        </button>
+        <button class="bnav-item" id="bnav-dian" onclick="cambiarTab('dian')">
+            <span class="bnav-icon ic-nav"><i data-lucide="file-text"></i></span><span class="bnav-label">Factura</span>
+        </button>
+        <button class="bnav-item" id="bnav-permisos" onclick="cambiarTab('permisos')">
+            <span class="bnav-icon ic-nav"><i data-lucide="shield"></i></span><span class="bnav-label">Permisos</span>
+        </button>
+        <button class="bnav-item" id="bnav-produccion" onclick="cambiarTab('produccion')">
+            <span class="bnav-icon ic-nav"><i data-lucide="flask-conical"></i></span><span class="bnav-label">Recetario</span>
+        </button>
+        <button class="bnav-item" id="bnav-calendario" onclick="cambiarTab('calendario')">
+            <span class="bnav-icon ic-nav"><i data-lucide="calendar"></i></span><span class="bnav-label">Cierres</span>
+        </button>
+        <a class="bnav-item" href="index.html">
+            <span class="bnav-icon ic-nav"><i data-lucide="utensils"></i></span><span class="bnav-label">Cocina</span>
+        </a>
+    </nav>
+
+    <!-- ════ MODAL CIERRE DE CAJA ════ -->
+    <div id="modal-cierre-caja" class="modal-overlay" style="display:none;"
+        onclick="if(event.target===this)cerrarModalCierre()">
+        <div class="modal-box" style="max-width:560px;">
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;">
+                <div>
+                    <h2 style="font-size:17px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:8px;"><span class="ic ic-md" style="color:var(--red);"><i data-lucide="lock"></i></span> Cierre de Caja — Informe Z</h2>
+                    <p style="font-size:11.5px;color:var(--text-3);margin-top:2px;">Restaurante Mateus · Bucaramanga, Santander</p>
+                </div>
+                <button onclick="cerrarModalCierre()"
+                    style="background:var(--surface-3);border:none;border-radius:999px;width:32px;height:32px;font-size:16px;cursor:pointer;color:var(--text-2);display:flex;align-items:center;justify-content:center;">×</button>
+            </div>
+
+            <!-- Resumen contable -->
+            <div style="background:var(--surface-2);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
+                <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;">Resumen del Ciclo</p>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12.5px;color:var(--text-2);">(+) Ingresos Brutos</span>
+                    <span class="mono" id="cierre-ing" style="font-weight:700;color:var(--olive);font-size:13px;">$0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12.5px;color:var(--text-2);">(-) Gastos y Nómina</span>
+                    <span class="mono" id="cierre-eg" style="font-weight:600;color:var(--red);font-size:13px;">$0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12.5px;color:var(--text-2);">(-) Provisión Rete-ICA 6.9‰</span>
+                    <span class="mono" id="cierre-ica" style="font-weight:600;color:var(--amber);font-size:13px;">$0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12.5px;color:var(--text-2);">(ref) Impoconsumo 8%</span>
+                    <span class="mono" id="cierre-impo" style="font-weight:600;color:var(--text-3);font-size:13px;">$0</span>
+                </div>
+                <div style="border-top:1.5px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13.5px;font-weight:700;color:var(--text-1);">(=) Utilidad Neta Estimada</span>
+                    <span class="mono" id="cierre-ut" style="font-weight:800;font-size:16px;">$0</span>
+                </div>
+            </div>
+
+            <!-- Métodos de pago -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+                <div style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:12px;padding:12px;text-align:center;">
+                    <p style="font-size:10px;font-weight:700;color:var(--olive);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="banknote"></i></span> Efectivo</p>
+                    <p class="mono" id="cierre-ef" style="font-size:14px;font-weight:700;color:var(--olive);">$0</p>
+                </div>
+                <div style="background:var(--blue-lt);border:1.5px solid rgba(37,99,168,.25);border-radius:12px;padding:12px;text-align:center;">
+                    <p style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="smartphone"></i></span> Transferencia</p>
+                    <p class="mono" id="cierre-tr" style="font-size:14px;font-weight:700;color:var(--blue);">$0</p>
+                </div>
+                <div style="background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.25);border-radius:12px;padding:12px;text-align:center;">
+                    <p style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="handshake"></i></span> Fiado</p>
+                    <p class="mono" id="cierre-fi" style="font-size:14px;font-weight:700;color:var(--amber);">$0</p>
+                </div>
+            </div>
+
+            <!-- Saldo final -->
+            <div style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;font-weight:700;color:var(--olive);display:flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="wallet"></i></span> Saldo Final en Caja</span>
+                <span class="mono" id="cierre-saldo" style="font-size:17px;font-weight:800;color:var(--olive);">$0</span>
+            </div>
+
+            <!-- Advertencia -->
+            <div style="background:var(--red-lt);border:1.5px solid var(--red-bd);border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start;">
+                <span style="font-size:18px;flex-shrink:0;color:var(--red);"><span class="ic ic-lg"><i data-lucide="triangle-alert"></i></span></span>
+                <p style="font-size:12px;color:var(--red);line-height:1.6;">Esta acción archivará el ciclo contable y <strong>reseteará el dashboard a $0</strong>. Los datos quedan guardados en el Calendario de Cierres. No se puede deshacer.</p>
+            </div>
+
+            <!-- Botones -->
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="cerrarModalCierre()" class="btn-ghost">Cancelar</button>
+                <button id="btn-confirmar-cierre" onclick="realizarCierre()"
+                    style="background:var(--red);color:#fff;border:none;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;display:inline-flex;align-items:center;gap:7px;"
+                    onmouseover="this.style.background='#a93226'"
+                    onmouseout="this.style.background='var(--red)'">
+                    <span class="ic ic-sm"><i data-lucide="lock"></i></span> Confirmar Cierre Z
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ MODAL NÓMINA ════ -->
+    <div id="modal-nomina" style="display:none;" class="modal-overlay"
+        onclick="if(event.target===this)cerrarModalNomina()">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;">
+                <div>
+                    <h2 style="font-size:17px;font-weight:700;color:var(--text-1);" id="modal-emp-nombre">Empleado</h2>
+                    <p style="font-size:12px;color:var(--text-3);margin-top:2px;" id="modal-emp-cargo">Cargo</p>
+                </div>
+                <button onclick="cerrarModalNomina()"
+                    style="background:var(--surface-3);border:none;border-radius:999px;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);">×</button>
+            </div>
+            <p class="section-sep" style="display:flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="arrow-down-to-line"></i></span> Devengados</p>
+            <div id="modal-devengados"></div>
+            <p class="section-sep" style="margin-top:14px;display:flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="arrow-up-from-line"></i></span> Deducciones (cargo empleado)</p>
+            <div id="modal-deducciones"></div>
+            <div
+                style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:14px;padding:16px 18px;margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:14px;font-weight:700;color:var(--olive);display:flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="banknote"></i></span> Neto a Pagar al Empleado</span>
+                <span class="mono" id="modal-neto" style="font-size:20px;font-weight:700;color:var(--olive);">$0</span>
+            </div>
+            <p class="section-sep" style="margin-top:16px;display:flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="building-2"></i></span> Provisiones a cargo del Restaurante (Empleador)</p>
+            <div id="modal-provisiones"></div>
+            <div
+                style="background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.3);border-radius:14px;padding:16px 18px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;font-weight:700;color:var(--amber);display:flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="briefcase"></i></span> Costo Real para el
+                    Restaurante</span>
+                <span class="mono" id="modal-costo-total"
+                    style="font-size:18px;font-weight:700;color:var(--amber);">$0</span>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                <button onclick="cerrarModalNomina()" class="btn-ghost">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ MODAL FACTURA DIAN (para exportarReciboPDF y abrirModalFacturaElectronica) ════ -->
+    <div id="modal-factura-dian" onclick="if(event.target===this)cerrarModalFactura()">
+        <div class="modal-box" style="max-width:480px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+                <div>
+                    <h2 style="font-size:16px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="file-check"></i></span> Factura Electrónica</h2>
+                    <p style="font-size:11.5px;color:var(--text-3);margin-top:2px;">Ref: <span id="fe-orden-no"
+                            class="mono">—</span></p>
+                </div>
+                <button onclick="cerrarModalFactura()"
+                    style="background:var(--surface-3);border:none;border-radius:999px;width:32px;height:32px;font-size:16px;cursor:pointer;color:var(--text-2);">×</button>
+            </div>
+            <div
+                style="background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span style="font-size:12px;color:var(--text-2);">Subtotal (sin IVA)</span>
+                    <span class="mono" style="font-size:12px;font-weight:600;" id="fe-subtotal">—</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span style="font-size:12px;color:var(--text-2);">IVA Consumo (8%)</span>
+                    <span class="mono" style="font-size:12px;font-weight:600;color:var(--olive);" id="fe-iva">—</span>
+                </div>
+                <div
+                    style="display:flex;justify-content:space-between;border-top:1.5px solid var(--border);padding-top:8px;">
+                    <span style="font-size:13px;font-weight:700;">Total</span>
+                    <span class="mono" style="font-size:14px;font-weight:700;color:var(--olive);" id="fe-total">—</span>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <div><label>Nombre o Razón Social</label><input type="text" id="fe-nombre" placeholder="Cliente Final">
+                </div>
+                <div><label>NIT / Cédula</label><input type="text" id="fe-nit" placeholder="000 000 000-0"></div>
+                <div><label>Correo electrónico</label><input type="email" id="fe-email"
+                        placeholder="correo@empresa.com"></div>
+            </div>
+            <div id="fe-resultado"
+                style="display:none;margin-top:14px;background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:14px;padding:14px;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
+                <button onclick="cerrarModalFactura()" class="btn-ghost">Cancelar</button>
+                <button onclick="generarFacturaElectronica()" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="send"></i></span> Generar CUFE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ SCRIPTS — admin.js PRIMERO, luego lógica inline ════ -->
+    <script src="admin.js"></script>
+
+    <script>
+        // ═══ GUARD ROL ADMIN ═══
+        (function () {
+            const rol = sessionStorage.getItem('user_role');
+            if (rol === 'admin') {
+                const nav = document.getElementById('global-nav');
+                if (nav) nav.style.display = 'flex';
+            }
+        })();
+
+        // ═══ GESTIÓN DE TABS ═══
+        const TABS = ['dashboard', 'pedidos', 'menu', 'personal', 'nomina', 'inventario', 'dian', 'permisos', 'produccion', 'calendario'];
+
+        function cambiarTab(dest) {
+            // 1. Ocultar todos los tabs de forma atómica
+            TABS.forEach(t => {
+                const el  = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if (el)  el.style.cssText = 'display:none;';
+                if (btn) { btn.classList.remove('tab-active'); btn.classList.add('tab-inactive'); }
+            });
+
+            // 2. Mostrar el tab destino con bloque de estilos atómico
+            const target    = document.getElementById(`tab-${dest}`);
+            const btnTarget = document.getElementById(`btn-tab-${dest}`);
+
+            if (target) {
+                target.style.cssText = dest === 'nomina'
+                    ? 'display:grid;'
+                    : 'display:flex;flex-direction:column;gap:24px;';
+            }
+            if (btnTarget) { btnTarget.classList.remove('tab-inactive'); btnTarget.classList.add('tab-active'); }
+
+            // 3. Sincronizar Bottom Nav (móvil)
+            document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('bnav-active'));
+            const bnavEl = document.getElementById(`bnav-${dest}`);
+            if (bnavEl) bnavEl.classList.add('bnav-active');
+
+            // 4. Disparar carga de datos — solo cuando el contenedor ya es visible
+            if (dest === 'dashboard')  cargarDashboardReal();
+            if (dest === 'pedidos')    cargarHistorialPedidos();
+            if (dest === 'menu')       cargarSlotsMenuReal();
+            if (dest === 'personal')   renderTablaEmpleados();
+            if (dest === 'nomina')     cargarGastosReal();
+            if (dest === 'inventario') cargarInventarioReal();
+            if (dest === 'permisos')   cargarEstadoSistema();
+            if (dest === 'calendario') cargarCalendarioCierres();
+            if (dest === 'produccion') {
+                cargarRecetas();
+                if (document.querySelectorAll('#tabla-form-ingredientes .ing-row').length === 0)
+                    agregarFilaIngrediente();
+            }
+        }
+
+        // ═══ INICIALIZACIÓN ═══
+        // NOTA: admin.js ya tiene su propio DOMContentLoaded que llama cargarDashboardReal().
+        // Este bloque solo inicializa la visibilidad de tabs usando la misma lógica atómica.
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar visibilidad de tabs
+            TABS.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (!el) return;
+                el.style.cssText = t === 'dashboard'
+                    ? 'display:flex;flex-direction:column;gap:24px;'
+                    : 'display:none;';
+            });
+            // iniciarDashboard() ya es llamado desde admin.js DOMContentLoaded en paralelo.
+            // No se duplica aquí.
+        });
+
+        // ═══ MÓDULO DIAN — historial local del día ═══
+        const FORMATO_COP = v => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+        let facturasDian = [];
+
+        function calcularIVADian() {
+            const valor = parseFloat(document.getElementById('dian-valor').value) || 0;
+            const resumen = document.getElementById('dian-resumen');
+            if (valor <= 0) { resumen.style.display = 'none'; return; }
+            const base = valor / 1.08;
+            const iva = valor - base;
+            document.getElementById('dian-base').textContent = FORMATO_COP(base);
+            document.getElementById('dian-iva').textContent = FORMATO_COP(iva);
+            document.getElementById('dian-total').textContent = FORMATO_COP(valor);
+            resumen.style.display = 'block';
+        }
+
+        function emitirFacturaDian() {
+            const tipoDoc = document.getElementById('dian-tipo-doc').value;
+            const numDoc = document.getElementById('dian-num-doc').value.trim();
+            const nombre = document.getElementById('dian-nombre').value.trim();
+            const email = document.getElementById('dian-email').value.trim();
+            const valor = parseFloat(document.getElementById('dian-valor').value) || 0;
+            if (!numDoc || !nombre || !email || valor <= 0) {
+                Toast.error('Por favor completa todos los campos obligatorios (*).'); return;
+            }
+            const base = valor / 1.08;
+            const iva = valor - base;
+            const ahora = new Date();
+            const hora = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            const folio = `FE-${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, '0')}${String(ahora.getDate()).padStart(2, '0')}-${String(facturasDian.length + 1).padStart(4, '0')}`;
+            facturasDian.push({ folio, nombre, tipoDoc, numDoc, email, base, iva, valor, hora });
+            _renderTablaHistorialDian();
+            const res = document.getElementById('dian-resultado');
+            res.style.display = 'block';
+            res.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="color:var(--olive);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+            <span style="font-size:13px;font-weight:700;color:var(--olive);">Factura registrada</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-2);line-height:1.7;">
+            <strong>Folio:</strong> <span class="mono">${folio}</span><br>
+            <strong>Receptor:</strong> ${nombre} · ${tipoDoc} ${numDoc}<br>
+            <strong>Total:</strong> ${FORMATO_COP(valor)} (IVA: ${FORMATO_COP(iva)})
+        </p>`;
+            ['dian-num-doc', 'dian-nombre', 'dian-email', 'dian-valor'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            document.getElementById('dian-resumen').style.display = 'none';
+        }
+
+        function _renderTablaHistorialDian() {
+            const tbody = document.getElementById('tabla-dian-historial');
+            const badge = document.getElementById('dian-contador-badge');
+            badge.textContent = `${facturasDian.length} factura${facturasDian.length !== 1 ? 's' : ''}`;
+            if (facturasDian.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">Aún no se han emitido facturas hoy.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = facturasDian.slice().reverse().map(f => `
+        <tr class="tbody-row">
+            <td><p style="font-size:13px;font-weight:600;color:var(--text-1);">${f.nombre}</p><p style="font-size:11px;color:var(--text-3);" class="mono">${f.tipoDoc} ${f.numDoc}</p></td>
+            <td><span class="mono" style="font-size:11.5px;color:var(--text-2);">${f.folio}</span></td>
+            <td style="text-align:right;font-weight:700;color:var(--text-1);" class="mono">${FORMATO_COP(f.valor)}</td>
+            <td style="text-align:center;color:var(--text-3);font-size:12px;">${f.hora}</td>
+        </tr>`).join('');
+        }
+
+        // ═══ MÓDULO PERSONAL — Nómina Colombiana 2026 ═══
+        const SMMLV_2026 = 1423500;
+        const AUX_TRANSPORTE_2026 = 200000;
+        const TOPE_AUX_TRANSP = SMMLV_2026 * 2;
+
+        const PCT_SALUD_EMP = 0.04;
+        const PCT_PENSION_EMP = 0.04;
+        const PCT_PRIMA = 0.0833;
+        const PCT_CESANTIAS = 0.0833;
+        const PCT_INT_CESANTIAS = 0.01;
+        const PCT_VACACIONES = 0.0417;
+        const PCT_SALUD_EMPL = 0.085;
+        const PCT_PENSION_EMPL = 0.12;
+        const PCT_ARL = 0.00522;
+        const PCT_SENA = 0.02;
+        const PCT_ICBF = 0.03;
+        const PCT_CCF = 0.04;
+
+        let listaEmpleados = [];
+
+        function calcularNomina(salarioBase, diasTrabajados) {
+            const diasMes = 30;
+            const salarioProporcional = (salarioBase / diasMes) * diasTrabajados;
+            const auxTransporte = salarioBase <= TOPE_AUX_TRANSP ? (AUX_TRANSPORTE_2026 / diasMes) * diasTrabajados : 0;
+            const totalDevengado = salarioProporcional + auxTransporte;
+            const deducSalud = salarioProporcional * PCT_SALUD_EMP;
+            const deducPension = salarioProporcional * PCT_PENSION_EMP;
+            const totalDeducciones = deducSalud + deducPension;
+            const netoPagar = totalDevengado - totalDeducciones;
+            const provPrima = salarioProporcional * PCT_PRIMA;
+            const provCesantias = salarioProporcional * PCT_CESANTIAS;
+            const provIntCesantias = salarioProporcional * PCT_INT_CESANTIAS;
+            const provVacaciones = salarioProporcional * PCT_VACACIONES;
+            const provSaludEmpl = salarioProporcional * PCT_SALUD_EMPL;
+            const provPensionEmpl = salarioProporcional * PCT_PENSION_EMPL;
+            const provARL = salarioProporcional * PCT_ARL;
+            const provSENA = salarioProporcional * PCT_SENA;
+            const provICBF = salarioProporcional * PCT_ICBF;
+            const provCCF = salarioProporcional * PCT_CCF;
+            const totalProvisiones = provPrima + provCesantias + provIntCesantias + provVacaciones
+                + provSaludEmpl + provPensionEmpl + provARL + provSENA + provICBF + provCCF;
+            const costoReal = salarioProporcional + auxTransporte + totalProvisiones;
+            return {
+                salarioProporcional, auxTransporte, totalDevengado, deducSalud, deducPension,
+                totalDeducciones, netoPagar, provPrima, provCesantias, provIntCesantias, provVacaciones,
+                provSaludEmpl, provPensionEmpl, provARL, provSENA, provICBF, provCCF, totalProvisiones, costoReal
+            };
+        }
+
+        function renderTablaEmpleados() {
+            const tbody = document.getElementById('tabla-empleados');
+            const badge = document.getElementById('emp-count-badge');
+            const costoBlock = document.getElementById('emp-costo-total');
+            const costoValor = document.getElementById('emp-costo-total-valor');
+            badge.textContent = `${listaEmpleados.length} empleado${listaEmpleados.length !== 1 ? 's' : ''}`;
+            if (listaEmpleados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-3);font-size:12.5px;">No hay empleados registrados.</td></tr>';
+                costoBlock.style.display = 'none'; return;
+            }
+            let costoTotal = 0;
+            tbody.innerHTML = listaEmpleados.map((emp, idx) => {
+                const n = calcularNomina(emp.salario, emp.dias);
+                costoTotal += n.costoReal;
+                const chipClass = { Mesero: 'chip-mesero', Cocinero: 'chip-cocinero', Cajero: 'chip-cajero', Administrador: 'chip-admin' }[emp.cargo] || 'chip-cajero';
+                return `<tr class="tbody-row">
+            <td><p style="font-size:13px;font-weight:600;color:var(--text-1);">${emp.nombre}</p></td>
+            <td style="text-align:center;"><span class="chip-cargo ${chipClass}">${emp.cargo}</span></td>
+            <td style="text-align:right;" class="mono">${FORMATO_COP(emp.salario)}</td>
+            <td style="text-align:center;font-size:13px;">${emp.dias}/30</td>
+            <td style="text-align:right;font-weight:700;color:var(--olive);" class="mono">${FORMATO_COP(n.netoPagar)}</td>
+            <td style="text-align:center;">
+                <div style="display:flex;justify-content:center;gap:6px;">
+                    <button onclick="abrirModalNomina(${idx})" class="btn-amber" style="padding:5px 12px;font-size:11px;display:inline-flex;align-items:center;gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="8" y1="21" y2="17"/><line x1="16" x2="16" y1="21" y2="17"/><line x1="12" x2="12" y1="17" y2="21"/></svg> Ver Desglose</button>
+                    <button onclick="eliminarEmpleado(${idx})" class="btn-danger" style="display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg></button>
+                </div>
+            </td>
+        </tr>`;
+            }).join('');
+            costoBlock.style.display = 'flex';
+            costoValor.textContent = FORMATO_COP(costoTotal);
+        }
+
+        function abrirModalNomina(idx) {
+            const emp = listaEmpleados[idx];
+            if (!emp) return;
+            const n = calcularNomina(emp.salario, emp.dias);
+            document.getElementById('modal-emp-nombre').textContent = emp.nombre;
+            document.getElementById('modal-emp-cargo').textContent = `${emp.cargo} · ${emp.dias} días trabajados de 30`;
+            document.getElementById('modal-devengados').innerHTML = `
+        <div class="nomina-row"><span class="nomina-label">Salario proporcional (${emp.dias}/30 días)</span><span class="nomina-value">${FORMATO_COP(n.salarioProporcional)}</span></div>
+        ${n.auxTransporte > 0
+                    ? `<div class="nomina-row"><span class="nomina-label">Auxilio de Transporte (proporcional)</span><span class="nomina-value">${FORMATO_COP(n.auxTransporte)}</span></div>`
+                    : `<div class="nomina-row"><span class="nomina-label" style="color:var(--text-3);">Auxilio de Transporte</span><span style="font-size:11px;color:var(--text-3);">No aplica (salario &gt; 2 SMMLV)</span></div>`}
+        <div class="nomina-row" style="border-top:1.5px solid var(--border);margin-top:4px;padding-top:10px;"><span style="font-weight:700;color:var(--text-1);">Total Devengado</span><span class="nomina-value" style="font-size:14px;">${FORMATO_COP(n.totalDevengado)}</span></div>`;
+            document.getElementById('modal-deducciones').innerHTML = `
+        <div class="nomina-row"><span class="nomina-label">Salud (4%)</span><span class="nomina-value deduccion">- ${FORMATO_COP(n.deducSalud)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">Pensión (4%)</span><span class="nomina-value deduccion">- ${FORMATO_COP(n.deducPension)}</span></div>
+        <div class="nomina-row" style="border-top:1.5px solid var(--border);margin-top:4px;padding-top:10px;"><span style="font-weight:700;">Total Deducciones</span><span class="nomina-value deduccion" style="font-size:14px;">- ${FORMATO_COP(n.totalDeducciones)}</span></div>`;
+            document.getElementById('modal-neto').textContent = FORMATO_COP(n.netoPagar);
+            document.getElementById('modal-provisiones').innerHTML = `
+        <div class="nomina-row"><span class="nomina-label">Prima (8.33%)</span><span class="nomina-value provision">${FORMATO_COP(n.provPrima)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">Cesantías (8.33%)</span><span class="nomina-value provision">${FORMATO_COP(n.provCesantias)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">Int. Cesantías (1%)</span><span class="nomina-value provision">${FORMATO_COP(n.provIntCesantias)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">Vacaciones (4.17%)</span><span class="nomina-value provision">${FORMATO_COP(n.provVacaciones)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">Salud empleador (8.5%)</span><span class="nomina-value provision">${FORMATO_COP(n.provSaludEmpl)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">Pensión empleador (12%)</span><span class="nomina-value provision">${FORMATO_COP(n.provPensionEmpl)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">ARL (0.522%)</span><span class="nomina-value provision">${FORMATO_COP(n.provARL)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">SENA (2%)</span><span class="nomina-value provision">${FORMATO_COP(n.provSENA)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">ICBF (3%)</span><span class="nomina-value provision">${FORMATO_COP(n.provICBF)}</span></div>
+        <div class="nomina-row"><span class="nomina-label">CCF (4%)</span><span class="nomina-value provision">${FORMATO_COP(n.provCCF)}</span></div>
+        <div class="nomina-row" style="border-top:1.5px solid var(--border);margin-top:4px;padding-top:10px;"><span style="font-weight:700;">Total Provisiones</span><span class="nomina-value provision" style="font-size:14px;">${FORMATO_COP(n.totalProvisiones)}</span></div>`;
+            document.getElementById('modal-costo-total').textContent = FORMATO_COP(n.costoReal);
+            document.getElementById('modal-nomina').style.display = 'flex';
+        }
+
+        function cerrarModalNomina() {
+            document.getElementById('modal-nomina').style.display = 'none';
+        }
+
+        function eliminarEmpleado(idx) {
+            if (!confirm(`¿Eliminar a "${listaEmpleados[idx].nombre}" del registro?`)) return;
+            listaEmpleados.splice(idx, 1);
+            renderTablaEmpleados();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const formEmp = document.getElementById('form-empleado');
+            if (formEmp) {
+                formEmp.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const nombre = document.getElementById('emp-nombre').value.trim();
+                    const cargo = document.getElementById('emp-cargo').value;
+                    const salario = parseFloat(document.getElementById('emp-salario').value) || 0;
+                    const dias = parseInt(document.getElementById('emp-dias').value) || 30;
+                    if (!nombre || salario <= 0) { Toast.error('Completa el nombre y el salario.'); return; }
+                    listaEmpleados.push({ nombre, cargo, salario, dias });
+                    formEmp.reset();
+                    document.getElementById('emp-dias').value = '30';
+                    renderTablaEmpleados();
+                    cambiarTab('personal');
+                });
+            }
+        });
+    </script>
+
+
+    <!-- ════ MODAL EDITAR COMANDA ADMIN ════ -->
+<div id="modal-editar-comanda-admin"
+     class="modal-overlay"
+     style="display:none;"
+     onclick="if(event.target===this)cerrarModalEditarComanda()">
+
+    <div class="modal-box" style="max-width:580px;padding:0;overflow:hidden;">
+
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:20px 24px;border-bottom:1.5px solid var(--border);
+                    background:var(--surface-2);">
+            <div>
+                <h2 style="font-size:16px;font-weight:700;color:var(--text-1);line-height:1.2;display:flex;align-items:center;gap:7px;">
+                    <span style="color:var(--olive);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
+                    Editar Comanda
+                </h2>
+                <p style="font-size:11.5px;color:var(--text-3);margin-top:2px;">
+                    Modifica ítems, cantidades o agrega productos al pedido.
+                </p>
+            </div>
+            <button onclick="cerrarModalEditarComanda()"
+                style="background:var(--surface-3);border:none;border-radius:999px;
+                       width:32px;height:32px;font-size:16px;cursor:pointer;
+                       color:var(--text-2);display:flex;align-items:center;
+                       justify-content:center;flex-shrink:0;transition:background .2s;"
+                onmouseover="this.style.background='var(--border)'"
+                onmouseout="this.style.background='var(--surface-3)'">×</button>
+        </div>
+
+        <!-- Body dinámico — _renderEditorAdmin() escribe aquí -->
+        <div id="eca-body"
+             style="padding:20px 24px;max-height:60vh;overflow-y:auto;">
+            <div style="text-align:center;padding:40px 0;color:var(--text-3);">
+                <div style="width:32px;height:32px;border:2.5px solid var(--olive-bd);
+                            border-top-color:var(--olive);border-radius:50%;
+                            animation:spin 0.8s linear infinite;
+                            margin:0 auto 12px;"></div>
+                <p style="font-size:13px;">Cargando comanda…</p>
+            </div>
+        </div>
+
+        <!-- Footer con acciones -->
+        <div id="eca-footer"
+             style="display:flex;justify-content:flex-end;gap:10px;
+                    padding:16px 24px;border-top:1.5px solid var(--border);
+                    background:var(--surface-2);">
+            <button onclick="cerrarModalEditarComanda()" class="btn-ghost">
+                Cancelar
+            </button>
+            <button id="eca-btn-guardar"
+                    onclick="guardarEdicionAdmin()"
+                    class="btn-olive"
+                    style="min-width:140px;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+                <span class="ic ic-sm"><i data-lucide="save"></i></span> Guardar cambios
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Animación spinner (si no existe ya en la página) -->
+<style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+</style>
+
+<script>
+    // Inicializar Lucide Icons al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.lucide) lucide.createIcons();
+    });
+    // Re-renderizar iconos tras cada cambio de tab (por si el DOM cambia)
+    const _origCambiarTab = window.cambiarTab;
+    if (typeof _origCambiarTab === 'function') {
+        window.cambiarTab = function(dest) {
+            _origCambiarTab(dest);
+            if (window.lucide) lucide.createIcons();
+        };
+    }
+</script>
+
+</body>
+</html>
