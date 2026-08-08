@@ -394,7 +394,19 @@ async function cargarDashboardReal() {
                                         style="background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-2);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;"
                                         onmouseover="this.style.background='var(--surface-3)'"
                                         onmouseout="this.style.background='var(--surface-2)'">
-                                        📄 PDF
+                                        Factura
+                                    </button>
+                                    <button onclick="imprimirReciboCocina('${ord.id}')"
+                                        style="background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.28);color:var(--amber);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;"
+                                        onmouseover="this.style.background='rgba(154,108,26,.16)'"
+                                        onmouseout="this.style.background='var(--amber-lt)'">
+                                        Recibo Cocina
+                                    </button>
+                                    <button onclick="imprimirReciboBar('${ord.id}')"
+                                        style="background:var(--purple-lt);border:1.5px solid rgba(102,68,192,.28);color:var(--purple);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;"
+                                        onmouseover="this.style.background='rgba(102,68,192,.16)'"
+                                        onmouseout="this.style.background='var(--purple-lt)'">
+                                        Recibo Bar
                                     </button>
                                     <button onclick="abrirModalFacturaElectronica('${ord.id}', '${ord.order_number}', ${ord.total_amount})"
                                         style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);color:var(--olive);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;"
@@ -715,30 +727,45 @@ function _imprimirReciboTermico(ord, mesaLabel) {
     html, body {
         margin: 0; padding: 0; width: 80mm;
         font-family: 'Courier New', Consolas, monospace;
-        font-size: 12px; line-height: 1.35; color: #000;
+        font-size: 14px; line-height: 1.4; color: #000;
         -webkit-print-color-adjust: exact;
     }
     .ticket { padding: 4mm 4mm 10mm 4mm; }
     .center { text-align: center; }
-    h1   { font-size: 15px; margin: 0 0 2px; letter-spacing: .5px; }
-    .sub { font-size: 10px; margin: 0 0 2px; }
-    hr   { border: none; border-top: 1px dashed #000; margin: 6px 0; }
-    .meta { font-size: 11.5px; margin: 2px 0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 2px; }
-    th    { text-align: left; font-size: 10.5px; border-bottom: 1px solid #000; padding-bottom: 3px; }
-    td    { padding: 3px 0; vertical-align: top; font-size: 11.5px; }
-    .cant { width: 9mm; font-weight: bold; }
+    h1   { font-size: 18px; margin: 0 0 2px; letter-spacing: .5px; }
+    .sub { font-size: 12px; margin: 0 0 2px; }
+    hr   { border: none; border-top: 1px dashed #000; margin: 7px 0; }
+    .meta { font-size: 13.5px; margin: 3px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 3px; }
+    th    { text-align: left; font-size: 12.5px; border-bottom: 1px solid #000; padding-bottom: 4px; }
+    td    { padding: 4px 0; vertical-align: top; font-size: 13.5px; }
+    .cant { width: 10mm; font-weight: bold; }
     .sub  { text-align: right; white-space: nowrap; }
     .fila-total {
         display: flex; justify-content: space-between;
-        font-size: 12.5px; margin-top: 4px;
+        font-size: 14.5px; margin-top: 5px;
     }
     .fila-total.destacado {
-        font-weight: bold; font-size: 14.5px; margin-top: 6px;
-        border-top: 1px solid #000; padding-top: 5px;
+        font-weight: bold; font-size: 17px; margin-top: 7px;
+        border-top: 1px solid #000; padding-top: 6px;
     }
-    .nota-propina { font-size: 9.5px; color: #444; margin-top: 2px; font-style: italic; }
-    .footer { margin-top: 10px; font-size: 10px; text-align: center; font-style: italic; }
+    .nota-propina { font-size: 11px; color: #444; margin-top: 3px; font-style: italic; }
+    .footer { margin-top: 11px; font-size: 12px; text-align: center; font-style: italic; }
+
+    /* [Ajuste 80mm] Letra más grande específicamente al imprimir,
+       para que el ticket térmico salga legible en el papel físico. */
+    @media print {
+        html, body { font-size: 16px; }
+        h1   { font-size: 20px; }
+        .sub { font-size: 13px; }
+        .meta { font-size: 15px; }
+        th   { font-size: 13.5px; }
+        td   { font-size: 15px; }
+        .fila-total { font-size: 16px; }
+        .fila-total.destacado { font-size: 18.5px; }
+        .nota-propina { font-size: 12px; }
+        .footer { font-size: 13px; }
+    }
 </style>
 </head>
 <body>
@@ -792,6 +819,411 @@ function _imprimirReciboTermico(ord, mesaLabel) {
 
     // Respaldo por si el navegador no soporta onafterprint
     setTimeout(() => { if (!ventana.closed) ventana.close(); }, 3000);
+}
+
+// ============================================================
+// [NUEVO] RECIBOS POR ÁREA — "Recibo Cocina" y "Recibo Bar"
+// ------------------------------------------------------------
+// Cada ítem del pedido pertenece a un menu_items.item_type
+// ('drink' = bebida; 'protein' / 'side' / 'soup' / 'a_la_carte' /
+// 'executive_lunch' = comida — ver MAPA_TIPO más arriba, que ya
+// usa este mismo campo). Esa es la "categoría" real del ítem:
+//   - Recibo Cocina → todo lo que NO sea 'drink'.
+//   - Recibo Bar    → únicamente lo que SÍ sea 'drink'.
+// Los "adicionales" agregados a mano (sin menu_item_id, ver
+// _ecaAgregarAdicional) no tienen item_type en la BD; se
+// clasifican por defecto como Cocina, salvo que su nombre
+// coincida con palabras típicas de bebida (fallback razonable
+// para porciones/adicionales de barra escritos a mano).
+//
+// Ambos tickets son térmicos (80mm), SIN precios ni propina,
+// letra grande para leer de lejos. Antes de imprimir, cada uno
+// filtra sus propios ítems pendientes: solo salen los que NO se
+// han enviado aún a ESA área (o cuya cantidad aumentó desde el
+// último envío), para no duplicar lo que ya se está preparando.
+//
+// El control de "qué ya se envió" se guarda en localStorage,
+// indexado por el ID del ítem (order_items.id) — NO por el ID de
+// la orden. Esto es clave para que funcione bien tras UNIR MESAS:
+// al fusionar, los ítems conservan su ID aunque cambien de
+// order_id, así que el rastro de "ya impreso" viaja con ellos.
+// Como cada ítem pertenece a una sola área, el mismo mapa se
+// puede compartir entre Cocina y Bar sin que se pisen entre sí.
+// ============================================================
+const _LS_AREA_ENVIADOS = 'mateus_area_enviados_v1';
+
+const _PALABRAS_BEBIDA = [
+    'jugo', 'gaseosa', 'limonada', 'cerveza', 'agua', 'bebida',
+    'refresco', 'malteada', 'coctel', 'cóctel', 'soda', 'te', 'té',
+    'cafe', 'café', 'avena', 'batido', 'granizado', 'michelada',
+];
+
+function _leerMapaAreaEnviados() {
+    try {
+        return JSON.parse(localStorage.getItem(_LS_AREA_ENVIADOS) || '{}');
+    } catch (_) {
+        return {};
+    }
+}
+
+function _guardarMapaAreaEnviados(mapa) {
+    try {
+        localStorage.setItem(_LS_AREA_ENVIADOS, JSON.stringify(mapa));
+    } catch (_) { /* localStorage no disponible — se reimprimirá todo, no es crítico */ }
+}
+
+// Mismo criterio de nombre que ya usan _itemsReciboTermico / el
+// ranking de platos: [nombre], [adicional] o product_name.
+function _nombreItemOrderItem(item) {
+    let nombre = 'Plato Especial';
+    if (item.notes && item.notes.includes('[nombre]'))
+        nombre = item.notes.split('[nombre]')[1].split('|')[0].trim();
+    else if (item.notes && item.notes.includes('[adicional]'))
+        nombre = '+ ' + item.notes.split('[adicional]')[1].trim();
+    else if (item.product_name)
+        nombre = item.product_name;
+    return nombre;
+}
+
+// Determina el área ('bar' | 'cocina') de un order_item a partir
+// de menu_items.item_type (traído vía join). Si el ítem no tiene
+// menu_item_id (adicional escrito a mano), se usa el nombre como
+// respaldo para detectar bebidas típicas.
+function _areaOrderItem(item) {
+    const tipo = item.menu_items?.item_type;
+    if (tipo) return tipo === 'drink' ? 'bar' : 'cocina';
+    const nombre = _nombreItemOrderItem(item).toLowerCase();
+    const esBebida = _PALABRAS_BEBIDA.some(palabra => nombre.includes(palabra));
+    return esBebida ? 'bar' : 'cocina';
+}
+
+// Calcula, para una orden y un área concreta ('cocina' | 'bar'),
+// qué ítems de esa área tienen unidades pendientes por enviar
+// (cantidad actual − cantidad ya enviada a ESA área). Los ítems
+// con 0 unidades pendientes o de otra área se excluyen.
+function _itemsPendientesPorArea(ord, area) {
+    const mapa = _leerMapaAreaEnviados();
+    return (ord.order_items || [])
+        .filter(it => _areaOrderItem(it) === area)
+        .map(it => {
+            const cantidadActual  = it.quantity || 1;
+            const cantidadEnviada = mapa[it.id] || 0;
+            const pendiente       = cantidadActual - cantidadEnviada;
+            return { id: it.id, nombre: _nombreItemOrderItem(it), cantidadActual, pendiente };
+        })
+        .filter(it => it.pendiente > 0);
+}
+
+// Marca como "enviadas" las unidades actuales SOLO de los ítems
+// que efectivamente se imprimieron en este ticket (no de toda la
+// orden), para no afectar el pendiente de la otra área.
+function _marcarItemsEnviados(items) {
+    const mapa = _leerMapaAreaEnviados();
+    items.forEach(it => { mapa[it.id] = it.cantidadActual; });
+    _guardarMapaAreaEnviados(mapa);
+}
+
+// Consulta común: trae la orden con sus ítems + item_type de cada
+// menu_item (para poder clasificar cocina vs. bar).
+async function _cargarOrdenParaImpresionArea(orderId) {
+    const { data: ord, error } = await supabaseClient
+        .from('orders')
+        .select(`id, order_number, notes, table_id, created_at,
+                 order_items ( id, quantity, notes, unit_price, product_name, menu_item_id, menu_items ( item_type ) )`)
+        .eq('id', orderId)
+        .single();
+    if (error || !ord) throw error || new Error('Orden no encontrada');
+    return ord;
+}
+
+async function imprimirReciboCocina(orderId) {
+    try {
+        const ord = await _cargarOrdenParaImpresionArea(orderId);
+
+        const itemsNuevos = _itemsPendientesPorArea(ord, 'cocina');
+        if (itemsNuevos.length === 0) {
+            Toast.info('No hay platos de cocina nuevos: ya se enviaron todos.');
+            return;
+        }
+
+        const tableMap  = await _buildTableMap();
+        const mesaLabel = _resolverMesaLabel(ord, tableMap);
+
+        _imprimirTicketAreaTermica(ord, mesaLabel, itemsNuevos, 'COCINA', 'comanda_cocina');
+
+        // Se marca como enviado DESPUÉS de generar el ticket, para que
+        // si el navegador bloquea la ventana emergente, el ítem siga
+        // apareciendo como pendiente en el próximo intento.
+        _marcarItemsEnviados(itemsNuevos);
+
+    } catch (err) {
+        console.error('Error generando el recibo de cocina:', err);
+        Toast.error('Error al generar el recibo de cocina.');
+    }
+}
+
+async function imprimirReciboBar(orderId) {
+    try {
+        const ord = await _cargarOrdenParaImpresionArea(orderId);
+
+        const itemsNuevos = _itemsPendientesPorArea(ord, 'bar');
+        if (itemsNuevos.length === 0) {
+            Toast.info('No hay bebidas nuevas: ya se enviaron todas al bar.');
+            return;
+        }
+
+        const tableMap  = await _buildTableMap();
+        const mesaLabel = _resolverMesaLabel(ord, tableMap);
+
+        _imprimirTicketAreaTermica(ord, mesaLabel, itemsNuevos, 'BAR', 'comanda_bar');
+
+        _marcarItemsEnviados(itemsNuevos);
+
+    } catch (err) {
+        console.error('Error generando el recibo de bar:', err);
+        Toast.error('Error al generar el recibo de bar.');
+    }
+}
+
+// ────────────────────────────────────────────────────────────
+// Ventana de impresión térmica (80mm) para un ÁREA (Cocina o
+// Bar): sin precios, sin propina, letra grande, solo cantidad +
+// producto. `tituloArea` decide el encabezado ('COCINA' / 'BAR')
+// y `nombreVentana` evita que ambos tickets se pisen si se abren
+// casi al mismo tiempo.
+// ────────────────────────────────────────────────────────────
+function _imprimirTicketAreaTermica(ord, mesaLabel, items, tituloArea, nombreVentana) {
+    const ventana = window.open('', nombreVentana, 'width=380,height=640');
+    if (!ventana) {
+        Toast.error('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.');
+        return;
+    }
+
+    const filasProductos = items.map(it => `
+        <tr>
+            <td class="cant">${it.pendiente}x</td>
+            <td class="nombre">${_escTicket(it.nombre)}</td>
+        </tr>
+    `).join('');
+
+    ventana.document.open();
+    ventana.document.write(`
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Comanda ${_escTicket(tituloArea)} ${_escTicket(ord.order_number)}</title>
+<style>
+    @page { size: 80mm auto; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0; padding: 0; width: 80mm;
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 16px; line-height: 1.4; color: #000;
+        -webkit-print-color-adjust: exact;
+    }
+    .ticket { padding: 4mm 4mm 10mm 4mm; }
+    .center { text-align: center; }
+    h1    { font-size: 20px; margin: 0 0 3px; letter-spacing: .5px; font-weight: 800; }
+    .sub  { font-size: 12px; margin: 0 0 2px; }
+    hr    { border: none; border-top: 2px dashed #000; margin: 8px 0; }
+    .meta { font-size: 14.5px; margin: 3px 0; font-weight: 700; }
+    .mesa-grande {
+        font-size: 27px; font-weight: 900; text-align: center;
+        margin: 8px 0; letter-spacing: .5px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    th    { text-align: left; font-size: 13px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+    td    { padding: 7px 0; vertical-align: top; font-size: 18px; font-weight: 700; }
+    .cant { width: 15mm; font-weight: 900; }
+    .footer { margin-top: 12px; font-size: 12px; text-align: center; font-style: italic; }
+
+    /* [Ajuste 80mm] Letra aún más grande al imprimir, para lectura
+       rápida en cocina/bar desde una distancia media. */
+    @media print {
+        html, body { font-size: 17px; }
+        h1   { font-size: 22px; }
+        .mesa-grande { font-size: 28px; }
+        .meta { font-size: 15.5px; }
+        td   { font-size: 19px; }
+        .footer { font-size: 13px; }
+    }
+</style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="center">
+            <h1>COMANDA · ${_escTicket(tituloArea)}</h1>
+            <p class="sub">Restaurante Mateus</p>
+        </div>
+        <hr>
+        <p class="meta">Ref: ${_escTicket(ord.order_number)}</p>
+        <div class="mesa-grande">${_escTicket(mesaLabel)}</div>
+        <p class="meta">Hora: ${_escTicket(new Date(ord.created_at).toLocaleTimeString('es-CO'))}</p>
+        <hr>
+        <table>
+            <thead>
+                <tr><th>Cant</th><th>Producto</th></tr>
+            </thead>
+            <tbody>
+                ${filasProductos || '<tr><td colspan="2" style="text-align:center;color:#666;">Sin ítems nuevos</td></tr>'}
+            </tbody>
+        </table>
+        <hr>
+        <div class="footer">Solo ítems nuevos / no enviados antes</div>
+    </div>
+</body>
+</html>`);
+    ventana.document.close();
+
+    ventana.onload = () => {
+        ventana.focus();
+        ventana.print();
+    };
+    ventana.onafterprint = () => ventana.close();
+    setTimeout(() => { if (!ventana.closed) ventana.close(); }, 3000);
+}
+
+// ============================================================
+// [NUEVO] UNIÓN DE MESAS
+// ------------------------------------------------------------
+// Fusiona la cuenta y los pedidos de una "mesa origen" dentro de
+// una "mesa destino": todos los order_items de la orden origen
+// cambian su order_id hacia la orden destino (conservan su propio
+// id — por eso el tracking de cocina de arriba sigue funcionando
+// después de unir), se suman los totales, y la orden origen se
+// elimina. Al final queda UNA sola mesa activa con todo el pedido.
+// ============================================================
+async function _obtenerOrdenesMesaActivas() {
+    const _ahora     = new Date();
+    const _offsetMs  = 5 * 60 * 60 * 1000;
+    const _hoyLocal  = new Date(_ahora.getTime() - _offsetMs);
+    const _yyyy      = _hoyLocal.getUTCFullYear();
+    const _mm        = String(_hoyLocal.getUTCMonth() + 1).padStart(2, '0');
+    const _dd        = String(_hoyLocal.getUTCDate()).padStart(2, '0');
+    const _inicioDia = `${_yyyy}-${_mm}-${_dd}T00:00:00-05:00`;
+    const _finDia    = `${_yyyy}-${_mm}-${_dd}T23:59:59-05:00`;
+    const _inicioDiaEfectivo = _resolverInicioDiaEfectivo(_inicioDia);
+
+    const [{ data: ordersRaw, error }, tableMap] = await Promise.all([
+        supabaseClient
+            .from('orders')
+            .select('id, order_number, notes, total_amount, status, table_id, payment_method')
+            .gte('created_at', _inicioDiaEfectivo)
+            .lte('created_at', _finDia)
+            .not('table_id', 'is', null),
+        _buildTableMap()
+    ]);
+    if (error) throw error;
+
+    // Solo mesas activas: no canceladas y sin pago ya registrado
+    // (una mesa ya pagada no tiene sentido fusionarla con otra).
+    return (ordersRaw || [])
+        .filter(o => o.status !== 'canceled' && o.status !== 'cancelled' && !o.payment_method)
+        .map(o => ({ ...o, mesaLabel: _resolverMesaLabel(o, tableMap) }));
+}
+
+async function abrirModalUnirMesas() {
+    let ordenes;
+    try {
+        ordenes = await _obtenerOrdenesMesaActivas();
+    } catch (err) {
+        console.error('[Mateus] Error cargando mesas activas:', err);
+        Toast.error('No se pudieron cargar las mesas activas.');
+        return;
+    }
+
+    if (!ordenes || ordenes.length < 2) {
+        Toast.info('Se necesitan al menos dos mesas activas para poder unirlas.');
+        return;
+    }
+
+    const opciones = ordenes.map(o =>
+        `<option value="${o.id}">${_escTicket(o.mesaLabel)} — ${_escTicket(o.order_number)} (${formatCOP(o.total_amount)})</option>`
+    ).join('');
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+    overlay.innerHTML = `
+        <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+            <h3 style="font-size:14px;font-weight:700;color:var(--text-1);margin:0;">Unir mesas</h3>
+            <p style="font-size:11.5px;color:var(--text-3);margin:0;line-height:1.5;">
+                La mesa de origen se cierra y sus pedidos pasan a la mesa de destino, que queda como la única cuenta activa.
+            </p>
+            <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px;">Mesa de origen (se cierra)</label>
+                <select id="um-origen" style="border-radius:999px;font-size:13px;width:100%;">
+                    <option value="">— Selecciona —</option>${opciones}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px;">Mesa de destino (queda activa)</label>
+                <select id="um-destino" style="border-radius:999px;font-size:13px;width:100%;">
+                    <option value="">— Selecciona —</option>${opciones}
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+                <button id="um-cancelar" class="btn-ghost">Cancelar</button>
+                <button id="um-confirmar" class="btn-olive">Unir mesas</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#um-cancelar').addEventListener('click', () => overlay.remove());
+
+    overlay.querySelector('#um-confirmar').addEventListener('click', async () => {
+        const origenId  = overlay.querySelector('#um-origen').value;
+        const destinoId = overlay.querySelector('#um-destino').value;
+
+        if (!origenId || !destinoId) { Toast.error('Selecciona ambas mesas.'); return; }
+        if (origenId === destinoId)  { Toast.error('La mesa de origen y destino no pueden ser la misma.'); return; }
+
+        const origenOrd  = ordenes.find(o => o.id === origenId);
+        const destinoOrd = ordenes.find(o => o.id === destinoId);
+
+        if (!confirm(`¿Unir "${origenOrd.mesaLabel}" dentro de "${destinoOrd.mesaLabel}"?\n\nLa mesa "${origenOrd.mesaLabel}" quedará cerrada y sus pedidos pasarán a "${destinoOrd.mesaLabel}".`)) return;
+
+        overlay.remove();
+        await _ejecutarUnionMesas(origenOrd, destinoOrd);
+    });
+}
+
+async function _ejecutarUnionMesas(origenOrd, destinoOrd) {
+    try {
+        // 1. Mover todos los ítems de la orden origen hacia la orden
+        //    destino. Conservan su ID → el tracking de cocina no se pierde.
+        const { error: errMove } = await supabaseClient
+            .from('order_items')
+            .update({ order_id: destinoOrd.id })
+            .eq('order_id', origenOrd.id);
+        if (errMove) throw errMove;
+
+        // 2. Sumar los totales y dejar constancia de la fusión en las notas.
+        const nuevoTotal  = (parseFloat(destinoOrd.total_amount) || 0) + (parseFloat(origenOrd.total_amount) || 0);
+        const notasFusion = `${destinoOrd.notes || ''}|[FUSION] +${origenOrd.mesaLabel} (${origenOrd.order_number})`.trim();
+
+        const { error: errUpdate } = await supabaseClient
+            .from('orders')
+            .update({ total_amount: nuevoTotal, notes: notasFusion, updated_at: new Date().toISOString() })
+            .eq('id', destinoOrd.id);
+        if (errUpdate) throw errUpdate;
+
+        // 3. La orden origen ya quedó sin ítems propios: se elimina.
+        const { error: errDelete } = await supabaseClient
+            .from('orders')
+            .delete()
+            .eq('id', origenOrd.id);
+        if (errDelete) console.warn('[Mateus] No se pudo eliminar la orden de origen tras fusionar:', errDelete.message);
+
+        Toast.ok(`"${origenOrd.mesaLabel}" se unió a "${destinoOrd.mesaLabel}" correctamente.`);
+
+        await cargarDashboardReal();
+        if (typeof cargarHistorialPedidos === 'function') await cargarHistorialPedidos();
+
+    } catch (err) {
+        console.error('[Mateus] Error uniendo mesas:', err);
+        Toast.error('No se pudo completar la unión de mesas. Revisa la consola.');
+    }
 }
 
 // ============================================================
@@ -3497,7 +3929,15 @@ async function cargarHistorialPedidos() {
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                         <button onclick="exportarReciboPDF('${ord.id}')"
                             style="flex:1;min-width:60px;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-2);border-radius:8px;padding:5px 8px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
-                            📄 PDF
+                            Factura
+                        </button>
+                        <button onclick="imprimirReciboCocina('${ord.id}')"
+                            style="flex:1;min-width:60px;background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.28);color:var(--amber);border-radius:8px;padding:5px 8px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                            Recibo Cocina
+                        </button>
+                        <button onclick="imprimirReciboBar('${ord.id}')"
+                            style="flex:1;min-width:60px;background:var(--purple-lt);border:1.5px solid rgba(102,68,192,.28);color:var(--purple);border-radius:8px;padding:5px 8px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                            Recibo Bar
                         </button>
                         <button onclick="abrirModalFacturaElectronica('${ord.id}', '${ord.order_number}', ${ord.total_amount})"
                             style="flex:1;min-width:60px;background:var(--olive-lt);border:1.5px solid var(--olive-bd);color:var(--olive);border-radius:8px;padding:5px 8px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
