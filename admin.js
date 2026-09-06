@@ -1,3 +1,26 @@
+// Control de suscripción - Cambiar a true cuando realicen el pago
+const suscripcionActiva = false;
+
+if (!suscripcionActiva) {
+    document.addEventListener("DOMContentLoaded", () => {
+        const bloqueoOverlay = document.createElement("div");
+        bloqueoOverlay.innerHTML = `
+            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); z-index: 999999; display: flex; justify-content: center; align-items: center; font-family: system-ui, -apple-system, sans-serif; padding: 20px; box-sizing: border-box;">
+                <div style="background: #ffffff; padding: 35px; border-radius: 12px; text-align: center; max-width: 420px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                    <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                    <h2 style="color: #e53935; margin: 0 0 15px 0; font-size: 22px;">Mensualidad Vencida</h2>
+                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5; margin: 0 0 20px 0;">
+                        El periodo de servicio de este mes ha finalizado. El acceso al sistema de administración y toma de pedidos se encuentra temporalmente suspendido hasta registrar el pago.
+                    </p>
+                    <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; color: #1f2937; font-size: 14px; font-weight: 500;">
+                        Comuníquese con el soporte técnico para reactivar el servicio.
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(bloqueoOverlay);
+    });
+}
 // ============================================================
 // RESTAURANTE MATEUS — PANEL DE ADMINISTRACIÓN
 // admin.js · Versión 3.7
