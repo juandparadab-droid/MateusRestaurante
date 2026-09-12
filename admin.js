@@ -509,6 +509,7 @@ async function eliminarComandaReal(idComanda, nroOrden) {
 // ============================================================
 // REGISTRAR MÉTODO DE PAGO EN UNA ORDEN
 // ============================================================
+
 async function registrarMetodoPago(orderId, metodo) {
     if (!metodo) return;
     try {
@@ -524,11 +525,6 @@ async function registrarMetodoPago(orderId, metodo) {
         const notesBase  = (ordData.notes || '').replace(/\|\[pago\][^|]*/g, '').trimEnd();
         const notesNuevo = `${notesBase}|[pago]${metodo}`;
 
-        // [v3.4 · CAMBIO-3] NO se cambia el status a 'paid'. El pago se
-        // registra SOLO en payment_method (+ nota [pago]). Así el pedido
-        // sigue visible en la pantalla de cocina hasta que se despache.
-        // "Pagado" (payment_method) y "despachado" (status=delivered)
-        // quedan desacoplados.
         const { error } = await supabaseClient
             .from('orders')
             .update({ notes: notesNuevo, payment_method: metodo })
@@ -550,12 +546,17 @@ async function registrarMetodoPago(orderId, metodo) {
         totalEfectivo      = parseFloat(sessionStorage.getItem('pm_efectivo')      || '0');
         totalTransferencia = parseFloat(sessionStorage.getItem('pm_transferencia') || '0');
         totalFiado         = parseFloat(sessionStorage.getItem('pm_fiado')         || '0');
+        totalDatafono      = parseFloat(sessionStorage.getItem('pm_datafono')      || '0');
         renderizarTotales();
 
-        const label = { efectivo: 'Efectivo 💵', transferencia: 'Transferencia 📲', fiado: 'Fiado 🤝' };
+        const label = { 
+            efectivo: 'Efectivo 💵', 
+            transferencia: 'Transferencia 📲', 
+            fiado: 'Fiado 🤝',
+            datafono: 'Datáfono 💳' 
+        };
         Toast.ok(`Pago registrado: ${label[metodo] || metodo}`);
 
-        // Recargar historial de pedidos si el tab está abierto
         const tabPedidos = document.getElementById('tab-pedidos');
         if (tabPedidos && tabPedidos.style.display !== 'none') {
             cargarHistorialPedidos();
@@ -574,7 +575,7 @@ async function registrarMetodoPago(orderId, metodo) {
 }
 
 function _extraerMetodoDeNotes(notes) {
-    const match = (notes || '').match(/\|\[pago\](efectivo|transferencia|fiado)/);
+    const match = (notes || '').match(/\|\[pago\](efectivo|transferencia|fiado|datafono)/);
     return match ? match[1] : null;
 }
 
@@ -592,6 +593,7 @@ function _badgeMetodo(metodo) {
         efectivo:      { bg: 'var(--olive-lt)',  color: 'var(--olive)', bd: 'var(--olive-bd)',     label: '💵 Efectivo'      },
         transferencia: { bg: 'var(--blue-lt)',   color: 'var(--blue)',  bd: 'rgba(37,99,168,.28)', label: '📲 Transferencia' },
         fiado:         { bg: 'var(--amber-lt)',  color: 'var(--amber)', bd: 'rgba(154,108,26,.28)',label: '🤝 Fiado'         },
+        datafono:      { bg: 'var(--purple-lt, rgba(147,51,234,.1))', color: 'var(--purple, #9333ea)', bd: 'rgba(147,51,234,.28)', label: '💳 Datáfono' },
     };
     const c = cfg[metodo] || cfg.efectivo;
     return `<span style="font-size:10px;font-weight:600;padding:3px 11px;border-radius:999px;
