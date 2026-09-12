@@ -1075,7 +1075,7 @@
                 </div>
 
                 <!-- KPIs fila 2 -->
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" class="kpi-grid">
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;" class="kpi-grid">
                     <div class="kpi-card" style="border-color:var(--olive-bd);">
                         <div>
                             <p
@@ -1106,6 +1106,16 @@
                         </div>
                         <div class="kpi-icon" style="background:var(--amber-lt);color:var(--amber);"><span class="ic ic-lg"><i data-lucide="clock"></i></span></div>
                     </div>
+                    <div class="kpi-card" style="border-color:rgba(102,68,192,.22);">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:5px;">
+                                <span class="ic ic-sm" style="color:var(--purple);"><i data-lucide="credit-card"></i></span> Datáfono</p>
+                            <h3 id="kpi-datafono" class="mono"
+                                style="font-size:20px;font-weight:700;color:var(--purple);margin-top:4px;">$0</h3>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--purple-lt);color:var(--purple);"><span class="ic ic-lg"><i data-lucide="credit-card"></i></span></div>
+                    </div>
                     <div class="kpi-card" style="border-color:var(--olive-bd);">
                         <div>
                             <p
@@ -1117,18 +1127,6 @@
                         </div>
                         <div class="kpi-icon" style="background:var(--olive-lt);color:var(--olive);"><span class="ic ic-lg"><i data-lucide="wallet"></i></span></div>
                     </div>
-<!-- KPI: Datáfono -->
-<div class="kpi-card" style="border-color:rgba(102,68,192,.22);">
-    <div>
-        <p style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:5px;">
-            <span class="ic ic-sm" style="color:var(--purple);"><i data-lucide="credit-card"></i></span> Datáfono
-        </p>
-        <h3 id="kpi-datafono" class="mono" style="font-size:20px;font-weight:700;color:var(--purple);margin-top:4px;">$0</h3>
-    </div>
-    <div class="kpi-icon" style="background:var(--purple-lt);color:var(--purple);"><span class="ic ic-lg"><i data-lucide="credit-card"></i></span></div>
-</div>
-
-                    
                 </div>
                
 
@@ -1815,12 +1813,13 @@
                                     <th style="text-align:right;">Utilidad Neta</th>
                                     <th style="text-align:right;">Efectivo</th>
                                     <th style="text-align:right;">Transferencia</th>
+                                    <th style="text-align:right;">Datáfono</th>
                                     <th style="text-align:right;">Fiado</th>
                                     <th style="text-align:center;width:50px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-calendario-cierres">
-                                <tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text-3);">Cargando historial…</td></tr>
+                                <tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-3);">Cargando historial…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1907,7 +1906,7 @@
             </div>
 
             <!-- Métodos de pago -->
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;" class="tables-grid">
                 <div style="background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:12px;padding:12px;text-align:center;">
                     <p style="font-size:10px;font-weight:700;color:var(--olive);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="banknote"></i></span> Efectivo</p>
                     <p class="mono" id="cierre-ef" style="font-size:14px;font-weight:700;color:var(--olive);">$0</p>
@@ -1915,6 +1914,10 @@
                 <div style="background:var(--blue-lt);border:1.5px solid rgba(37,99,168,.25);border-radius:12px;padding:12px;text-align:center;">
                     <p style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="smartphone"></i></span> Transferencia</p>
                     <p class="mono" id="cierre-tr" style="font-size:14px;font-weight:700;color:var(--blue);">$0</p>
+                </div>
+                <div style="background:var(--purple-lt);border:1.5px solid rgba(102,68,192,.25);border-radius:12px;padding:12px;text-align:center;">
+                    <p style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="credit-card"></i></span> Datáfono</p>
+                    <p class="mono" id="cierre-df" style="font-size:14px;font-weight:700;color:var(--purple);">$0</p>
                 </div>
                 <div style="background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.25);border-radius:12px;padding:12px;text-align:center;">
                     <p style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="ic ic-sm"><i data-lucide="handshake"></i></span> Fiado</p>
