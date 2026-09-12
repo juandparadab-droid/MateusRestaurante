@@ -102,6 +102,7 @@ let globalEgresos  = 0;
 let totalEfectivo      = 0;
 let totalTransferencia = 0;
 let totalFiado         = 0;
+let totalDatafono      = 0;
 let baseInicial        = 0;
 
 // ============================================================
@@ -303,19 +304,22 @@ async function cargarDashboardReal() {
         // vivía DENTRO del bloque de la tabla y, al quitarla, los KPIs habrían
         // quedado en cero.
         {
-            let _ef = 0, _tr = 0, _fi = 0;
+            let _ef = 0, _tr = 0, _fi = 0, _df = 0;
             ordenesValidas.forEach(ord => {
                 const metodo = ord.payment_method || _extraerMetodoDeNotes(ord.notes || '');
                 const monto  = parseFloat(ord.total_amount) || 0;
                 if (metodo === 'efectivo')           _ef += monto;
                 else if (metodo === 'transferencia') _tr += monto;
+                else if (metodo === 'datafono')      _df += monto;
                 else if (metodo === 'fiado')         _fi += monto;
             });
             sessionStorage.setItem('pm_efectivo',      String(_ef));
             sessionStorage.setItem('pm_transferencia', String(_tr));
+            sessionStorage.setItem('pm_datafono', String(_df));
             sessionStorage.setItem('pm_fiado',         String(_fi));
             totalEfectivo      = _ef;
             totalTransferencia = _tr;
+            totalDatafono = _df;
             totalFiado         = _fi;
             renderizarTotales();
         }
@@ -331,19 +335,22 @@ async function cargarDashboardReal() {
                         </td>
                     </tr>`;
             } else {
-                let _ef = 0, _tr = 0, _fi = 0;
+                let _ef = 0, _tr = 0, _fi = 0, _df = 0;
                 ordenesValidas.forEach(ord => {
                     const metodo = ord.payment_method || _extraerMetodoDeNotes(ord.notes || '');
                     const monto  = parseFloat(ord.total_amount) || 0;
                     if (metodo === 'efectivo')      _ef += monto;
                     if (metodo === 'transferencia') _tr += monto;
+                    if (método === 'datafono') _df +=monto;
                     if (metodo === 'fiado')         _fi += monto;
                 });
                 sessionStorage.setItem('pm_efectivo',      String(_ef));
                 sessionStorage.setItem('pm_transferencia', String(_tr));
+                sessionStorage.setItem('pm_datafono', String(_df));
                 sessionStorage.setItem('pm_fiado',         String(_fi));
                 totalEfectivo      = _ef;
                 totalTransferencia = _tr;
+                totalDatafono = _df;
                 totalFiado         = _fi;
                 renderizarTotales();
 
@@ -1236,15 +1243,17 @@ function renderizarTotales() {
     const elEf = document.getElementById('kpi-efectivo');
     const elTr = document.getElementById('kpi-transferencia');
     const elFi = document.getElementById('kpi-fiado');
+    const elDf = document.getElementById('kpi-datafono');
     const elSd = document.getElementById('kpi-saldo-caja');
     const elGv = document.getElementById('gros-ventas');
 
     if (elEf) elEf.textContent = formatCOP(totalEfectivo);
     if (elTr) elTr.textContent = formatCOP(totalTransferencia);
     if (elFi) elFi.textContent = formatCOP(totalFiado);
+    if (elDf) elDf.textContent = formatCOP(totalDatafono);
     if (elGv) elGv.textContent = formatCOP(globalIngresos);
 
-    const saldoCaja = baseInicial + totalEfectivo + totalTransferencia;
+    const saldoCaja = baseInicial + totalEfectivo + total Transferencia + totalDatafono;
     if (elSd) elSd.textContent = formatCOP(saldoCaja);
 
     const baseICA      = Math.max(0, globalIngresos - globalEgresos);
@@ -2240,6 +2249,7 @@ async function ejecutarCierreCaja() {
     setEl('cierre-ef',    totalEfectivo);
     setEl('cierre-tr',    totalTransferencia);
     setEl('cierre-fi',    totalFiado);
+    setEl('cierre-df', totalDatafono);
     setEl('cierre-saldo', saldoCaja);
 
     const elUt = document.getElementById('cierre-ut');
@@ -2285,6 +2295,7 @@ async function realizarCierre() {
         impoconsumo:   Math.round(ivaConsumo),
         efectivo:      Math.round(totalEfectivo),
         transferencia: Math.round(totalTransferencia),
+        datafono:      Math.round(totalDatafono),
         fiado:         Math.round(totalFiado),
         base_caja:     Math.round(baseInicial),
         created_at:    new Date().toISOString(),
@@ -2311,8 +2322,8 @@ async function realizarCierre() {
     localStorage.setItem('cierre_desde', ahoraCierre);
     sessionStorage.removeItem('cierre_desde');
 
-    ['pm_efectivo','pm_transferencia','pm_fiado','base_caja_hoy'].forEach(k => sessionStorage.removeItem(k));
-    totalEfectivo = 0; totalTransferencia = 0; totalFiado = 0; baseInicial = 0;
+    ['pm_efectivo','pm_transferencia','pm_fiado','pm_datafono','base_caja_hoy'].forEach(k => sessionStorage.removeItem(k));
+    totalEfectivo = 0; totalTransferencia = 0; totalFiado = 0; totalDatafono = 0; baseInicial = 0;
     globalIngresos = 0; globalEgresos = 0;
     // Actualizar DOM inmediatamente sin esperar la query
     const _elPed = document.getElementById('total-pedidos');
@@ -2474,7 +2485,7 @@ async function cargarCalendarioCierres() {
     const statsEl = document.getElementById('estadisticas-mensuales');
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-3);">Cargando historial…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-3);">Cargando historial…</td></tr>`;
 
     // Paso 1: re-sincronizar cierres locales pendientes hacia Supabase.
     let localesPendientes = [];
@@ -2540,8 +2551,9 @@ async function cargarCalendarioCierres() {
         ut:  a.ut  + (c.utilidad_neta || 0),
         ef:  a.ef  + (c.efectivo || 0),
         tr:  a.tr  + (c.transferencia || 0),
+        df: a.df + (c.datafono || 0),
         fi:  a.fi  + (c.fiado || 0),
-    }), { ing: 0, eg: 0, ut: 0, ef: 0, tr: 0, fi: 0 });
+    }), { ing: 0, eg: 0, ut: 0, ef: 0, tr: 0, df: 0, fi: 0 });
 
     // Paso 6: resumen — selector de mes + tarjetas del mes seleccionado.
     if (resumen) {
@@ -2594,8 +2606,8 @@ async function cargarCalendarioCierres() {
     // Paso 8: tabla de ciclos contables del mes.
     if (cierres.length === 0) {
         tbody.innerHTML = errorSupabase
-            ? `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--red);">Error al cargar cierres: ${errorSupabase.message || errorSupabase}</td></tr>`
-            : `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text-3);">Sin cierres registrados en ${labelMes}.</td></tr>`;
+            ? `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--red);">Error al cargar cierres: ${errorSupabase.message || errorSupabase}</td></tr>`
+            : `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-3);">Sin cierres registrados en ${labelMes}.</td></tr>`;
     } else {
         const fragment = document.createDocumentFragment();
         cierres.forEach(c => {
@@ -2611,6 +2623,7 @@ async function cargarCalendarioCierres() {
                 <td class="mono" style="text-align:right;${utClass};font-weight:700;">${formatCOP(c.utilidad_neta || 0)}</td>
                 <td class="mono" style="text-align:right;font-size:11.5px;">${formatCOP(c.efectivo || 0)}</td>
                 <td class="mono" style="text-align:right;font-size:11.5px;">${formatCOP(c.transferencia || 0)}</td>
+                <td class="mono" style="text-align:right;font-size:11.5px;color:var(--purple, #9333ea);">${formatCOP(c.datafono || 0)}</td>
                 <td class="mono" style="text-align:right;font-size:11.5px;color:var(--amber);">${formatCOP(c.fiado || 0)}</td>
                 <td style="text-align:center;">
                     ${c.local ? '' : `<button onclick="eliminarCierre('${c.id}', '${fechaTxt}')" title="Eliminar registro"
@@ -2690,8 +2703,8 @@ function _htmlEstadisticasMes(cierres, tot, labelMes) {
             </div>
         </div>`;
 
-    // — Distribución de métodos de pago —
-    const sumPagos = tot.ef + tot.tr + tot.fi;
+    // — Distribución de métodos de pago - 
+    const sumPagos = tot.ef + tot.tr + tot.df + tot.fi;
     const pct = v => sumPagos > 0 ? Math.round(v / sumPagos * 100) : 0;
     const filaPago = (icono, nombre, valor, color) => `
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
@@ -2742,6 +2755,7 @@ function _htmlEstadisticasMes(cierres, tot, labelMes) {
                 </p>
                 ${filaPago('banknote',   'Efectivo',      tot.ef, 'var(--olive)')}
                 ${filaPago('smartphone', 'Transferencia', tot.tr, 'var(--blue)')}
+                ${filaPago('credit-card', 'Datáfono', tot.df, 'var(--purple, #9333ea)')}
                 ${filaPago('handshake',  'Fiado',         tot.fi, 'var(--amber)')}
             </div>
         </div>
@@ -3880,9 +3894,10 @@ async function cargarHistorialPedidos() {
                 metodoCelda = `
                     <select onchange="registrarMetodoPago('${ord.id}', this.value)"
                         style="font-size:11px;padding:4px 10px;border-radius:8px;height:32px;width:100%;cursor:pointer;background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.28);color:var(--amber);font-family:'DM Sans',sans-serif;">
-                        <option value="">💳 Registrar pago…</option>
+                        <option value=""> Registrar pago…</option>
                         <option value="efectivo">💵 Efectivo</option>
                         <option value="transferencia">📲 Transferencia</option>
+                        <option value="datafono">💳 Datáfono</option>
                         <option value="fiado">🤝 Fiado</option>
                     </select>`;
             }
@@ -3975,8 +3990,8 @@ async function cargarHistorialPedidos() {
 // CAMBIAR MÉTODO DE PAGO EN PEDIDO YA PAGADO
 // ============================================================
 async function cambiarMetodoPago(orderId) {
-    const metodos = ['efectivo', 'transferencia', 'fiado'];
-    const labels  = { efectivo: '💵 Efectivo', transferencia: '📲 Transferencia', fiado: '🤝 Fiado' };
+    const metodos = ['efectivo', 'transferencia', 'datafono', 'fiado'];
+    const labels  = { efectivo: '💵 Efectivo', transferencia: '📲 Transferencia', datafono: '💳 Datáfono', fiado: '🤝 Fiado' };
 
     // Mini-modal inline — confirmar nuevo método
     const elegido = await new Promise(resolve => {
@@ -4093,6 +4108,7 @@ async function revertirPagoOrden(orderId) {
             totalEfectivo      = parseFloat(sessionStorage.getItem('pm_efectivo')      || '0');
             totalTransferencia = parseFloat(sessionStorage.getItem('pm_transferencia') || '0');
             totalFiado         = parseFloat(sessionStorage.getItem('pm_fiado')         || '0');
+            totalDatafono = parseFloat(sessionStorage.getItem('pm_datafono') || '0');
             renderizarTotales();
         }
 
