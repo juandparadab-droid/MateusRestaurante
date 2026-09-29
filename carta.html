@@ -450,26 +450,90 @@
   @keyframes enterLine  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   @keyframes enterCard  { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
 
-  .logo-img            { animation: enterPop  .7s cubic-bezier(.2,.9,.3,1.2) .05s backwards; }
-  header h1            { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .20s backwards; }
-  .header-sub          { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .32s backwards; }
-  .header-city         { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .42s backwards; }
-  #status-bar          { animation: enterFade .6s ease .55s backwards; }
-  #filters.animar .pill { animation: enterUp   .5s cubic-bezier(.2,.8,.2,1) calc(.6s + var(--p, 0) * .05s) backwards; }
+  body.listo .logo-img            { animation: enterPop  .7s cubic-bezier(.2,.9,.3,1.2) .05s backwards; }
+  body.listo header h1            { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .20s backwards; }
+  body.listo .header-sub          { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .32s backwards; }
+  body.listo .header-city         { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .42s backwards; }
+  body.listo #status-bar          { animation: enterFade .6s ease .55s backwards; }
+  body.listo #filters.animar .pill { animation: enterUp   .5s cubic-bezier(.2,.8,.2,1) calc(.6s + var(--p, 0) * .05s) backwards; }
 
-  main.animar .category-header { animation: enterSlide .55s cubic-bezier(.2,.8,.2,1) calc(.55s + var(--c, 0) * .12s) backwards; }
+  body.listo main.animar .category-header { animation: enterSlide .55s cubic-bezier(.2,.8,.2,1) calc(.55s + var(--c, 0) * .12s) backwards; }
   main.animar .category-section { position: relative; }
-  main.animar .card            { animation: enterCard  .6s cubic-bezier(.2,.8,.2,1) calc(.7s + var(--i, 0) * .06s) backwards; }
-  main.animar .ornament        { animation: enterFade  .6s ease .9s backwards; }
+  body.listo main.animar .card            { animation: enterCard  .6s cubic-bezier(.2,.8,.2,1) calc(.7s + var(--i, 0) * .06s) backwards; }
+  body.listo main.animar .ornament        { animation: enterFade  .6s ease .9s backwards; }
 
   /* Cambio de categoría: sin el retraso inicial de la página */
-  main.animar.cambio .category-header { animation-delay: calc(var(--c, 0) * .08s); }
-  main.animar.cambio .card            { animation-delay: calc(var(--i, 0) * .05s); }
-  main.animar.cambio .ornament        { animation-delay: .2s; }
+  body.listo main.animar.cambio .category-header { animation-delay: calc(var(--c, 0) * .08s); }
+  body.listo main.animar.cambio .card            { animation-delay: calc(var(--i, 0) * .05s); }
+  body.listo main.animar.cambio .ornament        { animation-delay: .2s; }
 
   @media (prefers-reduced-motion: reduce) {
     .logo-img, header h1, .header-sub, .header-city, #status-bar, #filters.animar .pill,
     main.animar .category-header, main.animar .card, main.animar .ornament { animation: none !important; }
+  }
+
+  /* ── PANTALLA DE ENTRADA (5 s) ── */
+  body.splash-on { overflow: hidden; }
+  #splash {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 24px; text-align: center;
+    background: radial-gradient(ellipse at 50% 42%, #FFFDF9 0%, var(--bg) 62%, #E9DFCB 100%);
+    animation: splashOut .7s ease 4.3s forwards;
+  }
+  @keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+  @keyframes splashLogo {
+    0%   { opacity: 0; transform: scale(.55) rotate(-8deg); }
+    55%  { opacity: 1; transform: scale(1.06) rotate(1deg); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes splashRise { from { opacity: 0; transform: translateY(16px); letter-spacing: .3em; } to { opacity: 1; transform: none; } }
+  @keyframes splashRing { from { transform: scale(.7); opacity: .55; } to { transform: scale(1.9); opacity: 0; } }
+  @keyframes splashBar  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes splashOrn  { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: none; } }
+
+  .splash-logo-wrap { position: relative; width: 112px; height: 112px; margin-bottom: 18px; }
+  .splash-logo-wrap::before, .splash-logo-wrap::after {
+    content: ''; position: absolute; inset: 0; border-radius: 26px; border: 1.5px solid var(--gold);
+    animation: splashRing 2.2s ease-out infinite .6s backwards;
+  }
+  .splash-logo-wrap::after { animation-delay: 1.5s; }
+  .splash-logo {
+    position: relative; width: 100%; height: 100%; object-fit: contain; display: block;
+    background: #D6C8AE; border-radius: 26px; border: 1.5px solid var(--border-2);
+    box-shadow: 0 10px 40px rgba(48,30,18,.22);
+    animation: splashLogo 1.1s cubic-bezier(.2,.9,.3,1.1) .15s backwards;
+  }
+  .splash-name {
+    font-family: var(--serif); font-weight: 300; color: var(--text); line-height: 1.1;
+    font-size: clamp(2rem, 8vw, 3rem); letter-spacing: .06em;
+    animation: splashRise 1s cubic-bezier(.2,.8,.2,1) .9s backwards;
+  }
+  .splash-name span { color: var(--text-muted); font-style: italic; }
+  .splash-sub {
+    font-family: var(--sans); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--text-muted);
+    margin-top: 6px; animation: splashRise 1s cubic-bezier(.2,.8,.2,1) 1.25s backwards;
+  }
+  .splash-city {
+    font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--text-dim);
+    animation: splashRise 1s cubic-bezier(.2,.8,.2,1) 1.5s backwards;
+  }
+  .splash-orn {
+    display: flex; align-items: center; gap: 10px; margin: 18px 0 0;
+    animation: splashOrn .9s ease 1.8s backwards; transform-origin: center;
+  }
+  .splash-orn i { display: block; width: 46px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+  .splash-orn i:last-child { background: linear-gradient(90deg, var(--gold), transparent); }
+  .splash-orn b { width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); display: block; }
+  .splash-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(48,30,18,.08); overflow: hidden; }
+  .splash-bar::after {
+    content: ''; display: block; height: 100%; background: var(--gold); transform-origin: left;
+    animation: splashBar 4.4s cubic-bezier(.4,.1,.3,1) forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #splash { animation-duration: .4s; animation-delay: 1.6s; }
+    #splash *, #splash *::before, #splash *::after { animation: none !important; }
+    .splash-bar::after { transform: none; }
   }
 
   /* ── FOOTER ── */
@@ -552,7 +616,31 @@
   #aviso-carta[hidden] { display: none; }
 </style>
 </head>
-<body>
+<body class="splash-on">
+
+<!-- PANTALLA DE ENTRADA -->
+<div id="splash" aria-hidden="true">
+  <div class="splash-logo-wrap">
+    <img class="splash-logo" src="logo.jpg" alt="" onerror="this.parentNode.style.display='none'">
+  </div>
+  <h1 class="splash-name">Restaurante <span>Mateus</span></h1>
+  <p class="splash-sub">Carta del día</p>
+  <p class="splash-city">Bucaramanga, Colombia</p>
+  <div class="splash-orn"><i></i><b></b><i></i></div>
+  <div class="splash-bar"></div>
+</div>
+<script>
+  // La entrada dura 5 s: la página empieza a animarse mientras el telón se disuelve.
+  (function () {
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var t0 = reduce ? 1600 : 4400, t1 = reduce ? 2100 : 5000;
+    setTimeout(function () { document.body.classList.add('listo'); }, t0);
+    setTimeout(function () {
+      document.body.classList.remove('splash-on');
+      var sp = document.getElementById('splash'); if (sp) sp.remove();
+    }, t1);
+  })();
+</script>
 
 <!-- HEADER -->
 <header>
