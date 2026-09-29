@@ -245,7 +245,6 @@
   /* ── CATEGORY SECTION ── */
   .category-section {
     margin-bottom: 52px;
-    animation: fadeUp .4s ease both;
   }
 
   @keyframes fadeUp {
@@ -316,7 +315,6 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    animation: fadeUp .35s ease both;
   }
 
   .card::before {
@@ -443,6 +441,36 @@
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── ANIMACIÓN DE ENTRADA ── */
+  @keyframes enterUp    { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes enterPop   { from { opacity: 0; transform: scale(.6) rotate(-6deg); } to { opacity: 1; transform: none; } }
+  @keyframes enterFade  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes enterSlide { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+  @keyframes enterLine  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes enterCard  { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
+
+  .logo-img            { animation: enterPop  .7s cubic-bezier(.2,.9,.3,1.2) .05s backwards; }
+  header h1            { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .20s backwards; }
+  .header-sub          { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .32s backwards; }
+  .header-city         { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .42s backwards; }
+  #status-bar          { animation: enterFade .6s ease .55s backwards; }
+  #filters.animar .pill { animation: enterUp   .5s cubic-bezier(.2,.8,.2,1) calc(.6s + var(--p, 0) * .05s) backwards; }
+
+  main.animar .category-header { animation: enterSlide .55s cubic-bezier(.2,.8,.2,1) calc(.55s + var(--c, 0) * .12s) backwards; }
+  main.animar .category-section { position: relative; }
+  main.animar .card            { animation: enterCard  .6s cubic-bezier(.2,.8,.2,1) calc(.7s + var(--i, 0) * .06s) backwards; }
+  main.animar .ornament        { animation: enterFade  .6s ease .9s backwards; }
+
+  /* Cambio de categoría: sin el retraso inicial de la página */
+  main.animar.cambio .category-header { animation-delay: calc(var(--c, 0) * .08s); }
+  main.animar.cambio .card            { animation-delay: calc(var(--i, 0) * .05s); }
+  main.animar.cambio .ornament        { animation-delay: .2s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo-img, header h1, .header-sub, .header-city, #status-bar, #filters.animar .pill,
+    main.animar .category-header, main.animar .card, main.animar .ornament { animation: none !important; }
+  }
 
   /* ── FOOTER ── */
   footer {
@@ -733,12 +761,12 @@ function groupItems(items) {
 
 /* ── RENDER FILTERS ── */
 function renderFilters(cats) {
-  const allBtn = `<button class="pill ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">
+  const allBtn = `<button class="pill ${activeFilter === 'all' ? 'active' : ''}" data-filter="all" style="--p:0">
     <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-2px;"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></span> Todo
   </button>`;
 
-  const pills = cats.map(c => `
-    <button class="pill ${String(activeFilter) === String(c.ord) ? 'active' : ''}" data-filter="${c.ord}">
+  const pills = cats.map((c, n) => `
+    <button class="pill ${String(activeFilter) === String(c.ord) ? 'active' : ''}" data-filter="${c.ord}" style="--p:${n + 1}">
       <span class="ico">${c.ico}</span> ${c.lbl}
     </button>
   `).join('');
@@ -749,7 +777,7 @@ function renderFilters(cats) {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.filter;
       renderFilters(cats);
-      renderCarta();
+      renderCarta(true, true);
     });
   });
 }
@@ -764,7 +792,7 @@ function cardHTML(item, idx) {
   const imgUrl = isAlaCarte && item.image_url ? item.image_url : null;
 
   return `
-    <article class="card" style="animation-delay:${idx * 0.04}s">
+    <article class="card" style="--i:${Math.min(idx, 16)}">
       ${imgUrl ? `<img class="card-img" src="${imgUrl}" alt="${name}" loading="lazy">` : ''}
       <h3 class="card-name">${name}</h3>
       ${desc ? `<p class="card-desc">${desc}</p>` : ''}
@@ -777,7 +805,9 @@ function cardHTML(item, idx) {
 }
 
 /* ── RENDER CARTA ── */
-function renderCarta() {
+let animTimer;
+let cartaAnimada = false;
+function renderCarta(animar = false, cambio = false) {
   const filtered = activeFilter === 'all'
     ? allItems
     : allItems.filter(i => String(CATS[i.item_type]?.ord) === String(activeFilter));
@@ -789,24 +819,33 @@ function renderCarta() {
 
   const groups = groupItems(filtered);
   let html = '';
+  let cardIdx = 0;
 
   groups.forEach((group, gi) => {
     const { meta, items } = group;
     html += `
       <section class="category-section" id="cat-${meta.ord}">
-        <div class="category-header">
+        <div class="category-header" style="--c:${gi}">
           <span class="cat-ico">${meta.ico}</span>
           <h2 class="cat-title">${meta.lbl}</h2>
           <span class="cat-count">${items.length} ${items.length === 1 ? 'plato' : 'platos'}</span>
         </div>
         <div class="items-grid">
-          ${items.map((item, i) => cardHTML(item, i)).join('')}
+          ${items.map(item => cardHTML(item, cardIdx++)).join('')}
         </div>
       </section>
       ${gi < groups.length - 1 ? '<div class="ornament">· · ·</div>' : ''}
     `;
   });
 
+  clearTimeout(animTimer);
+  mainEl.classList.remove('animar', 'cambio');
+  if (animar) {
+    void mainEl.offsetWidth;
+    mainEl.classList.add('animar');
+    if (cambio) mainEl.classList.add('cambio');
+    animTimer = setTimeout(() => mainEl.classList.remove('animar', 'cambio'), 3000);
+  }
   mainEl.innerHTML = html;
 }
 
@@ -847,8 +886,13 @@ async function fetchItems() {
       });
 
     const cats = getUniqCategories(allItems);
+    if (!cartaAnimada) {
+      filtersEl.classList.add('animar');
+      setTimeout(() => filtersEl.classList.remove('animar'), 1800);
+    }
     renderFilters(cats);
-    renderCarta();
+    renderCarta(!cartaAnimada);
+    cartaAnimada = true;
 
     setStatus('', `${allItems.length} platos disponibles · en vivo`);
   } catch (err) {
