@@ -618,7 +618,7 @@
             }
 
             /* ── Bottom Navigation (solo móvil) ── */
-            #btn-menu-movil, #drawer-overlay {
+            #btn-menu-movil, #drawer-overlay, #fecha-corta {
                 display: none;
             }
 
@@ -669,16 +669,29 @@
 
                 header h1 {
                     font-size: 13px !important;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
+
+                header > div { min-width: 0; gap: 8px !important; }
+                header > div:first-child { flex: 1 1 auto; }
+                header > div:last-child { flex: 0 0 auto; }
+                #fecha-actual { font-size: 11px !important; white-space: nowrap; }
+
+                /* Cierre de caja: solo icono (el texto completo está en el menú) */
+                #btn-cierre-caja {
+                    width: 36px; height: 36px;
+                    padding: 0 !important;
+                    display: inline-flex; align-items: center; justify-content: center;
+                    flex-shrink: 0;
+                }
+                #btn-cierre-caja .cierre-txt { display: none; }
+                #btn-cierre-caja .cierre-ic { margin: 0 !important; }
+                #btn-cierre-caja .cierre-ic svg { width: 16px; height: 16px; }
 
                 header p {
                     display: none !important;
-                }
-
-                #btn-cierre-caja {
-                    padding: 6px 12px !important;
-                    font-size: 11px !important;
-                    white-space: nowrap;
                 }
 
                 .layout-wrapper {
@@ -782,6 +795,11 @@
                     border-radius: 16px !important;
                     max-height: 85vh !important;
                 }
+            }
+
+            @media (max-width: 540px) {
+                #fecha-actual { display: none !important; }
+                #fecha-corta { display: inline; font-size: 11px; color: var(--text-3); white-space: nowrap; }
             }
 
             @media (max-width: 400px) {
@@ -1077,7 +1095,7 @@
                 style="background:var(--olive-soft);border-radius:11px;width:40px;height:40px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);">
                 <img src="logo.jpg" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
             </div>
-            <div>
+            <div style="min-width:0;">
                 <h1 style="font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text-1);line-height:1.2;">
                     Restaurante Mateus</h1>
                 <p style="font-size:10.5px;color:var(--text-3);">Panel Administrativo · Bucaramanga, Santander</p>
@@ -1085,11 +1103,12 @@
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
             <span id="fecha-actual" class="mono" style="font-size:12px;color:var(--text-3);">—</span>
+            <span id="fecha-corta" class="mono"></span>
             <button id="btn-cierre-caja" onclick="ejecutarCierreCaja()"
                 style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;"
                 onmouseover="this.style.background='rgba(192,57,43,.16)'"
                 onmouseout="this.style.background='var(--red-lt)'">
-                <span class="ic ic-sm" style="margin-right:4px;"><i data-lucide="lock"></i></span> Cierre de Caja (Z)
+                <span class="ic ic-sm cierre-ic" style="margin-right:4px;"><i data-lucide="lock"></i></span><span class="cierre-txt"> Cierre de Caja (Z)</span>
             </button>
         </div>
     </header>
@@ -2316,6 +2335,12 @@
         window.addEventListener('resize', ajustarSidebar);
         window.addEventListener('load', ajustarSidebar);
         document.addEventListener('DOMContentLoaded', ajustarSidebar);
+
+        // ═══ FECHA CORTA para el header en teléfono ═══
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('fecha-corta');
+            if (el) el.textContent = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).replace(/\./g, '').replace(' de ', ' ');
+        });
 
         // ═══ MENÚ DESLIZABLE (móvil/tablet) — reutiliza #sidebar-admin ═══
         function toggleDrawer() { document.body.classList.toggle('drawer-abierto'); }
