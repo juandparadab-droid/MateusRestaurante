@@ -4,27 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurante Mateus — Sistema Interno</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png?v=2">
+    <link rel="shortcut icon" href="favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="logo.png?v=2">
+    <meta name="theme-color" content="#301E12">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Bitter:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         /* ══════════════════════════════════════════
            VARIABLES Y RESET
         ══════════════════════════════════════════ */
         :root {
-            --oliva:       #4a5a28;
-            --oliva-lt:    #5c7032;
-            --oliva-pale:  #eef1e6;
-            --oliva-bd:    #c8d4a8;
-            --crema:       #faf9f6;
-            --ink:         #1a1a17;
-            --ink-mid:     #3d3d38;
-            --ink-muted:   #7a7a72;
-            --ink-ghost:   #b8b8b0;
+            --oliva:       #301E12;
+            --oliva-lt:    #4a3220;
+            --oliva-pale:  #EDE3D2;
+            --oliva-bd:    #D3C4A8;
+            --crema:       #F3ECDD;
+            --ink:         #241608;
+            --ink-mid:     #5B4630;
+            --ink-muted:   #8a7761;
+            --ink-ghost:   #b7a88f;
             --red-warm:    #c0392b;
             --red-pale:    #fdf2f2;
             --red-bd:      #f5c6c6;
@@ -54,7 +57,7 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
-        .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
+        .font-display { font-family: 'Bitter', Georgia, serif; }
 
         /* ── Animaciones ── */
         @keyframes fadeUp {
@@ -81,9 +84,9 @@
             80%      { transform: translateX(5px); }
         }
         @keyframes newOrderPulse {
-            0%   { box-shadow: 0 0 0 0 rgba(74,90,40,0.5); }
-            70%  { box-shadow: 0 0 0 14px rgba(74,90,40,0); }
-            100% { box-shadow: 0 0 0 0 rgba(74,90,40,0); }
+            0%   { box-shadow: 0 0 0 0 rgba(48,30,18,0.5); }
+            70%  { box-shadow: 0 0 0 14px rgba(48,30,18,0); }
+            100% { box-shadow: 0 0 0 0 rgba(48,30,18,0); }
         }
         @keyframes cardEntry {
             from { opacity: 0; transform: translateY(16px) scale(0.98); }
@@ -104,91 +107,155 @@
         .bg-deco::before {
             content:''; position:absolute; top:-220px; left:-220px;
             width:640px; height:640px;
-            background:radial-gradient(circle,rgba(74,90,40,0.055) 0%,transparent 70%);
+            background:radial-gradient(circle,rgba(48,30,18,0.055) 0%,transparent 70%);
             border-radius:50%;
         }
         .bg-deco::after {
             content:''; position:absolute; bottom:-180px; right:-180px;
             width:520px; height:520px;
-            background:radial-gradient(circle,rgba(74,90,40,0.04) 0%,transparent 70%);
+            background:radial-gradient(circle,rgba(48,30,18,0.04) 0%,transparent 70%);
             border-radius:50%;
         }
 
         /* ══════════════════════════════════════════
-           PANTALLA DE LOGIN
+           PANTALLA DE LOGIN — panel de marca (café del logo) + formulario
         ══════════════════════════════════════════ */
-        #screen-login {
-            min-height: 100svh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 24px 16px;
-            position: relative; z-index: 1;
+        #screen-login { min-height: 100svh; display: flex; position: relative; z-index: 1; }
+
+        .lg-brand {
+            flex: 1 1 46%; position: relative; overflow: hidden;
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, #40291a 0%, #301E12 65%, #24160c 100%);
+            display: flex; align-items: center; justify-content: center; padding: 48px 32px;
+        }
+        .lg-brand::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background-image: repeating-linear-gradient(135deg, rgba(236,225,203,.035) 0 1px, transparent 1px 15px);
+        }
+        .lg-brand-inner { position: relative; z-index: 1; text-align: center; }
+        .lg-m {
+            height: clamp(150px, 30vh, 250px); width: auto; display: block; margin: 0 auto;
+            animation: lgLogo 1.3s cubic-bezier(.2,.7,.2,1) .1s both;
+        }
+        @keyframes lgLogo {
+            from { clip-path: inset(100% 0 0 0); opacity: 0; transform: translateY(14px); }
+            40%  { opacity: 1; }
+            to   { clip-path: inset(0 0 0 0); opacity: 1; transform: none; }
+        }
+        .lg-rule { width: 64px; height: 1px; background: #b9a684; margin: 26px auto 18px; animation: fadeUp .8s ease .7s both; }
+        .lg-eyebrow {
+            font-size: 12px; font-weight: 500; letter-spacing: .55em; margin-right: -.55em;
+            text-transform: uppercase; color: #b9a684; animation: fadeUp .8s ease .85s both;
+        }
+        .lg-name {
+            font-family: 'Alfa Slab One', 'Bitter', serif; font-weight: 400;
+            font-size: clamp(2.6rem, 5vw, 4rem); letter-spacing: .07em; line-height: 1.1;
+            color: #ECE1CB; text-transform: uppercase; margin-top: 10px;
+            animation: fadeUp .9s cubic-bezier(.2,.8,.2,1) 1s both;
+        }
+        .lg-city {
+            font-size: 11.5px; letter-spacing: .3em; text-transform: uppercase; color: #93816A;
+            margin-top: 10px; animation: fadeUp .8s ease 1.25s both;
         }
 
+        .lg-panel {
+            flex: 1 1 54%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 32px 24px; background: var(--crema);
+        }
         .login-card {
-            background: #fff;
-            border: 1px solid #e8e8e0;
-            border-radius: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 24px 64px rgba(0,0,0,0.04);
-            padding: 44px 40px 40px;
-            width: 100%; max-width: 400px;
+            width: 100%; max-width: 400px; background: #FFFDF9; border: 1.5px solid #E3D8C3;
+            border-radius: 22px; padding: 38px 34px 34px;
+            box-shadow: 0 14px 44px rgba(48,30,18,0.10);
+            animation: scaleIn .6s cubic-bezier(.22,.68,0,1.2) .3s both;
         }
         .login-card.shake { animation: shake 0.4s ease; }
-
-        .rule-oliva {
-            display: block; width: 40px; height: 2px;
-            background: var(--oliva); margin: 0 auto 20px; border-radius: 2px;
-        }
+        .lg-kicker { font-size: 11px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--ink-muted); }
+        .lg-title { font-family: 'Alfa Slab One', 'Bitter', serif; font-weight: 400; font-size: 1.9rem; color: var(--ink); margin: 6px 0 6px; letter-spacing: .02em; }
+        .lg-sub { font-size: 13.5px; color: var(--ink-muted); line-height: 1.5; margin-bottom: 24px; }
+        .lg-field { display: flex; flex-direction: column; gap: 6px; }
+        .lg-field label { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-mid); }
 
         .input-auth {
-            width: 100%; padding: 13px 20px;
-            border: 1.5px solid #ddddd5; border-radius: 9999px;
-            background: #fff; font-family: 'DM Sans', sans-serif;
-            font-size: 15px; color: var(--ink); outline: none;
+            width: 100%; padding: 13px 16px; border: 1.5px solid #D3C4A8; border-radius: 12px;
+            background: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); outline: none;
             transition: border-color 0.25s, box-shadow 0.25s;
-            letter-spacing: 0.01em;
         }
         .input-auth::placeholder { color: var(--ink-ghost); }
-        .input-auth:focus {
-            border-color: var(--oliva);
-            box-shadow: 0 0 0 3px rgba(74,90,40,0.10);
-        }
-        .input-auth.field-error {
-            border-color: var(--red-warm);
-            box-shadow: 0 0 0 3px rgba(192,57,43,0.10);
-        }
+        .input-auth:focus { border-color: #301E12; box-shadow: 0 0 0 3px rgba(48,30,18,0.10); }
+        .input-auth.field-error { border-color: var(--red-warm); box-shadow: 0 0 0 3px rgba(192,57,43,0.10); }
 
         .btn-primary {
-            width: 100%; padding: 14px 24px; border-radius: 9999px;
-            background: var(--oliva); color: #fff;
-            font-family: 'DM Sans', sans-serif; font-size: 15px;
-            font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
-            border: none; cursor: pointer;
+            width: 100%; padding: 14px 24px; border-radius: 12px; margin-top: 4px;
+            background: #301E12; color: #F3ECDD;
+            font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase; border: none; cursor: pointer;
             transition: background 0.25s, transform 0.18s, box-shadow 0.25s;
-            box-shadow: 0 4px 18px rgba(74,90,40,0.22);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 6px 20px rgba(48,30,18,0.25);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-primary:hover:not(:disabled) {
-            background: var(--oliva-lt); transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(74,90,40,0.30);
-        }
+        .btn-primary svg { width: 16px; height: 16px; transition: transform .25s; }
+        .btn-primary:hover:not(:disabled) { background: #1F1209; transform: translateY(-1px); box-shadow: 0 8px 26px rgba(48,30,18,0.32); }
+        .btn-primary:hover:not(:disabled) svg { transform: translateX(4px); }
         .btn-primary:active:not(:disabled) { transform: translateY(0); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .msg-box {
-            padding: 11px 16px; border-radius: 12px;
-            font-size: 13.5px; line-height: 1.5; display: none;
-        }
-        .msg-box.error   { display:block; background:var(--red-pale);  border:1px solid var(--red-bd);  color:var(--red-warm); }
+        .msg-box { padding: 11px 16px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; display: none; }
+        .msg-box.error   { display:block; background:var(--red-pale); border:1px solid var(--red-bd); color:var(--red-warm); }
         .msg-box.success { display:block; background:var(--oliva-pale); border:1px solid var(--oliva-bd); color:var(--oliva); }
+        .lg-foot { margin-top: 22px; font-size: 11.5px; color: var(--ink-ghost); letter-spacing: .04em; text-align: center; }
 
-        .perfil-chip {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 12px; border-radius: 9999px;
-            font-size: 11px; font-weight: 500;
-            letter-spacing: 0.06em; text-transform: uppercase;
+        @media (max-width: 820px) {
+            #screen-login { flex-direction: column; }
+            .lg-brand { flex: none; padding: 28px 20px 58px; }
+            .lg-m { height: 92px; }
+            .lg-rule { margin: 16px auto 12px; }
+            .lg-name { font-size: 2.2rem; margin-top: 6px; }
+            .lg-city { margin-top: 6px; font-size: 10.5px; }
+            .lg-panel { flex: 1; justify-content: flex-start; margin-top: -30px; border-radius: 28px 28px 0 0; padding-top: 26px; position: relative; }
+            .login-card { padding: 28px 22px 26px; box-shadow: none; border: none; background: transparent; }
+        }
+
+        /* ══════════════════════════════════════════
+           PANTALLA DE ENTRADA (5 s) al iniciar sesión
+        ══════════════════════════════════════════ */
+        #entrada {
+            position: fixed; inset: 0; z-index: 10000; display: none;
+            background: radial-gradient(ellipse 65% 55% at 50% 42%, #40291a 0%, #301E12 68%, #24160c 100%);
+            flex-direction: column; align-items: center; justify-content: center; overflow: hidden;
+            transition: transform .8s cubic-bezier(.77,0,.18,1);
+        }
+        #entrada.salir { transform: translateY(-100%); }
+        .en-logo { height: clamp(150px, 27vh, 230px); width: auto; display: block; clip-path: inset(100% 0 0 0); opacity: 0; }
+        #entrada.go .en-logo { animation: enLogo 1.5s cubic-bezier(.2,.7,.2,1) .15s both; }
+        @keyframes enLogo {
+            from { clip-path: inset(100% 0 0 0); opacity: 0; transform: translateY(16px) scale(.97); }
+            35%  { opacity: 1; }
+            to   { clip-path: inset(0 0 0 0); opacity: 1; transform: none; }
+        }
+        .en-rule { width: 0; height: 1px; background: #b9a684; margin: 26px 0 18px; }
+        #entrada.go .en-rule { animation: enRule .9s cubic-bezier(.6,0,.2,1) 1.35s forwards; }
+        @keyframes enRule { to { width: 64px; } }
+        .en-eyebrow { font-size: 12px; font-weight: 500; letter-spacing: .55em; margin-right: -.55em; text-transform: uppercase; color: #b9a684; opacity: 0; }
+        #entrada.go .en-eyebrow { animation: enFade .9s ease 1.65s forwards; }
+        .en-name {
+            display: flex; overflow: hidden; margin-top: 10px; padding: 4px 6px 8px;
+            font-family: 'Alfa Slab One', 'Bitter', serif; font-size: clamp(2.6rem, 12vw, 3.9rem);
+            letter-spacing: .07em; color: #ECE1CB; line-height: 1.1; text-transform: uppercase;
+        }
+        .en-name span { display: inline-block; transform: translateY(115%); }
+        #entrada.go .en-name span { animation: enRise .8s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(1.85s + var(--i) * .085s); }
+        @keyframes enRise { to { transform: translateY(0); } }
+        .en-city { font-size: 11.5px; letter-spacing: .3em; text-transform: uppercase; color: #93816A; margin-top: 6px; opacity: 0; text-align: center; padding: 0 24px; }
+        #entrada.go .en-city { animation: enFade .9s ease 2.75s forwards; }
+        .en-bar { position: absolute; left: 50%; bottom: max(9vh, 48px); transform: translateX(-50%); width: min(220px, 52vw); text-align: center; }
+        .en-bar-track { height: 2px; background: rgba(236,225,203,.14); border-radius: 2px; overflow: hidden; }
+        .en-bar-fill { height: 100%; width: 0; background: #ECE1CB; border-radius: 2px; }
+        #entrada.go .en-bar-fill { animation: enBar var(--en-ms, 5000ms) cubic-bezier(.45,.05,.25,1) forwards; }
+        @keyframes enBar { to { width: 100%; } }
+        .en-msg { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #93816A; margin-top: 12px; opacity: 0; }
+        #entrada.go .en-msg { animation: enFade .8s ease 2.2s forwards; }
+        @keyframes enFade { to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) {
+            #entrada, #entrada * { animation-duration: .01s !important; animation-delay: 0s !important; }
         }
 
         /* ══════════════════════════════════════════
@@ -198,15 +265,15 @@
             position: fixed; top:0; left:0; right:0; z-index:100;
             background: rgba(255,255,255,0.92);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid #e8e8e0;
+            border-bottom: 1px solid #E3D8C3;
             padding: 0 24px; height: 56px;
             display: none; align-items: center; justify-content: space-between;
             animation: slideDown 0.4s ease both;
         }
         #nav-admin.visible { display: flex; }
 
-        .nav-logo { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-weight:400; color:var(--ink); }
-        .nav-logo em { font-style:italic; color:var(--oliva); }
+        .nav-logo { font-family:'Alfa Slab One','Bitter',serif; font-size:1.05rem; font-weight:400; letter-spacing:.03em; color:var(--ink); }
+        .nav-logo em { font-style:normal; color:var(--oliva); }
 
         .nav-tabs { display:flex; gap:4px; }
         .nav-tab {
@@ -246,11 +313,11 @@
         body.role-admin #bar-cocina { top: 56px; }
 
         .dot-live {
-            width:8px; height:8px; background:#4ade80;
+            width:8px; height:8px; background:#D7C7AD;
             border-radius:50%; animation:pulse 2s infinite;
         }
-        .bar-title { font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:#fff; }
-        .bar-title em { font-style:italic; color:var(--oliva-bd); }
+        .bar-title { font-family:'Bitter',serif; font-size:1.1rem; color:#fff; }
+        .bar-title em { font-style:normal; color:var(--oliva-bd); }
 
         .stat-chip {
             display:flex; align-items:center; gap:6px;
@@ -259,7 +326,7 @@
         }
         .stat-chip.pending   { background:rgba(217,119,6,0.25); border-color:rgba(217,119,6,0.4);  color:#fcd34d; }
         .stat-chip.preparing { background:rgba(37,99,235,0.25);  border-color:rgba(37,99,235,0.4);  color:#93c5fd; }
-        .stat-chip.delivered { background:rgba(74,90,40,0.3);    border-color:rgba(200,212,168,0.4); color:var(--oliva-bd); }
+        .stat-chip.delivered { background:rgba(48,30,18,0.3);    border-color:rgba(215,199,173,0.4); color:var(--oliva-bd); }
 
         .btn-logout-dark {
             padding:5px 13px; border-radius:9999px; font-size:12px; font-weight:500;
@@ -279,14 +346,14 @@
         body.role-admin  .cocina-main { padding-top: 132px; }
 
         .section-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(1.6rem,3vw,2rem); font-weight:300; color:var(--ink); letter-spacing:-0.01em;
+            font-family: 'Alfa Slab One', 'Bitter', serif;
+            font-size: clamp(1.35rem,2.6vw,1.75rem); font-weight:400; color:var(--ink); letter-spacing:0.01em;
         }
-        .section-title em { font-style:italic; color:var(--oliva); }
+        .section-title em { font-style:normal; color:var(--oliva); }
 
         .filter-btn {
             padding:7px 18px; border-radius:9999px; font-size:13px; font-weight:500;
-            border:1.5px solid #ddddd5; background:#fff; color:var(--ink-muted);
+            border:1.5px solid #E3D8C3; background:#fff; color:var(--ink-muted);
             cursor:pointer; transition:all 0.2s;
         }
         .filter-btn:hover  { border-color:var(--oliva-bd); color:var(--oliva); background:var(--oliva-pale); }
@@ -310,7 +377,7 @@
             animation: cardEntry 0.4s cubic-bezier(.22,.68,0,1.2) both;
             position: relative;
         }
-        .order-card:hover { border-color:#c2d09c; transform:translateY(-2px); box-shadow:0 6px 24px rgba(74,90,40,0.10); }
+        .order-card:hover { border-color:#D3C4A8; transform:translateY(-2px); box-shadow:0 6px 24px rgba(48,30,18,0.10); }
         .order-card.es-llevar { background:#fef08a; border-color:#eab308; border-width:2px; box-shadow:0 2px 8px rgba(234,179,8,0.35), 0 6px 20px rgba(234,179,8,0.20); }
         .order-card.es-llevar:hover { border-color:#ca8a04; box-shadow:0 6px 28px rgba(234,179,8,0.45); }
         .order-card.es-llevar .card-header { background:#fde047; border-bottom:1.5px solid #eab308; }
@@ -319,10 +386,10 @@
 
         .card-header {
             padding:16px 18px 14px;
-            border-bottom:1px solid #f0f0ea;
+            border-bottom:1px solid #EDE3D2;
             display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
         }
-        .order-number { font-family:monospace; font-size:11px; font-weight:700; color:#4a5a28; letter-spacing:0.08em; }
+        .order-number { font-family:monospace; font-size:11px; font-weight:700; color:#301E12; letter-spacing:0.08em; }
         .customer-name { font-size:15px; font-weight:700; color:#111827; margin-top:2px; }
 
         .status-badge {
@@ -333,30 +400,30 @@
         }
         .status-badge.pending    { background:rgba(217,119,6,0.09);  border-color:rgba(217,119,6,0.28);  color:#b45309; }
         .status-badge.confirmed  { background:rgba(37,99,235,0.08);  border-color:rgba(37,99,235,0.25);  color:#1d4ed8; }
-        .status-badge.in_kitchen { background:rgba(74,90,40,0.09);   border-color:rgba(74,90,40,0.28);   color:#4a5a28; }
+        .status-badge.in_kitchen { background:rgba(48,30,18,0.09);   border-color:rgba(48,30,18,0.28);   color:#301E12; }
 
         .mesa-tag {
-            font-size:12px; font-weight:700; color:#4a5a28;
-            background:#f0f3e8; border:1px solid #c2d09c;
+            font-size:12px; font-weight:700; color:#301E12;
+            background:#F3ECDD; border:1px solid #D3C4A8;
             padding:5px 12px; border-radius:10px; white-space:nowrap;
         }
 
         .card-body { padding:16px 18px; flex:1; overflow-y:auto; max-height:260px; }
         .items-label {
             font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-            color:#9ca3af; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #f0f0ea;
+            color:#9ca3af; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #EDE3D2;
         }
 
         .order-item {
-            background:#fafaf8; border:1px solid #e8e8e2;
+            background:#FFFDF9; border:1px solid #E3D8C3;
             border-radius:12px; padding:10px 12px; margin-bottom:8px;
         }
         .order-item:last-child { margin-bottom:0; }
         .item-top { display:flex; align-items:flex-start; gap:10px; }
         .item-qty {
             flex-shrink:0; min-width:32px; height:28px; padding:0 4px;
-            background:rgba(74,90,40,0.10); border:1px solid rgba(74,90,40,0.28);
-            color:#4a5a28; font-size:12px; font-weight:800;
+            background:rgba(48,30,18,0.10); border:1px solid rgba(48,30,18,0.28);
+            color:#301E12; font-size:12px; font-weight:800;
             border-radius:8px; display:flex; align-items:center; justify-content:center;
         }
         .item-name { font-size:14px; font-weight:600; color:#1f2937; line-height:1.35; }
@@ -367,7 +434,7 @@
         }
 
         .card-footer {
-            padding:14px 18px; border-top:1px solid #f0f0ea; display:flex; gap:10px;
+            padding:14px 18px; border-top:1px solid #EDE3D2; display:flex; gap:10px;
         }
         .btn-kitchen {
             flex:1; padding:10px; border-radius:12px; font-size:13px; font-weight:700;
@@ -376,8 +443,8 @@
         }
         .btn-kitchen.en-cocina  { background:#ea580c; color:#fff; }
         .btn-kitchen.en-cocina:hover  { background:#c2410c; }
-        .btn-kitchen.despachar  { background:#059669; color:#fff; box-shadow:0 3px 12px rgba(5,150,105,0.3); }
-        .btn-kitchen.despachar:hover  { background:#047857; }
+        .btn-kitchen.despachar  { background:#301E12; color:#fff; box-shadow:0 3px 12px rgba(48,30,18,0.3); }
+        .btn-kitchen.despachar:hover  { background:#1F1209; }
 
         /* ── Historial cocina ── */
         .hist-card { background:#fff; border:1.5px solid #e5e7eb; border-radius:14px; overflow:hidden; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,0.06); opacity:0.88; }
@@ -397,7 +464,7 @@
             grid-column:1/-1; text-align:center; padding:80px 24px;
         }
         .empty-icon   { font-size:2.8rem; margin-bottom:14px; opacity:0.4; }
-        .empty-title  { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:300; color:var(--ink-muted); margin-bottom:6px; }
+        .empty-title  { font-family:'Bitter',serif; font-size:1.3rem; font-weight:500; color:var(--ink-muted); margin-bottom:6px; }
         .empty-sub    { font-size:13px; color:var(--ink-ghost); }
 
         .loading-state {
@@ -491,86 +558,68 @@
 ══════════════════════════════════════════ -->
 <div id="screen-login">
 
-    <div style="text-align:center;margin-bottom:36px;">
-        <div class="anim-1" style="margin-bottom:18px;">
-            <div style="width:80px;height:80px;border-radius:20px;overflow:hidden;margin:0 auto;box-shadow:0 2px 12px rgba(74,90,40,0.14);border:1.5px solid var(--oliva-bd);background:var(--oliva-pale);display:flex;align-items:center;justify-content:center;">
-                <img src="logo.png" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
-            </div>
+    <section class="lg-brand">
+        <div class="lg-brand-inner">
+            <img class="lg-m" src="data:image/png;base64,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" alt="Restaurante Mateus">
+            <div class="lg-rule"></div>
+            <p class="lg-eyebrow">Restaurante</p>
+            <h1 class="lg-name">Mateus</h1>
+            <p class="lg-city">Sistema interno · Bucaramanga</p>
         </div>
-        <h1 class="font-display anim-2" style="font-size:clamp(1.9rem,5vw,2.6rem);font-weight:300;color:var(--ink);letter-spacing:-0.01em;line-height:1.1;margin-bottom:6px;">
-            Restaurante <span style="font-style:italic;color:var(--oliva);">Mateus</span>
-        </h1>
-        <p class="anim-3" style="font-size:13px;color:var(--ink-muted);font-weight:300;letter-spacing:0.08em;text-transform:uppercase;">
-            Sistema Interno · Bucaramanga
-        </p>
-    </div>
+    </section>
 
-    <div class="login-card anim-card" id="login-card">
-        <div style="text-align:center;margin-bottom:28px;">
-            <span class="rule-oliva"></span>
-            <h2 class="font-display" style="font-size:1.5rem;font-weight:400;color:var(--ink);letter-spacing:-0.01em;margin-bottom:6px;">
-                Acceso al Sistema
-            </h2>
-            <p style="font-size:13.5px;color:var(--ink-muted);font-weight:300;line-height:1.5;">
-                Ingresa tus credenciales para continuar.
-            </p>
-        </div>
+    <section class="lg-panel">
+        <div class="login-card" id="login-card">
+            <p class="lg-kicker">Acceso al sistema</p>
+            <h2 class="lg-title">Bienvenido</h2>
+            <p class="lg-sub">Ingresa tus credenciales para continuar.</p>
 
-        <!-- ► FORM con id para que app.js lo capture via addEventListener -->
-        <form id="form-login" novalidate style="display:flex;flex-direction:column;gap:12px;">
+            <!-- ► FORM con id para que app.js lo capture via addEventListener -->
+            <form id="form-login" novalidate style="display:flex;flex-direction:column;gap:14px;">
+                <div class="lg-field">
+                    <label for="login-user">Usuario</label>
+                    <input type="text" id="login-user" class="input-auth" placeholder="Tu usuario"
+                        autocomplete="username" spellcheck="false" autocapitalize="none" required>
+                </div>
 
-            <input
-                type="text"
-                id="login-user"
-                class="input-auth"
-                placeholder="Usuario"
-                autocomplete="username"
-                spellcheck="false"
-                aria-label="Usuario"
-                required
-            >
+                <div class="lg-field">
+                    <label for="login-pass">Contraseña</label>
+                    <div style="position:relative;">
+                        <input type="password" id="login-pass" class="input-auth" placeholder="Tu contraseña"
+                            autocomplete="current-password" required style="padding-right:48px;">
+                        <button type="button" id="btn-toggle-pass"
+                            style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-muted);line-height:1;"
+                            aria-label="Mostrar/ocultar contraseña">
+                            <span><i data-lucide="eye" id="icon-toggle-pass"></i></span>
+                        </button>
+                    </div>
+                </div>
 
-            <div style="position:relative;">
-                <input
-                    type="password"
-                    id="login-pass"
-                    class="input-auth"
-                    placeholder="Contraseña"
-                    autocomplete="current-password"
-                    aria-label="Contraseña"
-                    required
-                    style="padding-right:48px;"
-                >
-                <button
-                    type="button"
-                    id="btn-toggle-pass"
-                    style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-ghost);font-size:16px;line-height:1;"
-                    aria-label="Mostrar/ocultar contraseña">
-                    <span><i data-lucide="eye" id="icon-toggle-pass"></i></span>
+                <div class="msg-box" id="login-msg" role="alert"></div>
+
+                <!-- type="submit" para que Enter funcione nativamente -->
+                <button type="submit" class="btn-primary" id="btn-login">
+                    <span id="btn-login-text">Ingresar</span>
+                    <i data-lucide="arrow-right"></i>
                 </button>
-            </div>
-
-            <div class="msg-box" id="login-msg" role="alert"></div>
-
-            <!-- type="submit" para que Enter funcione nativamente -->
-            <button type="submit" class="btn-primary" id="btn-login">
-                <span id="btn-login-text">Ingresar</span>
-            </button>
-        </form>
-
-        <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f0f0e8;">
-            <p style="font-size:11px;color:var(--ink-ghost);letter-spacing:0.05em;text-transform:uppercase;text-align:center;margin-bottom:12px;">Perfiles disponibles</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-                <span class="perfil-chip" style="background:var(--oliva-pale);border:1px solid var(--oliva-bd);color:var(--oliva);"><span><i data-lucide="crown"></i></span> Admin</span>
-                <span class="perfil-chip" style="background:var(--amber-pale);border:1px solid var(--amber-bd);color:var(--amber);"><span><i data-lucide="chef-hat"></i></span> Cocina</span>
-                <span class="perfil-chip" style="background:var(--blue-pale);border:1px solid var(--blue-bd);color:var(--blue);"><span><i data-lucide="user"></i></span> Cliente</span>
-            </div>
+            </form>
         </div>
-    </div>
 
-    <p class="anim-4" style="margin-top:24px;font-size:11.5px;color:var(--ink-ghost);letter-spacing:0.04em;text-align:center;">
-        © 2025 Restaurante Mateus · Uso exclusivo del personal
-    </p>
+        <p class="lg-foot">© 2026 Restaurante Mateus · Uso exclusivo del personal</p>
+    </section>
+</div>
+
+<!-- PANTALLA DE ENTRADA (se reproduce al iniciar sesión) -->
+<div id="entrada" aria-hidden="true">
+    <img class="en-logo" alt="" src="">
+    <div class="en-rule"></div>
+    <div class="en-eyebrow">Restaurante</div>
+    <div class="en-name" id="en-name"></div>
+    <div class="en-city" id="en-city"></div>
+    <div class="en-bar">
+        <div class="en-bar-track"><div class="en-bar-fill"></div></div>
+        <div class="en-msg" id="en-msg"></div>
+    </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -671,6 +720,53 @@ document.addEventListener('DOMContentLoaded', function () {
         }).observe(grid, { childList: true, subtree: false });
     }
 });
+
+
+// ══════════════════════════════════════════════════════════════
+// PANTALLA DE ENTRADA al iniciar sesión (5 s)
+//  · admin   → animación y luego pasa directo a admin.html
+//  · cocina  → animación; al subir la cortina ya está la cocina
+//  · cliente → animación y luego menu.html
+// ══════════════════════════════════════════════════════════════
+window.MateusEntrada = (function () {
+    const MS = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1200 : 5000;
+    const RUTAS = {
+        admin:   { msg: 'Preparando tu panel',  saludo: 'Administrador', cortina: false, destino: () => 'admin.html' },
+        cocina:  { msg: 'Preparando la cocina', saludo: 'Cocina',        cortina: true,  destino: null },
+        cliente: { msg: 'Preparando la carta',  saludo: 'Cliente',       cortina: false, destino: (u) => 'menu.html?usuario=' + encodeURIComponent(u) },
+    };
+    function reproducir(rol, usuario) {
+        const cfg = RUTAS[rol] || RUTAS.cocina;
+        const box = document.getElementById('entrada');
+        if (!box) { if (window._iniciarApp) window._iniciarApp(); return; }
+
+        box.querySelector('.en-logo').src = document.querySelector('.lg-m').src;
+        document.getElementById('en-msg').textContent  = cfg.msg;
+        document.getElementById('en-city').textContent = 'Bienvenido · ' + cfg.saludo;
+        const nombre = document.getElementById('en-name');
+        nombre.textContent = '';
+        [...'MATEUS'].forEach((ch, i) => {
+            const s = document.createElement('span'); s.textContent = ch; s.style.setProperty('--i', i); nombre.appendChild(s);
+        });
+        document.documentElement.style.setProperty('--en-ms', MS + 'ms');
+
+        box.classList.remove('go', 'salir');
+        box.style.display = 'flex';
+        void box.offsetWidth;                 // reinicia las animaciones
+        box.classList.add('go');
+
+        if (cfg.cortina) {
+            setTimeout(() => { box.classList.add('salir'); if (window._iniciarApp) window._iniciarApp(); }, MS - 800);
+            setTimeout(() => { box.style.display = 'none'; box.classList.remove('go', 'salir'); }, MS + 100);
+        } else {
+            setTimeout(() => {
+                try { sessionStorage.setItem('mateus_entrada', '1'); } catch (e) {}
+                window.location.href = cfg.destino(usuario);
+            }, MS);
+        }
+    }
+    return { reproducir };
+})();
 
 // Toggle de visibilidad de contraseña
 document.getElementById('btn-toggle-pass').addEventListener('click', function () {
