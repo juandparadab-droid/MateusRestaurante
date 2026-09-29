@@ -496,6 +496,16 @@
     font-style: italic;
     font-size: 1.1rem;
   }
+
+  /* ── AVISO DESTACADO ── */
+  #aviso-carta {
+    position: relative; z-index: 1;
+    max-width: 640px; margin: 18px auto 0; padding: 12px 18px;
+    text-align: center; font-size: 14px; line-height: 1.5;
+    color: var(--gold2); background: var(--gold-dim);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  #aviso-carta[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -505,10 +515,13 @@
   <div class="logo-rule">
     <div class="logo-diamond"></div>
   </div>
-  <h1>Restaurante <span>Mateus</span></h1>
-  <p class="header-sub">Carta del día</p>
-  <p class="header-city">Bucaramanga, Colombia</p>
+  <h1 id="carta-nombre">Restaurante <span>Mateus</span></h1>
+  <p class="header-sub" id="carta-subtitulo">Carta del día</p>
+  <p class="header-city" id="carta-ciudad">Bucaramanga, Colombia</p>
 </header>
+
+<!-- AVISO (se edita desde el panel admin → Carta Digital) -->
+<div id="aviso-carta" hidden></div>
 
 <!-- STATUS -->
 <div id="status-bar">
@@ -533,8 +546,8 @@
 
 <!-- FOOTER -->
 <footer>
-  <p class="footer-brand">Restaurante Mateus</p>
-  <p class="footer-note">Precios en pesos colombianos · IVA incluido</p>
+  <p class="footer-brand" id="carta-pie-nombre">Restaurante Mateus</p>
+  <p class="footer-note" id="carta-nota-pie">Precios en pesos colombianos · IVA incluido</p>
 </footer>
 
 <!-- TOAST -->
@@ -562,6 +575,57 @@ const CATS = {
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ── CONFIGURACIÓN EDITABLE (panel admin → Carta Digital) ── */
+const CONFIG_DEFAULT = {
+  nombre:                 'Restaurante Mateus',
+  subtitulo:              'Carta del día',
+  ciudad:                 'Bucaramanga, Colombia',
+  nota_pie:               'Precios en pesos colombianos · IVA incluido',
+  aviso:                  '',
+  categorias_ocultas:     [],     // números de categoría (1 Proteínas … 6 Salsas)
+  mostrar_disponibilidad: true,
+  ocultar_agotados:       false,
+};
+let CONFIG = { ...CONFIG_DEFAULT };
+
+async function cargarConfig() {
+  try {
+    const { data, error } = await db.from('carta_config').select('config').eq('id', 'main').maybeSingle();
+    if (error) throw error;
+    CONFIG = { ...CONFIG_DEFAULT, ...((data && data.config) || {}) };
+  } catch (e) {
+    console.warn('[Carta] Sin configuración personalizada, se usan valores por defecto.', e.message || e);
+    CONFIG = { ...CONFIG_DEFAULT };
+  }
+  aplicarConfig();
+}
+
+function aplicarConfig() {
+  const nombre = (CONFIG.nombre || '').trim() || CONFIG_DEFAULT.nombre;
+  const h1 = document.getElementById('carta-nombre');
+  if (h1) {
+    const palabras = nombre.split(/\s+/);
+    const ultima = palabras.pop();
+    h1.textContent = palabras.length ? palabras.join(' ') + ' ' : '';
+    const sp = document.createElement('span');
+    sp.textContent = ultima;
+    h1.appendChild(sp);
+  }
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('carta-subtitulo', CONFIG.subtitulo || '');
+  set('carta-ciudad',    CONFIG.ciudad || '');
+  set('carta-pie-nombre', nombre);
+  set('carta-nota-pie',  CONFIG.nota_pie || '');
+  document.title = `Carta — ${nombre}`;
+
+  const aviso = document.getElementById('aviso-carta');
+  if (aviso) {
+    const txt = (CONFIG.aviso || '').trim();
+    aviso.textContent = txt;
+    aviso.hidden = !txt;
+  }
+}
+
 /* ── STATE ── */
 let allItems   = [];
 let activeFilter = 'all';
@@ -585,6 +649,7 @@ function fmt(price) {
 
 /* ── AVAILABILITY CHIP ── */
 function portionChip(portions) {
+  if (!CONFIG.mostrar_disponibilidad) return '';
   if (portions === 0) {
     return `<span class="chip chip-zero"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Agotado</span>`;
   }
@@ -732,6 +797,8 @@ async function fetchItems() {
     // Sort & filter in JS
     allItems = (data || [])
       .filter(i => CATS[i.item_type])
+      .filter(i => !(CONFIG.categorias_ocultas || []).includes(CATS[i.item_type].ord))
+      .filter(i => !(CONFIG.ocultar_agotados && i.portions_today === 0))
       .sort((a, b) => {
         const oa = CATS[a.item_type]?.ord ?? 99;
         const ob = CATS[b.item_type]?.ord ?? 99;
@@ -761,11 +828,19 @@ function subscribeRealtime() {
         fetchItems().then(() => showToast('✦ Carta actualizada'));
       }
     )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'carta_config' },
+      () => {
+        cargarConfig().then(fetchItems).then(() => showToast('✦ Carta actualizada'));
+      }
+    )
     .subscribe();
 }
 
 /* ── INIT ── */
 (async () => {
+  await cargarConfig();
   await fetchItems();
   subscribeRealtime();
 })();
