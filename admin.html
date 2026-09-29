@@ -618,13 +618,47 @@
             }
 
             /* ── Bottom Navigation (solo móvil) ── */
-            #bottom-nav {
+            #btn-menu-movil, #drawer-overlay {
                 display: none;
             }
 
             @media (max-width: 768px) {
-                aside {
-                    display: none !important;
+                /* Mismo menú lateral de escritorio, como panel deslizable */
+                #sidebar-admin {
+                    position: fixed !important;
+                    top: 0; left: 0; bottom: 0;
+                    width: min(300px, 86vw) !important;
+                    height: 100% !important;
+                    z-index: 9600;
+                    transform: translateX(-100%);
+                    transition: transform .25s ease;
+                    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
+                    padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)) !important;
+                    box-shadow: none;
+                }
+                body.drawer-abierto #sidebar-admin {
+                    transform: translateX(0);
+                    box-shadow: 6px 0 28px rgba(26, 31, 24, .22);
+                }
+                #drawer-overlay {
+                    display: block;
+                    position: fixed; inset: 0;
+                    z-index: 9500;
+                    background: rgba(26, 31, 24, .45);
+                    opacity: 0; pointer-events: none;
+                    transition: opacity .25s ease;
+                }
+                body.drawer-abierto #drawer-overlay { opacity: 1; pointer-events: auto; }
+                body.drawer-abierto { overflow: hidden; }
+                #btn-menu-movil {
+                    display: inline-flex; align-items: center; justify-content: center;
+                    width: 38px; height: 38px; flex-shrink: 0;
+                    border-radius: 10px;
+                    border: 1.5px solid var(--border);
+                    background: var(--surface-2, var(--surface));
+                    color: var(--text-1);
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
                 }
 
                 header {
@@ -658,7 +692,7 @@
                     min-width: 0 !important;
                     max-width: 100% !important;
                     padding: 14px !important;
-                    padding-bottom: 90px !important;
+                    padding-bottom: 24px !important;
                     overflow-x: hidden !important;
                     box-sizing: border-box !important;
                 }
@@ -728,88 +762,6 @@
 
                 #form-nuevo-insumo>div:last-child {
                     grid-column: span 2;
-                }
-
-                #bottom-nav {
-                    display: flex;
-                    position: fixed;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    z-index: 9000;
-                    background: var(--surface);
-                    border-top: 1.5px solid var(--border);
-                    padding: 0;
-                    padding-bottom: env(safe-area-inset-bottom, 0px);
-                    box-shadow: 0 -4px 20px rgba(26, 31, 24, 0.08);
-                    height: 66px;
-                    align-items: stretch;
-                    overflow-x: auto;
-                    overflow-y: hidden;
-                    -webkit-overflow-scrolling: touch;
-                    scrollbar-width: none;
-                }
-
-                #bottom-nav::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .bnav-item {
-                    flex: 0 0 72px;
-                    min-width: 72px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 3px;
-                    padding: 8px 4px;
-                    cursor: pointer;
-                    border: none;
-                    background: transparent;
-                    color: var(--text-3);
-                    font-family: 'DM Sans', sans-serif;
-                    font-size: 10px;
-                    font-weight: 500;
-                    text-decoration: none;
-                    transition: color .18s;
-                    position: relative;
-                    -webkit-tap-highlight-color: transparent;
-                }
-
-                .bnav-item.bnav-active {
-                    color: var(--olive);
-                }
-
-                .bnav-item.bnav-active::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 20%;
-                    right: 20%;
-                    height: 2.5px;
-                    background: var(--olive);
-                    border-radius: 0 0 4px 4px;
-                }
-
-                .bnav-icon {
-                    width: 22px;
-                    height: 22px;
-                    line-height: 1;
-                    transition: transform .18s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-            .bnav-item.bnav-active .bnav-icon {
-                    transform: translateY(-1px);
-                }
-
-                .bnav-label {
-                    font-size: 9.5px;
-                    font-weight: 600;
-                    letter-spacing: .2px;
-                    white-space: nowrap;
                 }
 
                 .kpi-card {
@@ -1118,6 +1070,9 @@
     <header
         style="background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 24px;height:58px;display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;">
         <div style="display:flex;align-items:center;gap:12px;">
+            <button id="btn-menu-movil" type="button" onclick="toggleDrawer()" aria-label="Abrir menú" aria-controls="sidebar-admin">
+                <span class="ic ic-md"><i data-lucide="menu"></i></span>
+            </button>
             <div
                 style="background:var(--olive-soft);border-radius:11px;width:40px;height:40px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);">
                 <img src="logo.jpg" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
@@ -1138,6 +1093,8 @@
             </button>
         </div>
     </header>
+
+    <div id="drawer-overlay" onclick="cerrarDrawer()"></div>
 
     <div style="display:flex;width:100%;overflow-x:hidden;" class="layout-wrapper">
 
@@ -1171,7 +1128,7 @@
                 <span class="ic ic-md"><i data-lucide="file-text"></i></span> Facturación DIAN
             </button>
 
-            <button onclick="ejecutarCierreCaja()" id="btn-tab-cierre-caja" class="w-full text-left"
+            <button onclick="cerrarDrawer(); ejecutarCierreCaja()" id="btn-tab-cierre-caja" class="w-full text-left"
                 style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;font-family:'DM Sans',sans-serif;background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);"
                 onmouseover="this.style.background='rgba(192,57,43,.16)'"
                 onmouseout="this.style.background='var(--red-lt)'">
@@ -2113,40 +2070,6 @@
         </main>
     </div>
 
-    <!-- ════ BOTTOM NAV (móvil) ════ -->
-    <nav id="bottom-nav" aria-label="Navegación principal">
-        <button class="bnav-item bnav-active" id="bnav-dashboard" onclick="cambiarTab('dashboard')">
-            <span class="bnav-icon ic-nav"><i data-lucide="layout-dashboard"></i></span><span class="bnav-label">Dashboard</span>
-        </button>
-        <button class="bnav-item" id="bnav-pedidos" onclick="cambiarTab('pedidos')">
-            <span class="bnav-icon ic-nav"><i data-lucide="shopping-bag"></i></span><span class="bnav-label">Pedidos</span>
-        </button>
-        <button class="bnav-item" id="bnav-menu" onclick="cambiarTab('menu')">
-            <span class="bnav-icon ic-nav"><i data-lucide="book-open"></i></span><span class="bnav-label">Productos</span>
-        </button>
-        <button class="bnav-item" id="bnav-carta" onclick="cambiarTab('carta')">
-            <span class="bnav-icon ic-nav"><i data-lucide="qr-code"></i></span><span class="bnav-label">Carta</span>
-        </button>
-        <button class="bnav-item" id="bnav-personal" onclick="cambiarTab('personal')">
-            <span class="bnav-icon ic-nav"><i data-lucide="users"></i></span><span class="bnav-label">Personal</span>
-        </button>
-        <button class="bnav-item" id="bnav-nomina" onclick="cambiarTab('nomina')">
-            <span class="bnav-icon ic-nav"><i data-lucide="banknote"></i></span><span class="bnav-label">Gastos</span>
-        </button>
-        <button class="bnav-item" id="bnav-inventario" onclick="cambiarTab('inventario')">
-            <span class="bnav-icon ic-nav"><i data-lucide="package"></i></span><span class="bnav-label">Inventario</span>
-        </button>
-        <button class="bnav-item" id="bnav-dian" onclick="cambiarTab('dian')">
-            <span class="bnav-icon ic-nav"><i data-lucide="file-text"></i></span><span class="bnav-label">Factura</span>
-        </button>
-        <button class="bnav-item" id="bnav-calendario" onclick="cambiarTab('calendario')">
-            <span class="bnav-icon ic-nav"><i data-lucide="calendar"></i></span><span class="bnav-label">Cierres</span>
-        </button>
-        <a class="bnav-item" href="index.html">
-            <span class="bnav-icon ic-nav"><i data-lucide="utensils"></i></span><span class="bnav-label">Cocina</span>
-        </a>
-    </nav>
-
     <!-- ════ MODAL CIERRE DE CAJA ════ -->
     <div id="modal-cierre-caja" class="modal-overlay" style="display:none;"
         onclick="if(event.target===this)cerrarModalCierre()">
@@ -2394,6 +2317,12 @@
         window.addEventListener('load', ajustarSidebar);
         document.addEventListener('DOMContentLoaded', ajustarSidebar);
 
+        // ═══ MENÚ DESLIZABLE (móvil/tablet) — reutiliza #sidebar-admin ═══
+        function toggleDrawer() { document.body.classList.toggle('drawer-abierto'); }
+        function cerrarDrawer() { document.body.classList.remove('drawer-abierto'); }
+        window.addEventListener('resize', () => { if (window.innerWidth > 768) cerrarDrawer(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarDrawer(); });
+
         // ═══ GESTIÓN DE TABS ═══
         const TABS = ['dashboard', 'pedidos', 'facturas', 'tomar-pedido', 'menu', 'carta', 'personal', 'nomina', 'inventario', 'dian', 'calendario', 'impresoras'];
 
@@ -2417,10 +2346,8 @@
             }
             if (btnTarget) { btnTarget.classList.remove('tab-inactive'); btnTarget.classList.add('tab-active'); }
 
-            // 3. Sincronizar Bottom Nav (móvil)
-            document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('bnav-active'));
-            const bnavEl = document.getElementById(`bnav-${dest}`);
-            if (bnavEl) bnavEl.classList.add('bnav-active');
+            // 3. Cerrar el menú deslizable (móvil/tablet)
+            cerrarDrawer();
 
             // 4. Disparar carga de datos — solo cuando el contenedor ya es visible
             if (dest === 'dashboard')  cargarDashboardReal();
