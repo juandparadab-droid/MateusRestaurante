@@ -490,6 +490,53 @@
                 font-family: 'DM Mono', monospace;
             }
 
+            #global-nav {
+                background: var(--surface);
+                border-bottom: 1.5px solid var(--border);
+                padding: 0 24px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                height: 44px;
+            }
+
+            .gnav-btn {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 16px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-2);
+                background: transparent;
+                border: 1.5px solid transparent;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all .2s;
+                font-family: 'DM Sans', sans-serif;
+            }
+
+            .gnav-btn:hover {
+                background: var(--surface-3);
+                color: var(--text-1);
+                border-color: var(--border);
+            }
+
+            .gnav-btn.gnav-active {
+                background: var(--olive-lt);
+                color: var(--olive);
+                border-color: var(--olive-bd);
+                font-weight: 600;
+            }
+
+            .gnav-sep {
+                width: 1px;
+                height: 18px;
+                background: var(--border);
+                margin: 0 4px;
+            }
+
             /* Modal factura DIAN */
             #modal-factura-dian {
                 position: fixed;
@@ -618,47 +665,17 @@
             }
 
             /* ── Bottom Navigation (solo móvil) ── */
-            #btn-menu-movil, #drawer-overlay, #fecha-corta {
+            #bottom-nav {
                 display: none;
             }
 
             @media (max-width: 768px) {
-                /* Mismo menú lateral de escritorio, como panel deslizable */
-                #sidebar-admin {
-                    position: fixed !important;
-                    top: 0; left: 0; bottom: 0;
-                    width: min(300px, 86vw) !important;
-                    height: 100% !important;
-                    z-index: 9600;
-                    transform: translateX(-100%);
-                    transition: transform .25s ease;
-                    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
-                    padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)) !important;
-                    box-shadow: none;
+                aside {
+                    display: none !important;
                 }
-                body.drawer-abierto #sidebar-admin {
-                    transform: translateX(0);
-                    box-shadow: 6px 0 28px rgba(26, 31, 24, .22);
-                }
-                #drawer-overlay {
-                    display: block;
-                    position: fixed; inset: 0;
-                    z-index: 9500;
-                    background: rgba(26, 31, 24, .45);
-                    opacity: 0; pointer-events: none;
-                    transition: opacity .25s ease;
-                }
-                body.drawer-abierto #drawer-overlay { opacity: 1; pointer-events: auto; }
-                body.drawer-abierto { overflow: hidden; }
-                #btn-menu-movil {
-                    display: inline-flex; align-items: center; justify-content: center;
-                    width: 38px; height: 38px; flex-shrink: 0;
-                    border-radius: 10px;
-                    border: 1.5px solid var(--border);
-                    background: var(--surface-2, var(--surface));
-                    color: var(--text-1);
-                    cursor: pointer;
-                    -webkit-tap-highlight-color: transparent;
+
+                #global-nav {
+                    display: none !important;
                 }
 
                 header {
@@ -669,29 +686,16 @@
 
                 header h1 {
                     font-size: 13px !important;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
                 }
-
-                header > div { min-width: 0; gap: 8px !important; }
-                header > div:first-child { flex: 1 1 auto; }
-                header > div:last-child { flex: 0 0 auto; }
-                #fecha-actual { font-size: 11px !important; white-space: nowrap; }
-
-                /* Cierre de caja: solo icono (el texto completo está en el menú) */
-                #btn-cierre-caja {
-                    width: 36px; height: 36px;
-                    padding: 0 !important;
-                    display: inline-flex; align-items: center; justify-content: center;
-                    flex-shrink: 0;
-                }
-                #btn-cierre-caja .cierre-txt { display: none; }
-                #btn-cierre-caja .cierre-ic { margin: 0 !important; }
-                #btn-cierre-caja .cierre-ic svg { width: 16px; height: 16px; }
 
                 header p {
                     display: none !important;
+                }
+
+                #btn-cierre-caja {
+                    padding: 6px 12px !important;
+                    font-size: 11px !important;
+                    white-space: nowrap;
                 }
 
                 .layout-wrapper {
@@ -705,7 +709,7 @@
                     min-width: 0 !important;
                     max-width: 100% !important;
                     padding: 14px !important;
-                    padding-bottom: 24px !important;
+                    padding-bottom: 90px !important;
                     overflow-x: hidden !important;
                     box-sizing: border-box !important;
                 }
@@ -777,6 +781,88 @@
                     grid-column: span 2;
                 }
 
+                #bottom-nav {
+                    display: flex;
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    z-index: 9000;
+                    background: var(--surface);
+                    border-top: 1.5px solid var(--border);
+                    padding: 0;
+                    padding-bottom: env(safe-area-inset-bottom, 0px);
+                    box-shadow: 0 -4px 20px rgba(26, 31, 24, 0.08);
+                    height: 66px;
+                    align-items: stretch;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                }
+
+                #bottom-nav::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .bnav-item {
+                    flex: 0 0 72px;
+                    min-width: 72px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 3px;
+                    padding: 8px 4px;
+                    cursor: pointer;
+                    border: none;
+                    background: transparent;
+                    color: var(--text-3);
+                    font-family: 'DM Sans', sans-serif;
+                    font-size: 10px;
+                    font-weight: 500;
+                    text-decoration: none;
+                    transition: color .18s;
+                    position: relative;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                .bnav-item.bnav-active {
+                    color: var(--olive);
+                }
+
+                .bnav-item.bnav-active::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 20%;
+                    right: 20%;
+                    height: 2.5px;
+                    background: var(--olive);
+                    border-radius: 0 0 4px 4px;
+                }
+
+                .bnav-icon {
+                    width: 22px;
+                    height: 22px;
+                    line-height: 1;
+                    transition: transform .18s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+            .bnav-item.bnav-active .bnav-icon {
+                    transform: translateY(-1px);
+                }
+
+                .bnav-label {
+                    font-size: 9.5px;
+                    font-weight: 600;
+                    letter-spacing: .2px;
+                    white-space: nowrap;
+                }
+
                 .kpi-card {
                     padding: 14px 14px !important;
                 }
@@ -795,11 +881,6 @@
                     border-radius: 16px !important;
                     max-height: 85vh !important;
                 }
-            }
-
-            @media (max-width: 540px) {
-                #fecha-actual { display: none !important; }
-                #fecha-corta { display: inline; font-size: 11px; color: var(--text-3); white-space: nowrap; }
             }
 
             @media (max-width: 400px) {
@@ -1023,7 +1104,7 @@
             @media (min-width: 769px) {
                 html, body { height: 100%; }
                 body { height: 100vh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-                body > header { flex: 0 0 auto; }
+                body > header, body > #global-nav { flex: 0 0 auto; }
                 .layout-wrapper { flex: 1 1 auto; min-height: 0; overflow: hidden !important; }
                 #sidebar-admin { height: auto !important; position: static !important; align-self: stretch; }
                 .layout-wrapper > main { height: 100%; overflow-y: auto !important; }
@@ -1079,23 +1160,64 @@
             }
             .tp-mesero-mini-btn:hover { background: var(--surface-3); color: var(--text-1); border-color: var(--border-2); }
             .tp-mesero-mini-btn.danger:hover { background: var(--red-lt); color: var(--red); border-color: var(--red-bd); }
+            /* ── Meseros: tarjetas del mismo tamaño, botones dentro de la tarjeta ── */
+            #tp-mesero-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)) !important; align-items: stretch; }
+            .tp-mesero-wrap { display: flex; }
+            .tp-mesero-wrap > .tp-mesero-card { width: 100%; min-height: 112px; padding-top: 28px; }
+            .tp-mesero-card-actions { top: 6px; right: 6px; }
+            .tp-mesero-mini-btn { width: 22px; height: 22px; }
+
+            /* ── Historial de pedidos: tarjetas alineadas, acciones en rejilla uniforme ── */
+            #grid-historial-pedidos { align-items: start; }
+            #grid-historial-pedidos .mh-acciones { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+            #grid-historial-pedidos .mh-acciones > button {
+                width: 100%; flex: none; min-height: 38px; padding: 6px 8px; line-height: 1.15; text-align: center;
+                display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            }
+            .mh-ic { display: inline-flex; vertical-align: -3px; }
+
+            /* ── Propina: modal y KPI ── */
+            #mpr-resultado { display: flex; align-items: center; gap: 10px; min-height: 54px; margin-top: 14px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface-2); font-size: 12.5px; color: var(--text-3); }
+            #mpr-resultado.ok   { background: var(--olive-lt); border-color: var(--olive-bd); color: var(--olive); }
+            #mpr-resultado.warn { background: var(--red-lt, #fff0f0); border-color: rgba(185,28,28,.25); color: var(--red); }
+            #mpr-resultado .mpr-valor { margin-left: auto; font-size: 17px; font-weight: 700; }
+            .mpr-chip { padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+            .mpr-chip:hover { border-color: var(--olive-bd); background: var(--olive-lt); color: var(--olive); }
+            @media (min-width: 769px) and (max-width: 1280px) { #kpi-row-2 { grid-template-columns: repeat(3, 1fr) !important; } }
         </style>
     </head>
 
 <body>
 
+    <!-- ════ BARRA NAVEGACIÓN GLOBAL (solo escritorio/admin) ════ -->
+    <nav id="global-nav" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-right:12px;">
+            <div
+                style="width:30px;height:30px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);background:var(--olive-soft);display:flex;align-items:center;justify-content:center;">
+                <img src="logo.jpg" alt="Mateus" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <span style="font-size:12px;color:var(--text-2);font-weight:500;white-space:nowrap;">Restaurante Mateus —
+                Panel Administrativo</span>
+        </div>
+        <div class="gnav-sep"></div>
+        <a href="admin.html" class="gnav-btn gnav-active"><span class="ic ic-sm"><i data-lucide="layout-dashboard"></i></span> Panel Admin</a>
+        <a href="index.html" class="gnav-btn"><span class="ic ic-sm"><i data-lucide="utensils"></i></span> Pantalla Cocina</a>
+        <a href="menu.html" class="gnav-btn"><span class="ic ic-sm"><i data-lucide="smartphone"></i></span> Vista Cliente</a>
+        <div style="flex:1;"></div>
+        <span
+            style="font-size:10.5px;font-weight:700;color:var(--olive);background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="shield-check"></i></span>
+            Administrador</span>
+    </nav>
+
     <!-- ════ HEADER ════ -->
     <header
         style="background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 24px;height:58px;display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;">
         <div style="display:flex;align-items:center;gap:12px;">
-            <button id="btn-menu-movil" type="button" onclick="toggleDrawer()" aria-label="Abrir menú" aria-controls="sidebar-admin">
-                <span class="ic ic-md"><i data-lucide="menu"></i></span>
-            </button>
             <div
                 style="background:var(--olive-soft);border-radius:11px;width:40px;height:40px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);">
                 <img src="logo.jpg" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
             </div>
-            <div style="min-width:0;">
+            <div>
                 <h1 style="font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text-1);line-height:1.2;">
                     Restaurante Mateus</h1>
                 <p style="font-size:10.5px;color:var(--text-3);">Panel Administrativo · Bucaramanga, Santander</p>
@@ -1103,17 +1225,14 @@
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
             <span id="fecha-actual" class="mono" style="font-size:12px;color:var(--text-3);">—</span>
-            <span id="fecha-corta" class="mono"></span>
             <button id="btn-cierre-caja" onclick="ejecutarCierreCaja()"
                 style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;"
                 onmouseover="this.style.background='rgba(192,57,43,.16)'"
                 onmouseout="this.style.background='var(--red-lt)'">
-                <span class="ic ic-sm cierre-ic" style="margin-right:4px;"><i data-lucide="lock"></i></span><span class="cierre-txt"> Cierre de Caja (Z)</span>
+                <span class="ic ic-sm" style="margin-right:4px;"><i data-lucide="lock"></i></span> Cierre de Caja (Z)
             </button>
         </div>
     </header>
-
-    <div id="drawer-overlay" onclick="cerrarDrawer()"></div>
 
     <div style="display:flex;width:100%;overflow-x:hidden;" class="layout-wrapper">
 
@@ -1147,7 +1266,7 @@
                 <span class="ic ic-md"><i data-lucide="file-text"></i></span> Facturación DIAN
             </button>
 
-            <button onclick="cerrarDrawer(); ejecutarCierreCaja()" id="btn-tab-cierre-caja" class="w-full text-left"
+            <button onclick="ejecutarCierreCaja()" id="btn-tab-cierre-caja" class="w-full text-left"
                 style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;font-family:'DM Sans',sans-serif;background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);"
                 onmouseover="this.style.background='rgba(192,57,43,.16)'"
                 onmouseout="this.style.background='var(--red-lt)'">
@@ -1275,7 +1394,7 @@
                 </div>
 
                 <!-- KPIs fila 2 -->
-                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;" class="kpi-grid">
+                <div id="kpi-row-2" style="display:grid;grid-template-columns:repeat(6,1fr);gap:16px;" class="kpi-grid">
                     <div class="kpi-card" style="border-color:var(--olive-bd);">
                         <div>
                             <p
@@ -1326,6 +1445,17 @@
                             <p style="font-size:9.5px;color:var(--text-3);margin-top:2px;">Base + Efectivo + Transf.</p>
                         </div>
                         <div class="kpi-icon" style="background:var(--olive-lt);color:var(--olive);"><span class="ic ic-lg"><i data-lucide="wallet"></i></span></div>
+                    </div>
+                    <div class="kpi-card" style="border-color:var(--olive-bd);">
+                        <div>
+                            <p
+                                style="font-size:10.5px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:5px;">
+                                <span class="ic ic-sm" style="color:var(--olive);"><i data-lucide="hand-coins"></i></span> Propinas</p>
+                            <h3 id="kpi-propinas" class="mono"
+                                style="font-size:20px;font-weight:700;color:var(--olive);margin-top:4px;">$0</h3>
+                            <p id="kpi-propinas-sub" style="font-size:9.5px;color:var(--text-3);margin-top:2px;">Sin propinas registradas</p>
+                        </div>
+                        <div class="kpi-icon" style="background:var(--olive-lt);color:var(--olive);"><span class="ic ic-lg"><i data-lucide="hand-coins"></i></span></div>
                     </div>
                 </div>
                
@@ -2089,6 +2219,40 @@
         </main>
     </div>
 
+    <!-- ════ BOTTOM NAV (móvil) ════ -->
+    <nav id="bottom-nav" aria-label="Navegación principal">
+        <button class="bnav-item bnav-active" id="bnav-dashboard" onclick="cambiarTab('dashboard')">
+            <span class="bnav-icon ic-nav"><i data-lucide="layout-dashboard"></i></span><span class="bnav-label">Dashboard</span>
+        </button>
+        <button class="bnav-item" id="bnav-pedidos" onclick="cambiarTab('pedidos')">
+            <span class="bnav-icon ic-nav"><i data-lucide="shopping-bag"></i></span><span class="bnav-label">Pedidos</span>
+        </button>
+        <button class="bnav-item" id="bnav-menu" onclick="cambiarTab('menu')">
+            <span class="bnav-icon ic-nav"><i data-lucide="book-open"></i></span><span class="bnav-label">Productos</span>
+        </button>
+        <button class="bnav-item" id="bnav-carta" onclick="cambiarTab('carta')">
+            <span class="bnav-icon ic-nav"><i data-lucide="qr-code"></i></span><span class="bnav-label">Carta</span>
+        </button>
+        <button class="bnav-item" id="bnav-personal" onclick="cambiarTab('personal')">
+            <span class="bnav-icon ic-nav"><i data-lucide="users"></i></span><span class="bnav-label">Personal</span>
+        </button>
+        <button class="bnav-item" id="bnav-nomina" onclick="cambiarTab('nomina')">
+            <span class="bnav-icon ic-nav"><i data-lucide="banknote"></i></span><span class="bnav-label">Gastos</span>
+        </button>
+        <button class="bnav-item" id="bnav-inventario" onclick="cambiarTab('inventario')">
+            <span class="bnav-icon ic-nav"><i data-lucide="package"></i></span><span class="bnav-label">Inventario</span>
+        </button>
+        <button class="bnav-item" id="bnav-dian" onclick="cambiarTab('dian')">
+            <span class="bnav-icon ic-nav"><i data-lucide="file-text"></i></span><span class="bnav-label">Factura</span>
+        </button>
+        <button class="bnav-item" id="bnav-calendario" onclick="cambiarTab('calendario')">
+            <span class="bnav-icon ic-nav"><i data-lucide="calendar"></i></span><span class="bnav-label">Cierres</span>
+        </button>
+        <a class="bnav-item" href="index.html">
+            <span class="bnav-icon ic-nav"><i data-lucide="utensils"></i></span><span class="bnav-label">Cocina</span>
+        </a>
+    </nav>
+
     <!-- ════ MODAL CIERRE DE CAJA ════ -->
     <div id="modal-cierre-caja" class="modal-overlay" style="display:none;"
         onclick="if(event.target===this)cerrarModalCierre()">
@@ -2236,6 +2400,31 @@
         </div>
     </div>
 
+    <!-- ════ MODAL PAGO RECIBIDO / PROPINA — se muestra al elegir el método de pago (excepto fiado) ════ -->
+    <div id="modal-propina" class="modal-overlay" style="display:none;z-index:10450;">
+        <div class="modal-box" style="max-width:400px;padding:26px 24px;">
+            <h2 style="font-size:16px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;margin-bottom:4px;">
+                <span class="ic ic-md"><i data-lucide="hand-coins"></i></span> Pago recibido
+            </h2>
+            <p id="mpr-sub" style="font-size:12px;color:var(--text-3);line-height:1.5;margin-bottom:16px;">
+                Ingresa cuánto entregó el cliente para calcular la propina.
+            </p>
+            <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+                <span style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;">Total de la cuenta</span>
+                <span id="mpr-total" class="mono" style="font-size:17px;font-weight:700;color:var(--olive);">$0</span>
+            </div>
+            <label>Valor recibido</label>
+            <input type="text" id="mpr-recibido" inputmode="numeric" autocomplete="off" placeholder="Ej: 55.000">
+            <div id="mpr-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;"></div>
+            <div id="mpr-resultado"></div>
+            <div style="display:flex;gap:8px;margin-top:20px;">
+                <button type="button" id="mpr-cancelar" class="btn-ghost" style="flex:1;">Cancelar</button>
+                <button type="button" id="mpr-omitir" class="btn-ghost" style="flex:1;">Omitir</button>
+                <button type="button" id="mpr-continuar" class="btn-olive" style="flex:1;">Registrar</button>
+            </div>
+        </div>
+    </div>
+
 <div id="mateus-confirm-overlay" class="modal-overlay" style="display:none;z-index:10500;">
         <div class="modal-box" style="max-width:360px;padding:26px 24px;text-align:center;">
             <div id="mateus-confirm-icono" style="display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
@@ -2324,6 +2513,15 @@
     <script src="admin.js"></script>
 
     <script>
+        // ═══ GUARD ROL ADMIN ═══
+        (function () {
+            const rol = sessionStorage.getItem('user_role');
+            if (rol === 'admin') {
+                const nav = document.getElementById('global-nav');
+                if (nav) nav.style.display = 'flex';
+            }
+        })();
+
         // ═══ SIDEBAR: ocupar exactamente el alto visible ═══
         function ajustarSidebar() {
             const sb = document.getElementById('sidebar-admin');
@@ -2335,18 +2533,6 @@
         window.addEventListener('resize', ajustarSidebar);
         window.addEventListener('load', ajustarSidebar);
         document.addEventListener('DOMContentLoaded', ajustarSidebar);
-
-        // ═══ FECHA CORTA para el header en teléfono ═══
-        document.addEventListener('DOMContentLoaded', () => {
-            const el = document.getElementById('fecha-corta');
-            if (el) el.textContent = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).replace(/\./g, '').replace(' de ', ' ');
-        });
-
-        // ═══ MENÚ DESLIZABLE (móvil/tablet) — reutiliza #sidebar-admin ═══
-        function toggleDrawer() { document.body.classList.toggle('drawer-abierto'); }
-        function cerrarDrawer() { document.body.classList.remove('drawer-abierto'); }
-        window.addEventListener('resize', () => { if (window.innerWidth > 768) cerrarDrawer(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarDrawer(); });
 
         // ═══ GESTIÓN DE TABS ═══
         const TABS = ['dashboard', 'pedidos', 'facturas', 'tomar-pedido', 'menu', 'carta', 'personal', 'nomina', 'inventario', 'dian', 'calendario', 'impresoras'];
@@ -2371,8 +2557,10 @@
             }
             if (btnTarget) { btnTarget.classList.remove('tab-inactive'); btnTarget.classList.add('tab-active'); }
 
-            // 3. Cerrar el menú deslizable (móvil/tablet)
-            cerrarDrawer();
+            // 3. Sincronizar Bottom Nav (móvil)
+            document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('bnav-active'));
+            const bnavEl = document.getElementById(`bnav-${dest}`);
+            if (bnavEl) bnavEl.classList.add('bnav-active');
 
             // 4. Disparar carga de datos — solo cuando el contenedor ya es visible
             if (dest === 'dashboard')  cargarDashboardReal();
@@ -4264,6 +4452,128 @@ const MateusCliente = {
     };
 })();
 
+// ════════════════════════════════════════════════════════════
+// PROPINA — al elegir el método de pago se pide cuánto entregó el cliente.
+//   propina  = recibido - total   (si recibido > total)
+//   faltante = total - recibido   (si el cliente dio menos que la cuenta)
+// Se guarda en orders.notes como " | Recibido: N | Propina: N | Faltante: N"
+// (mismo formato "clave: valor | clave: valor" del resto del sistema).
+// ════════════════════════════════════════════════════════════
+const MateusPropina = {
+    _num(s) { return parseInt(String(s || '').replace(/\D/g, ''), 10) || 0; },
+    _fmt(n) { return (typeof formatCOP === 'function') ? formatCOP(n) : '$' + Number(n).toLocaleString('es-CO'); },
+    _valor(notes, clave) { return this._num(MateusCliente._extraer(notes, clave)); },
+
+    async _total(orderId) {
+        const { data } = await supabaseClient.from('orders').select('total_amount').eq('id', orderId).single();
+        return Number(data?.total_amount) || 0;
+    },
+
+    calcular(total, recibido) {
+        return { recibido, propina: Math.max(0, recibido - total), faltante: Math.max(0, total - recibido) };
+    },
+
+    _render(total, recibido) {
+        const box = document.getElementById('mpr-resultado');
+        if (!box) return;
+        const icono = (n) => `<span class="ic ic-md"><i data-lucide="${n}"></i></span>`;
+        if (!recibido) {
+            box.className = '';
+            box.innerHTML = `${icono('calculator')}<span>Ingresa el valor recibido.</span>`;
+        } else {
+            const c = this.calcular(total, recibido);
+            if (c.propina > 0) {
+                box.className = 'ok';
+                box.innerHTML = `${icono('hand-coins')}<span>Propina</span><span class="mpr-valor mono">${this._fmt(c.propina)}</span>`;
+            } else if (c.faltante > 0) {
+                box.className = 'warn';
+                box.innerHTML = `${icono('triangle-alert')}<span>Faltante: el cliente dio menos que la cuenta</span><span class="mpr-valor mono">${this._fmt(c.faltante)}</span>`;
+            } else {
+                box.className = '';
+                box.innerHTML = `${icono('circle-check')}<span>Cuenta exacta, sin propina</span>`;
+            }
+        }
+        if (window.lucide) lucide.createIcons();
+    },
+
+    async pedir(orderId, metodo) {
+        const total = await this._total(orderId).catch(() => 0);
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modal-propina');
+            const input = document.getElementById('mpr-recibido');
+            const elTotal = document.getElementById('mpr-total');
+            const chips = document.getElementById('mpr-chips');
+            const sub = document.getElementById('mpr-sub');
+            const bOk = document.getElementById('mpr-continuar');
+            const bSkip = document.getElementById('mpr-omitir');
+            const bNo = document.getElementById('mpr-cancelar');
+            if (!overlay || !input || !bOk || !bSkip || !bNo || !total) { resolve(null); return; }
+
+            const etiquetas = { efectivo: 'efectivo', transferencia: 'transferencia', datafono: 'datáfono' };
+            if (sub) sub.textContent = `Pago en ${etiquetas[String(metodo).toLowerCase()] || metodo}. Ingresa cuánto entregó el cliente para calcular la propina.`;
+            elTotal.textContent = this._fmt(total);
+
+            const poner = (n) => { input.value = n ? n.toLocaleString('es-CO') : ''; this._render(total, n); };
+            const sugeridos = [total];
+            [1000, 5000, 10000, 50000].forEach(step => {
+                const v = Math.ceil(total / step) * step;
+                if (v > total && !sugeridos.includes(v)) sugeridos.push(v);
+            });
+            chips.innerHTML = '';
+            sugeridos.slice(0, 4).forEach((v, i) => {
+                const b = document.createElement('button');
+                b.type = 'button'; b.className = 'mpr-chip';
+                b.textContent = i === 0 ? 'Exacto' : this._fmt(v);
+                b.onclick = () => { poner(v); input.focus(); };
+                chips.appendChild(b);
+            });
+
+            poner(0);
+            overlay.style.display = 'flex';
+            setTimeout(() => input.focus(), 50);
+
+            const onInput = () => poner(this._num(input.value));
+            input.addEventListener('input', onInput);
+
+            const cerrar = (res) => {
+                overlay.style.display = 'none';
+                input.removeEventListener('input', onInput);
+                bOk.onclick = bSkip.onclick = bNo.onclick = null;
+                document.removeEventListener('keydown', onKey);
+                resolve(res);
+            };
+            const continuar = () => {
+                const n = this._num(input.value);
+                if (!n) { Toast.error('Ingresa el valor recibido, o usa Omitir.'); input.focus(); return; }
+                cerrar(this.calcular(total, n));
+            };
+            const onKey = (e) => {
+                if (e.key === 'Escape') cerrar('cancelar');
+                else if (e.key === 'Enter') { e.preventDefault(); continuar(); }
+            };
+            document.addEventListener('keydown', onKey);
+            bOk.onclick = continuar;
+            bSkip.onclick = () => cerrar({ recibido: 0, propina: 0, faltante: 0 });
+            bNo.onclick = () => cerrar('cancelar');
+        });
+    },
+
+    async guardar(orderId, { recibido, propina, faltante }) {
+        try {
+            let notas = await MateusCliente._notas(orderId);
+            notas = notas.replace(/\s*\|\s*(?:Recibido|Propina|Faltante):\s*[^|]*/gi, '');
+            notas += ` | Recibido: ${recibido}`;
+            if (propina) notas += ` | Propina: ${propina}`;
+            if (faltante) notas += ` | Faltante: ${faltante}`;
+            const { error } = await supabaseClient.from('orders').update({ notes: notas }).eq('id', orderId);
+            if (error) throw error;
+        } catch (err) {
+            console.warn('[Propina] No se pudo guardar el pago recibido:', err);
+            Toast.error('No se pudo guardar la propina.');
+        }
+    },
+};
+
 // Al elegir el método de pago (Historial de Pedidos y mesas) también se piden los datos.
 (function _mateusEnvolverPago() {
     const _original = window.registrarMetodoPago;
@@ -4276,8 +4586,16 @@ const MateusCliente = {
         const sel = document.activeElement && document.activeElement.tagName === 'SELECT' ? document.activeElement : null;
         const r = await MateusCliente.pedir(orderId, 'pago');
         if (r === 'cancelar') { if (sel) sel.value = ''; return; } // no se registra el pago
+        // Pago recibido / propina (no aplica a fiado: aún no se cobra).
+        let p = null;
+        if (String(metodo).toLowerCase() !== 'fiado') {
+            p = await MateusPropina.pedir(orderId, metodo);
+            if (p === 'cancelar') { if (sel) sel.value = ''; return; }
+        }
         const res = await _original.call(this, orderId, metodo, ...resto);
         if (MateusCliente.tieneDatos(r)) await MateusCliente.guardar(orderId, r);
+        if (p && p.recibido) await MateusPropina.guardar(orderId, p);
+        if (typeof cargarPropinasDashboard === 'function') cargarPropinasDashboard();
         return res;
     };
 })();
@@ -4326,6 +4644,8 @@ async function descargarExcelContadora(fechaISO) {
                 tel: MateusCliente._extraer(o.notes, 'Tel'),
                 metodo: _xlMetodo(o),
                 valor: Number(o.total_amount) || 0,
+                recibido: MateusPropina._valor(o.notes, 'Recibido') || '',
+                propina: MateusPropina._valor(o.notes, 'Propina') || '',
             };
         });
 
@@ -4350,6 +4670,8 @@ async function descargarExcelContadora(fechaISO) {
             { header: 'Teléfono', key: 'tel', width: 16 },
             { header: 'Método de pago', key: 'metodo', width: 16 },
             { header: 'Valor de la compra', key: 'valor', width: 20, style: { numFmt: FMT } },
+            { header: 'Valor recibido', key: 'recibido', width: 18, style: { numFmt: FMT } },
+            { header: 'Propina', key: 'propina', width: 14, style: { numFmt: FMT } },
         ];
         encabezado(ws);
         filas.forEach(f => {
@@ -4357,11 +4679,12 @@ async function descargarExcelContadora(fechaISO) {
             if (f.metodo === 'Sin registrar') row.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3CD' } }; });
         });
         const total = filas.reduce((s, f) => s + f.valor, 0);
-        const rt = ws.addRow({ hora: '', orden: '', mesa: '', cliente: 'TOTAL DEL DÍA', doc: '', metodo: '', valor: total });
+        const totalPropina = filas.reduce((s, f) => s + (Number(f.propina) || 0), 0);
+        const rt = ws.addRow({ hora: '', orden: '', mesa: '', cliente: 'TOTAL DEL DÍA', doc: '', metodo: '', valor: total, propina: totalPropina });
         rt.font = { bold: true };
         rt.eachCell(c => { c.border = { top: { style: 'thin' } }; });
         ws.views = [{ state: 'frozen', ySplit: 1 }];
-        ws.autoFilter = { from: 'A1', to: 'H1' };
+        ws.autoFilter = { from: 'A1', to: 'J1' };
 
         const wr = wb.addWorksheet('Resumen');
         wr.columns = [
@@ -4374,6 +4697,7 @@ async function descargarExcelContadora(fechaISO) {
         filas.forEach(f => { (porMetodo[f.metodo] = porMetodo[f.metodo] || { n: 0, total: 0 }); porMetodo[f.metodo].n++; porMetodo[f.metodo].total += f.valor; });
         Object.keys(porMetodo).sort().forEach(k => wr.addRow({ metodo: k, n: porMetodo[k].n, total: porMetodo[k].total }));
         const rr = wr.addRow({ metodo: 'TOTAL', n: filas.length, total });
+        wr.addRow({ metodo: 'Propinas recaudadas', n: filas.filter(f => f.propina).length, total: totalPropina });
         rr.font = { bold: true };
         rr.eachCell(c => { c.border = { top: { style: 'thin' } }; });
 
@@ -4698,5 +5022,124 @@ async function cartaCopiarEnlace() {
 }
 </script>
 
+
+<script>
+// ════════════════════════════════════════════════════════════
+// DASHBOARD — propinas recaudadas del ciclo actual (mismo rango que el resto del dashboard)
+// ════════════════════════════════════════════════════════════
+async function cargarPropinasDashboard() {
+    const el = document.getElementById('kpi-propinas');
+    if (!el) return;
+    const sub = document.getElementById('kpi-propinas-sub');
+    try {
+        const hoy = new Date(Date.now() - 5 * 60 * 60 * 1000);
+        const f = `${hoy.getUTCFullYear()}-${String(hoy.getUTCMonth() + 1).padStart(2, '0')}-${String(hoy.getUTCDate()).padStart(2, '0')}`;
+        let inicio = `${f}T00:00:00-05:00`;
+        const fin = `${f}T23:59:59-05:00`;
+        if (typeof _resolverInicioDiaEfectivo === 'function') inicio = _resolverInicioDiaEfectivo(inicio);
+        const { data, error } = await supabaseClient.from('orders').select('status, notes').gte('created_at', inicio).lte('created_at', fin);
+        if (error) throw error;
+        let total = 0, cuentas = 0, faltante = 0;
+        (data || []).forEach(o => {
+            if (o.status === 'canceled' || o.status === 'cancelled') return;
+            const p = MateusPropina._valor(o.notes, 'Propina');
+            const fa = MateusPropina._valor(o.notes, 'Faltante');
+            if (p) { total += p; cuentas++; }
+            faltante += fa;
+        });
+        el.textContent = MateusPropina._fmt(total);
+        if (sub) sub.textContent = (cuentas ? `${cuentas} cuenta${cuentas === 1 ? '' : 's'} con propina` : 'Sin propinas registradas')
+            + (faltante ? ` · Faltante ${MateusPropina._fmt(faltante)}` : '');
+    } catch (err) {
+        console.warn('[Propina] No se pudo calcular el KPI de propinas:', err);
+    }
+}
+
+(function _envolverDashboard() {
+    const _orig = window.cargarDashboardReal;
+    if (typeof _orig === 'function') {
+        window.cargarDashboardReal = async function (...a) {
+            const r = await _orig.apply(this, a);
+            cargarPropinasDashboard();
+            return r;
+        };
+    }
+    setTimeout(cargarPropinasDashboard, 1500);
+})();
+
+// ════════════════════════════════════════════════════════════
+// EMOJIS → ICONOS (lucide). Cubre lo que dibuja admin.js (tarjetas de pedidos, toasts, etc.)
+// y alinea los botones de acción de las tarjetas del historial en rejilla uniforme.
+// ════════════════════════════════════════════════════════════
+(function _mateusIconos() {
+    const RE = /\p{Extended_Pictographic}(?:\uFE0F|\u20E3)?(?:\u200D\p{Extended_Pictographic}\uFE0F?)*/gu;
+    const TEST = /\p{Extended_Pictographic}/u;
+    const MAPA = {
+        '⏳': 'hourglass', '⌛': 'hourglass', '✏': 'pencil-line', '📝': 'pencil-line', '🗑': 'trash-2',
+        '🧾': 'receipt', '📄': 'file-text', '📃': 'file-text', '🖨': 'printer', '💵': 'banknote', '💰': 'wallet',
+        '💳': 'credit-card', '📱': 'smartphone', '🏦': 'landmark', '✅': 'circle-check', '✔': 'check',
+        '❌': 'circle-x', '✖': 'x', '⚠': 'alert-triangle', '🍽': 'utensils', '🍺': 'beer', '🍻': 'beer',
+        '🔥': 'flame', '🔒': 'lock', '🔓': 'lock-open', '📊': 'bar-chart-3', '📦': 'package', '👤': 'user-round',
+        '🕐': 'clock-3', '⏰': 'clock', '➕': 'plus', '🔄': 'refresh-cw', '🔍': 'search', '⭐': 'star', '★': 'star',
+        'ℹ': 'info', '🤝': 'handshake', '🪑': 'armchair', '📋': 'clipboard-list', '🧹': 'brush-cleaning'
+    };
+    const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'OPTION', 'SELECT', 'INPUT', 'TITLE', 'NOSCRIPT']);
+    let pendiente = false;
+
+    function nombreIcono(em) {
+        const k = em.replace(/\uFE0F|\u20E3/g, '');
+        return MAPA[k] || MAPA[Array.from(k)[0]] || 'circle';
+    }
+
+    function convertir(root) {
+        const nodos = [];
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        while (w.nextNode()) {
+            const n = w.currentNode, p = n.parentElement;
+            if (!p || SKIP.has(p.tagName) || p.closest('svg') || !TEST.test(n.nodeValue)) continue;
+            nodos.push(n);
+        }
+        nodos.forEach(n => {
+            const txt = n.nodeValue, frag = document.createDocumentFragment();
+            let last = 0;
+            for (const m of txt.matchAll(RE)) {
+                if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+                const span = document.createElement('span');
+                span.className = 'ic ic-sm mh-ic';
+                span.innerHTML = `<i data-lucide="${nombreIcono(m[0])}"></i>`;
+                frag.appendChild(span);
+                last = m.index + m[0].length;
+            }
+            if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+            n.parentNode.replaceChild(frag, n);
+        });
+        return nodos.length;
+    }
+
+    function pulirTarjetas() {
+        const grid = document.getElementById('grid-historial-pedidos');
+        if (!grid) return;
+        grid.querySelectorAll('button').forEach(b => {
+            const p = b.parentElement;
+            if (!p || p === grid || p.classList.contains('mh-acciones')) return;
+            if (p.querySelectorAll(':scope > button').length >= 3) p.classList.add('mh-acciones');
+        });
+    }
+
+    function ejecutar() {
+        pendiente = false;
+        const n = convertir(document.body);
+        pulirTarjetas();
+        if (n && window.lucide) lucide.createIcons();
+    }
+
+    new MutationObserver(() => {
+        if (pendiente) return;
+        pendiente = true;
+        requestAnimationFrame(ejecutar);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    ejecutar();
+})();
+</script>
 </body>
 </html>
