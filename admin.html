@@ -1176,6 +1176,8 @@
             }
             .mh-ic { display: inline-flex; vertical-align: -3px; }
 
+            @media (max-width: 768px) { .btn-sesion-txt { display: none; } #btn-cerrar-sesion { padding: 7px 11px !important; } }
+
             /* ── Propina: modal y KPI ── */
             #mpr-resultado { display: flex; align-items: center; gap: 10px; min-height: 54px; margin-top: 14px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface-2); font-size: 12.5px; color: var(--text-3); }
             #mpr-resultado.ok   { background: var(--olive-lt); border-color: var(--olive-bd); color: var(--olive); }
@@ -1188,26 +1190,6 @@
     </head>
 
 <body>
-
-    <!-- ════ BARRA NAVEGACIÓN GLOBAL (solo escritorio/admin) ════ -->
-    <nav id="global-nav" style="display:none;">
-        <div style="display:flex;align-items:center;gap:10px;margin-right:12px;">
-            <div
-                style="width:30px;height:30px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);background:var(--olive-soft);display:flex;align-items:center;justify-content:center;">
-                <img src="logo.jpg" alt="Mateus" style="width:100%;height:100%;object-fit:cover;">
-            </div>
-            <span style="font-size:12px;color:var(--text-2);font-weight:500;white-space:nowrap;">Restaurante Mateus —
-                Panel Administrativo</span>
-        </div>
-        <div class="gnav-sep"></div>
-        <a href="admin.html" class="gnav-btn gnav-active"><span class="ic ic-sm"><i data-lucide="layout-dashboard"></i></span> Panel Admin</a>
-        <a href="index.html" class="gnav-btn"><span class="ic ic-sm"><i data-lucide="utensils"></i></span> Pantalla Cocina</a>
-        <a href="menu.html" class="gnav-btn"><span class="ic ic-sm"><i data-lucide="smartphone"></i></span> Vista Cliente</a>
-        <div style="flex:1;"></div>
-        <span
-            style="font-size:10.5px;font-weight:700;color:var(--olive);background:var(--olive-lt);border:1.5px solid var(--olive-bd);border-radius:999px;padding:3px 12px;display:inline-flex;align-items:center;gap:5px;"><span class="ic ic-sm"><i data-lucide="shield-check"></i></span>
-            Administrador</span>
-    </nav>
 
     <!-- ════ HEADER ════ -->
     <header
@@ -1230,6 +1212,12 @@
                 onmouseover="this.style.background='rgba(192,57,43,.16)'"
                 onmouseout="this.style.background='var(--red-lt)'">
                 <span class="ic ic-sm" style="margin-right:4px;"><i data-lucide="lock"></i></span> Cierre de Caja (Z)
+            </button>
+            <button id="btn-cerrar-sesion" type="button" onclick="cerrarSesionAdmin()" title="Cerrar sesión"
+                style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);color:var(--text-2);border:1.5px solid var(--border-2);border-radius:999px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s,color .2s,border-color .2s;"
+                onmouseover="this.style.background='var(--surface-3)';this.style.color='var(--text-1)'"
+                onmouseout="this.style.background='var(--surface-2)';this.style.color='var(--text-2)'">
+                <span class="ic ic-sm"><i data-lucide="log-out"></i></span><span class="btn-sesion-txt">Cerrar sesión</span>
             </button>
         </div>
     </header>
@@ -2513,15 +2501,6 @@
     <script src="admin.js"></script>
 
     <script>
-        // ═══ GUARD ROL ADMIN ═══
-        (function () {
-            const rol = sessionStorage.getItem('user_role');
-            if (rol === 'admin') {
-                const nav = document.getElementById('global-nav');
-                if (nav) nav.style.display = 'flex';
-            }
-        })();
-
         // ═══ SIDEBAR: ocupar exactamente el alto visible ═══
         function ajustarSidebar() {
             const sb = document.getElementById('sidebar-admin');
@@ -5140,6 +5119,37 @@ async function cargarPropinasDashboard() {
     }).observe(document.body, { childList: true, subtree: true, characterData: true });
     ejecutar();
 })();
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CERRAR SESIÓN
+// Borra solo las llaves de identidad. NO toca pm_*, base_caja_hoy ni cierre_desde
+// (son los acumulados del día y el corte de caja).
+// ════════════════════════════════════════════════════════════
+const LOGIN_URL = 'index.html';
+
+async function cerrarSesionAdmin() {
+    const ok = await MateusConfirm.show({
+        titulo: '¿Cerrar sesión?',
+        mensaje: 'Saldrás del panel administrativo. Los pedidos y el dashboard no se modifican.',
+        textoConfirmar: 'Cerrar sesión',
+        textoCancelar: 'Cancelar',
+        peligro: true,
+    });
+    if (!ok) return;
+
+    try { if (supabaseClient?.auth?.signOut) await supabaseClient.auth.signOut(); } catch (e) { console.warn('[Sesión] signOut:', e); }
+
+    ['user_role', 'user_name', 'user_id', 'user_email', 'mateus_mesero_nombre'].forEach(k => {
+        try { sessionStorage.removeItem(k); } catch (e) {}
+    });
+    try {
+        Object.keys(localStorage).filter(k => /^sb-.*-auth-token$/.test(k)).forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
+
+    location.replace(LOGIN_URL);
+}
 </script>
 </body>
 </html>
