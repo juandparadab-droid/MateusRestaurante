@@ -96,8 +96,11 @@ window.Mateus = {
             _currentUser = userInput;
             sessionStorage.setItem('user_role', _currentRole);
             sessionStorage.setItem('user_name', _currentUser);
-            _iniciarApp();
-        }, 600);
+            // Pantalla de entrada de 5 s; después cada rol va a su vista
+            // (admin → admin.html, cocina → cocina, cliente → menu.html).
+            if (window.MateusEntrada) MateusEntrada.reproducir(_currentRole, _currentUser);
+            else _iniciarApp();
+        }, 300);
     },
 
     cerrarSesion() {
@@ -322,6 +325,12 @@ function _mostrarLogin() {
 }
 
 function _iniciarApp() {
+    // El administrador entra directo a su panel. La vista de cocina solo se
+    // muestra si la pide expresamente (enlace "Pantalla Cocina": index.html?vista=cocina).
+    if (_currentRole === 'admin' && new URLSearchParams(window.location.search).get('vista') !== 'cocina') {
+        window.location.replace('admin.html');
+        return;
+    }
     const scLogin = document.getElementById('screen-login');
     if (scLogin) scLogin.style.display = 'none';
     document.body.className = `role-${_currentRole}`;
@@ -471,7 +480,7 @@ function _activarRealtime() {
         .subscribe((status) => {
             console.info('[Mateus] Canal RT:', status);
             const dot = document.getElementById('dot-live');
-            if (dot) dot.style.background = status === 'SUBSCRIBED' ? '#4ade80' : '#f87171';
+            if (dot) dot.style.background = status === 'SUBSCRIBED' ? '#D7C7AD' : '#f87171';
         });
 }
 
@@ -516,7 +525,7 @@ function _mostrarToast(mensaje, tipo = 'info') {
     if (!container) return;
     const toast = document.createElement('div');
     toast.className = 'toast';
-    if (tipo === 'new')     toast.style.borderLeftColor = '#4ade80';
+    if (tipo === 'new')     toast.style.borderLeftColor = '#D7C7AD';
     if (tipo === 'error')   toast.style.borderLeftColor = '#ef4444';
     if (tipo === 'success') toast.style.borderLeftColor = '#22c55e';
     const iconos = { new:'🛎️', info:'ℹ️', success:'✅', warning:'⚠️', error:'❌' };
@@ -776,7 +785,7 @@ function _actualizarTimers() {
         const raw = el.getAttribute('data-created');
         if (!raw) { el.textContent = '—'; return; }
         const mins = Math.floor((ahora - new Date(raw).getTime()) / 60000);
-        if (mins < 1)       { el.textContent = 'Ahora mismo';         el.style.color = '#4ade80'; }
+        if (mins < 1)       { el.textContent = 'Ahora mismo';         el.style.color = '#5B4630'; }
         else if (mins < 10) { el.textContent = `Hace ${mins} min`;    el.style.color = '#9ca3af'; }
         else if (mins < 20) { el.textContent = `⚠ ${mins} min`;      el.style.color = '#fbbf24'; }
         else                { el.textContent = `🔴 ${mins} min`;      el.style.color = '#f87171'; }
