@@ -103,7 +103,7 @@ window.Mateus = {
             sessionStorage.setItem('user_name', _currentUser);
             // Pantalla de entrada de 5 s; después cada rol va a su vista
             // (admin → admin.html, cocina → cocina, cliente → menu.html).
-            if (window.MateusEntrada) MateusEntrada.reproducir(_currentRole, _currentUser);
+            if (window.MateusEntrada) MateusEntrada.reproducir(_currentRole, _currentUser, _iniciarApp);
             else _iniciarApp();
         }, 300);
     },
