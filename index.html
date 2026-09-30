@@ -486,12 +486,10 @@
         .login-brand::before { top:-270px; left:-230px; }
         .login-brand::after { bottom:-300px; right:-250px; width:500px; height:500px; }
         .brand-content { width:min(100%,520px); position:relative; z-index:1; text-align:center; }
-        .brand-monogram { position:relative; width:164px; height:270px; margin:0 auto 26px; color:#f1e5ca; font:700 258px/.82 'Cormorant Garamond',Georgia,serif; letter-spacing:-.13em; }
-        .brand-monogram > span { display:block; transform:scaleX(1.04); }
-        .brand-cutlery { position:absolute; inset:26px 0 17px; width:100%; height:calc(100% - 43px); pointer-events:none; }
+        .brand-monogram { display:block; width:164px; height:270px; object-fit:contain; margin:0 auto 26px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.08)); }
         .brand-divider { width:80px; height:1px; background:#bda987; margin:0 auto 22px; opacity:.85; }
         .brand-kicker { color:#bba887; font-size:13px; font-weight:600; letter-spacing:.45em; margin-left:.45em; }
-        .brand-name { color:#f1e5ca; font:900 clamp(48px,5.2vw,76px)/.98 'Cormorant Garamond',Georgia,serif; letter-spacing:.035em; margin:9px 0 18px; }
+        .brand-name { color:#f1e5ca; font:900 clamp(54px,5.2vw,84px)/.94 Georgia,'Times New Roman',serif; letter-spacing:.005em; margin:9px 0 20px; }
         .brand-tagline { color:#a99575; font-size:12px; letter-spacing:.28em; line-height:1.7; }
         .login-card {
             grid-column:2; grid-row:1;
@@ -538,14 +536,13 @@
         @media(max-width:1000px) {
             #screen-login { grid-template-columns:minmax(350px,42%) minmax(480px,58%); }
             .login-card { width:calc(100% - 48px); padding:36px 32px; }
-            .brand-monogram { transform:scale(.86); margin-bottom:2px; }
-            .brand-name { font-size:54px; }
+            .brand-monogram { width:142px; height:234px; margin-bottom:12px; }
+            .brand-name { font-size:58px; }
         }
         @media(max-width:760px) {
             #screen-login { display:flex; flex-direction:column; min-height:100svh; padding:0 18px 24px; }
             .login-brand { width:calc(100% + 36px); min-height:225px; padding:23px 16px 20px; margin:0 -18px 25px; }
-            .brand-monogram { width:70px; height:82px; font-size:82px; margin:0 auto 8px; }
-            .brand-cutlery { inset:10px 0 4px; height:calc(100% - 14px); }
+            .brand-monogram { width:66px; height:108px; margin:0 auto 5px; }
             .brand-divider { display:none; }
             .brand-kicker { font-size:9px; letter-spacing:.32em; }
             .brand-name { font-size:38px; margin:3px 0 4px; }
@@ -599,15 +596,7 @@
 <div id="screen-login">
     <section class="login-brand" aria-label="Restaurante Mateus">
         <div class="brand-content">
-            <div class="brand-monogram anim-1" aria-hidden="true">
-                <span>M</span>
-                <svg class="brand-cutlery" viewBox="0 0 164 240" fill="none" aria-hidden="true">
-                    <g stroke="#301e12" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M48 43v59m-8-59v25m8-25v25m8-25v25m-16 0c0 17 2 24 8 31v91m0-91c6-7 8-14 8-31"/>
-                    </g>
-                    <path d="M113 42c-10 15-12 34-12 58v8c0 9 5 15 11 20v91h8v-91c6-5 11-11 11-20V42c0-5-5-5-6 0l-5 51h-3l1-54c0-5-5-5-6 0l-1 54h-3l-1-51c0-5-5-5-6 0l-1 51h-3l-1-48c0-5-5-7-6-3z" fill="#301e12"/>
-                </svg>
-            </div>
+            <img class="brand-monogram anim-1" src="login-mark.png" alt="Monograma de Restaurante Mateus">
             <div class="brand-divider anim-1"></div>
             <p class="brand-kicker anim-2">RESTAURANTE</p>
             <h1 class="brand-name anim-3">MATEUS</h1>
