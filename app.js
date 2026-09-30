@@ -33,7 +33,12 @@
 const SUPABASE_URL      = "https://guqgyuefsdedstfbhxvo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_zSGT_1Qr1QVI3aTPWOMwdQ_jqMqxnA-";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// El login de escritorio es local; los pedidos y el resto del Admin usan
+// la capa SQLite/Supabase que se carga en admin.html. En la web se conserva
+// el cliente remoto y el comportamiento existente.
+const supabaseClient = window.mateusApp?.offlineMode
+    ? null
+    : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const _supabase = supabaseClient;
 
 const RESTAURANT_SLUG = "restaurante-mateus";
@@ -315,7 +320,9 @@ function _mostrarLogin() {
     const navAdmin  = document.getElementById('nav-admin');
     const barCocina = document.getElementById('bar-cocina');
 
-    if (scLogin)   scLogin.style.display = 'flex';
+    // Quita el ocultamiento inline para que se aplique el layout original
+    // (grid en escritorio y flex en la variante móvil).
+    if (scLogin)   scLogin.style.removeProperty('display');
     if (scCocina)  scCocina.classList.remove('visible');
     if (navAdmin)  navAdmin.classList.remove('visible');
     if (barCocina) barCocina.classList.remove('visible');
@@ -348,7 +355,7 @@ function _iniciarApp() {
         _mostrarCocina();
     } else if (_currentRole === 'cliente') {
         _mostrarMsgLogin('Bienvenido. Redirigiendo…', 'success');
-        if (scLogin) scLogin.style.display = 'flex';
+        if (scLogin) scLogin.style.removeProperty('display');
         setTimeout(() => {
             window.location.href = `menu.html?usuario=${encodeURIComponent(_currentUser)}`;
         }, 900);
@@ -1132,6 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ═══ GUARD: Verificar si el sistema está habilitado ═══
 async function verificarAccesoPedidos() {
+    if (!supabaseClient) return true;
     try {
         const { data } = await supabaseClient
             .from('system_settings')
