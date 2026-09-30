@@ -461,6 +461,102 @@
             .nav-tabs .nav-tab:not(.active) { display:none; }
             #bar-cocina .stat-chip { display:none; }
         }
+
+        /* Acceso Mateus: composición original a dos paneles para escritorio. */
+        #screen-login {
+            display:grid;
+            grid-template-columns:minmax(420px,45%) minmax(520px,55%);
+            grid-template-rows:minmax(650px,1fr);
+            align-items:stretch;
+            justify-content:stretch;
+            min-height:100svh;
+            padding:0;
+            background:#f3ecdf;
+        }
+        .login-brand {
+            grid-column:1; grid-row:1;
+            position:relative; z-index:1;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            overflow:hidden; padding:50px 34px;
+            color:#f1e5ca;
+            background-color:#301e12;
+            background-image:repeating-linear-gradient(132deg,transparent 0,transparent 13px,rgba(255,244,222,.035) 13px,rgba(255,244,222,.035) 14px);
+        }
+        .login-brand::before,.login-brand::after { content:""; position:absolute; width:420px; height:420px; border:1px solid rgba(241,229,202,.045); border-radius:50%; pointer-events:none; }
+        .login-brand::before { top:-270px; left:-230px; }
+        .login-brand::after { bottom:-300px; right:-250px; width:500px; height:500px; }
+        .brand-content { width:min(100%,520px); position:relative; z-index:1; text-align:center; }
+        .brand-monogram { position:relative; width:164px; height:270px; margin:0 auto 26px; color:#f1e5ca; font:700 258px/.82 'Cormorant Garamond',Georgia,serif; letter-spacing:-.13em; }
+        .brand-monogram > span { display:block; transform:scaleX(1.04); }
+        .brand-cutlery { position:absolute; inset:26px 0 17px; width:100%; height:calc(100% - 43px); pointer-events:none; }
+        .brand-divider { width:80px; height:1px; background:#bda987; margin:0 auto 22px; opacity:.85; }
+        .brand-kicker { color:#bba887; font-size:13px; font-weight:600; letter-spacing:.45em; margin-left:.45em; }
+        .brand-name { color:#f1e5ca; font:900 clamp(48px,5.2vw,76px)/.98 'Cormorant Garamond',Georgia,serif; letter-spacing:.035em; margin:9px 0 18px; }
+        .brand-tagline { color:#a99575; font-size:12px; letter-spacing:.28em; line-height:1.7; }
+        .login-card {
+            grid-column:2; grid-row:1;
+            align-self:center; justify-self:center;
+            position:relative; top:-25px; z-index:1;
+            width:min(500px,calc(100% - 72px)); max-width:500px;
+            margin:0; padding:43px 42px 42px;
+            border:1px solid #e4d8c4; border-radius:26px;
+            background:#fffdfb;
+            box-shadow:0 18px 65px rgba(48,30,18,.10);
+        }
+        .login-card-heading { margin-bottom:29px; }
+        .login-eyebrow { color:#9a8467; font-size:12px; font-weight:700; letter-spacing:.28em; margin-bottom:8px; }
+        .login-title { color:#27180f; font:900 43px/1.08 'Cormorant Garamond',Georgia,serif; letter-spacing:-.025em; margin-bottom:11px; }
+        .login-subtitle { color:#927e65; font-size:15px; line-height:1.5; }
+        .login-fields { display:flex; flex-direction:column; gap:8px; }
+        .login-field-label { color:#6d5740; font-size:12px; font-weight:700; letter-spacing:.12em; margin-top:2px; }
+        .input-auth {
+            width:100%; padding:15px 19px; border:1px solid #d9c5a5; border-radius:15px;
+            background:#fff; color:#302317; font:400 15px 'DM Sans',sans-serif; outline:none;
+            transition:border-color .2s,box-shadow .2s;
+        }
+        .input-auth::placeholder { color:#ad9c85; }
+        .input-auth:focus { border-color:#715337; box-shadow:0 0 0 3px rgba(113,83,55,.11); }
+        .input-auth.field-error { border-color:#c0392b; box-shadow:0 0 0 3px rgba(192,57,43,.10); }
+        .login-password-wrap { position:relative; }
+        .login-password-wrap .input-auth { padding-right:54px; }
+        #btn-toggle-pass { position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#9a8467; background:transparent; border:0; cursor:pointer; padding:7px; }
+        #btn-toggle-pass svg { width:18px; height:18px; }
+        .login-card .msg-box { margin-top:4px; }
+        .login-card .btn-primary {
+            margin-top:7px; min-height:57px; padding:15px 22px; border-radius:15px;
+            background:#301e12; color:#f5ead8; font:700 15px 'DM Sans',sans-serif;
+            letter-spacing:.1em; box-shadow:0 9px 22px rgba(48,30,18,.20);
+        }
+        .login-card .btn-primary:hover:not(:disabled) { background:#4a3020; transform:translateY(-1px); }
+        .login-card .btn-primary svg { width:18px; height:18px; }
+        .login-footer {
+            grid-column:2; grid-row:1; align-self:end; justify-self:center;
+            position:relative; z-index:1; margin:0 12px 22px;
+            color:#ad987b; font-size:12px; letter-spacing:.04em; text-align:center;
+        }
+        .login-footer a { color:inherit; text-decoration:underline; text-underline-offset:3px; }
+        @media(max-width:1000px) {
+            #screen-login { grid-template-columns:minmax(350px,42%) minmax(480px,58%); }
+            .login-card { width:calc(100% - 48px); padding:36px 32px; }
+            .brand-monogram { transform:scale(.86); margin-bottom:2px; }
+            .brand-name { font-size:54px; }
+        }
+        @media(max-width:760px) {
+            #screen-login { display:flex; flex-direction:column; min-height:100svh; padding:0 18px 24px; }
+            .login-brand { width:calc(100% + 36px); min-height:225px; padding:23px 16px 20px; margin:0 -18px 25px; }
+            .brand-monogram { width:70px; height:82px; font-size:82px; margin:0 auto 8px; }
+            .brand-cutlery { inset:10px 0 4px; height:calc(100% - 14px); }
+            .brand-divider { display:none; }
+            .brand-kicker { font-size:9px; letter-spacing:.32em; }
+            .brand-name { font-size:38px; margin:3px 0 4px; }
+            .brand-tagline { font-size:9px; letter-spacing:.16em; }
+            .login-card { top:auto; width:min(500px,100%); margin:0 auto; padding:30px 25px; }
+            .login-title { font-size:37px; }
+            .login-footer { margin:18px 0 0; }
+        }
+        @media(prefers-reduced-motion:reduce) {
+            .anim-1,.anim-2,.anim-3,.anim-4,.anim-card { animation:none !important; }
+        }
     </style>
 </head>
 <body>
@@ -501,87 +597,73 @@
      PANTALLA 1: LOGIN
 ══════════════════════════════════════════ -->
 <div id="screen-login">
-
-    <div style="text-align:center;margin-bottom:36px;">
-        <div class="anim-1" style="margin-bottom:18px;">
-            <div style="width:80px;height:80px;border-radius:20px;overflow:hidden;margin:0 auto;box-shadow:0 2px 12px rgba(74,90,40,0.14);border:1.5px solid var(--oliva-bd);background:var(--oliva-pale);display:flex;align-items:center;justify-content:center;">
-                <img src="logo.jpg" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
+    <section class="login-brand" aria-label="Restaurante Mateus">
+        <div class="brand-content">
+            <div class="brand-monogram anim-1" aria-hidden="true">
+                <span>M</span>
+                <svg class="brand-cutlery" viewBox="0 0 164 240" fill="none" aria-hidden="true">
+                    <g stroke="#301e12" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M48 43v59m-8-59v25m8-25v25m8-25v25m-16 0c0 17 2 24 8 31v91m0-91c6-7 8-14 8-31"/>
+                    </g>
+                    <path d="M113 42c-10 15-12 34-12 58v8c0 9 5 15 11 20v91h8v-91c6-5 11-11 11-20V42c0-5-5-5-6 0l-5 51h-3l1-54c0-5-5-5-6 0l-1 54h-3l-1-51c0-5-5-5-6 0l-1 51h-3l-1-48c0-5-5-7-6-3z" fill="#301e12"/>
+                </svg>
             </div>
+            <div class="brand-divider anim-1"></div>
+            <p class="brand-kicker anim-2">RESTAURANTE</p>
+            <h1 class="brand-name anim-3">MATEUS</h1>
+            <p class="brand-tagline anim-4">SISTEMA INTERNO · MESA DE LOS SANTOS</p>
         </div>
-        <h1 class="font-display anim-2" style="font-size:clamp(1.9rem,5vw,2.6rem);font-weight:300;color:var(--ink);letter-spacing:-0.01em;line-height:1.1;margin-bottom:6px;">
-            Restaurante <span style="font-style:italic;color:var(--oliva);">Mateus</span>
-        </h1>
-        <p class="anim-3" style="font-size:13px;color:var(--ink-muted);font-weight:300;letter-spacing:0.08em;text-transform:uppercase;">
-            Sistema Interno · Mesa de los santos
-        </p>
-    </div>
+    </section>
 
-    <div class="login-card anim-card" id="login-card">
-        <div style="text-align:center;margin-bottom:28px;">
-            <span class="rule-oliva"></span>
-            <h2 class="font-display" style="font-size:1.5rem;font-weight:400;color:var(--ink);letter-spacing:-0.01em;margin-bottom:6px;">
-                Acceso al Sistema
-            </h2>
-            <p style="font-size:13.5px;color:var(--ink-muted);font-weight:300;line-height:1.5;">
-                Ingresa tus credenciales para continuar.
-            </p>
-        </div>
+    <section class="login-card anim-card" id="login-card" aria-labelledby="login-title">
+        <header class="login-card-heading">
+            <p class="login-eyebrow">ACCESO AL SISTEMA</p>
+            <h2 class="login-title" id="login-title">Bienvenido</h2>
+            <p class="login-subtitle">Ingresa tus credenciales para continuar.</p>
+        </header>
 
-        <!-- ► FORM con id para que app.js lo capture via addEventListener -->
-        <form id="form-login" novalidate style="display:flex;flex-direction:column;gap:12px;">
-
+        <!-- Se conservan los identificadores que usa app.js para autenticar. -->
+        <form id="form-login" class="login-fields" novalidate>
+            <label class="login-field-label" for="login-user">USUARIO</label>
             <input
                 type="text"
                 id="login-user"
                 class="input-auth"
-                placeholder="Usuario"
+                placeholder="Ingresa tu usuario"
                 autocomplete="username"
                 spellcheck="false"
                 aria-label="Usuario"
                 required
             >
 
-            <div style="position:relative;">
+            <label class="login-field-label" for="login-pass">CONTRASEÑA</label>
+            <div class="login-password-wrap">
                 <input
                     type="password"
                     id="login-pass"
                     class="input-auth"
-                    placeholder="Contraseña"
+                    placeholder="Ingresa tu contraseña"
                     autocomplete="current-password"
                     aria-label="Contraseña"
                     required
-                    style="padding-right:48px;"
                 >
-                <button
-                    type="button"
-                    id="btn-toggle-pass"
-                    style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-ghost);font-size:16px;line-height:1;"
-                    aria-label="Mostrar/ocultar contraseña">
+                <button type="button" id="btn-toggle-pass" aria-label="Mostrar u ocultar contraseña">
                     <span><i data-lucide="eye" id="icon-toggle-pass"></i></span>
                 </button>
             </div>
 
             <div class="msg-box" id="login-msg" role="alert"></div>
 
-            <!-- type="submit" para que Enter funcione nativamente -->
             <button type="submit" class="btn-primary" id="btn-login">
-                <span id="btn-login-text">Ingresar</span>
+                <span id="btn-login-text">INGRESAR</span>
+                <i data-lucide="arrow-right" aria-hidden="true"></i>
             </button>
         </form>
+    </section>
 
-        <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f0f0e8;">
-            <p style="font-size:11px;color:var(--ink-ghost);letter-spacing:0.05em;text-transform:uppercase;text-align:center;margin-bottom:12px;">Perfiles disponibles</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-                <span class="perfil-chip" style="background:var(--oliva-pale);border:1px solid var(--oliva-bd);color:var(--oliva);"><span><i data-lucide="crown"></i></span> Admin</span>
-                <span class="perfil-chip" style="background:var(--amber-pale);border:1px solid var(--amber-bd);color:var(--amber);"><span><i data-lucide="chef-hat"></i></span> Cocina</span>
-                <span class="perfil-chip" style="background:var(--blue-pale);border:1px solid var(--blue-bd);color:var(--blue);"><span><i data-lucide="user"></i></span> Cliente</span>
-            </div>
-        </div>
-    </div>
-
-    <p class="anim-4" style="margin-top:24px;font-size:11.5px;color:var(--ink-ghost);letter-spacing:0.04em;text-align:center;">
-        © 2025 Restaurante Mateus · Uso exclusivo del personal
-        <br><a href="privacidad.html" style="display:inline-block;margin-top:8px;color:inherit;text-decoration:underline;text-underline-offset:3px;">Política de privacidad</a>
+    <p class="login-footer anim-4">
+        © 2026 Restaurante Mateus · Uso exclusivo del personal<br>
+        <a href="privacidad.html">Política de privacidad</a>
     </p>
 </div>
 
