@@ -4,27 +4,43 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Restaurante Mateus — Panel Administrativo</title>
+        <meta name="theme-color" content="#301e12">
+        <link rel="manifest" href="manifest.webmanifest">
         <link rel="icon" type="image/jpg" href="logo.jpg">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
-        <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap"
-            rel="stylesheet">
-        <!-- Tailwind cargado ANTES que Supabase para evitar conflictos -->
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-        <!-- Supabase -->
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <!-- jsPDF — cargado con crossorigin para evitar el warning de Tracking Prevention -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-            crossorigin="anonymous"></script>
-        <!-- Lucide Icons — librería de iconos SVG vía CDN -->
-        <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-        <!-- Anime.js — animaciones del módulo de estadísticas mensuales -->
-        <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-        <!-- ExcelJS — reporte diario en Excel para la contadora -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" crossorigin="anonymous"></script>
-        <!-- qrcode-generator — genera el QR de la carta digital (pestaña Carta Digital) -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" crossorigin="anonymous"></script>
+        <script src="mateus-pwa-store.js"></script>
+        <script defer src="pwa-register.js"></script>
+        <!-- En escritorio los recursos se cargan desde node_modules; en la web siguen usando CDN. -->
+        <script>
+            (function () {
+                const desktop = !!window.mateusApp?.offlineMode;
+                const pwa = !!window.MateusPwaStore?.offlineMode;
+                if (desktop) {
+                    for (const family of ['dm-sans', 'dm-mono']) {
+                        document.write('<link rel="stylesheet" href="./node_modules/@fontsource/' + family + '/index.css">');
+                    }
+                } else {
+                    document.write('<link rel="preconnect" href="https://fonts.googleapis.com">');
+                    document.write('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
+                    document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap">');
+                }
+                const scripts = desktop ? [
+                    './node_modules/@tailwindcss/browser/dist/index.global.js',
+                    './node_modules/lucide/dist/umd/lucide.min.js',
+                    './node_modules/animejs/lib/anime.min.js',
+                    './node_modules/exceljs/dist/exceljs.min.js',
+                    './node_modules/qrcode-generator/qrcode.js'
+                ] : [
+                    'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4',
+                    'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
+                    'https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
+                ];
+                if (!desktop && !pwa) scripts.splice(1, 0, 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+                for (const src of scripts) document.write('<script src="' + src + '"></' + 'script>');
+            })();
+        </script>
+        <script src="mateus-offline.js"></script>
         <style>
             :root {
                 /* ═══ Paleta derivada del logo (café oscuro + crema) ═══ */
@@ -1186,34 +1202,6 @@
             .mpr-chip { padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
             .mpr-chip:hover { border-color: var(--olive-bd); background: var(--olive-lt); color: var(--olive); }
             @media (min-width: 769px) and (max-width: 1280px) { #kpi-row-2 { grid-template-columns: repeat(3, 1fr) !important; } }
-
-            /* ── Móvil: encabezado en dos filas y menú inferior con todas las secciones ── */
-            @media (max-width: 768px) {
-                body > header {
-                    height: auto !important; min-height: 52px;
-                    padding: 8px 12px !important;
-                    display: flex !important; flex-wrap: wrap; align-items: center !important;
-                    justify-content: flex-start !important; column-gap: 8px; row-gap: 8px;
-                }
-                body > header .hdr-right { display: contents !important; }
-                body > header .hdr-left  { order: 1; flex: 1 1 calc(100% - 52px); min-width: 0; gap: 10px !important; }
-                body > header .hdr-left > div:first-child { width: 36px !important; height: 36px !important; border-radius: 10px !important; }
-                body > header h1 { font-size: 14px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                #btn-cerrar-sesion { order: 2; flex: 0 0 40px; width: 40px; height: 36px; padding: 0 !important; justify-content: center; }
-                #fecha-actual { order: 3; flex: 1 1 auto; min-width: 0; font-size: 11.5px !important; white-space: nowrap; }
-                #btn-cierre-caja { order: 4; flex: 0 0 auto; padding: 7px 14px !important; font-size: 11.5px !important; }
-
-                #bottom-nav {
-                    display: flex !important; flex-wrap: wrap; justify-content: center; align-content: flex-start;
-                    height: auto !important; overflow: visible !important;
-                    padding: 2px 4px calc(2px + env(safe-area-inset-bottom, 0px)) !important;
-                }
-                .bnav-item { flex: 0 0 calc(100% / 6) !important; min-width: 0 !important; height: 52px; padding: 6px 2px !important; }
-                .bnav-label { font-size: 9px !important; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-                .bnav-item.bnav-active::before { left: 26%; right: 26%; }
-                main { padding-bottom: 130px !important; }
-            }
-            @media (max-width: 340px) { #fecha-actual { font-size: 10.5px !important; } }
         </style>
     </head>
 
@@ -1222,7 +1210,7 @@
     <!-- ════ HEADER ════ -->
     <header
         style="background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 24px;height:58px;display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;">
-        <div class="hdr-left" style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
             <div
                 style="background:var(--olive-soft);border-radius:11px;width:40px;height:40px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--olive-bd);">
                 <img src="logo.jpg" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
@@ -1233,7 +1221,7 @@
                 <p style="font-size:10.5px;color:var(--text-3);">Panel Administrativo · Bucaramanga, Santander</p>
             </div>
         </div>
-        <div class="hdr-right" style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
             <span id="fecha-actual" class="mono" style="font-size:12px;color:var(--text-3);">—</span>
             <button id="btn-cierre-caja" onclick="ejecutarCierreCaja()"
                 style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;"
@@ -1663,7 +1651,7 @@
                         </div>
                         <button id="tp-btn-enviar" onclick="enviarPedidoMesa()" class="btn-olive"
                             style="width:100%;margin-top:14px;height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;">
-                            <span class="ic ic-sm"><i data-lucide="send"></i></span> Realizar pedido
+                            <span class="ic ic-sm"><i data-lucide="send"></i></span> Enviar pedido a cocina
                         </button>
                     </div>
 
@@ -2237,20 +2225,11 @@
 
     <!-- ════ BOTTOM NAV (móvil) ════ -->
     <nav id="bottom-nav" aria-label="Navegación principal">
-        <button class="bnav-item" id="bnav-tomar-pedido" onclick="cambiarTab('tomar-pedido')">
-            <span class="bnav-icon ic-nav"><i data-lucide="clipboard-list"></i></span><span class="bnav-label">Mesas</span>
+        <button class="bnav-item bnav-active" id="bnav-dashboard" onclick="cambiarTab('dashboard')">
+            <span class="bnav-icon ic-nav"><i data-lucide="layout-dashboard"></i></span><span class="bnav-label">Dashboard</span>
         </button>
         <button class="bnav-item" id="bnav-pedidos" onclick="cambiarTab('pedidos')">
             <span class="bnav-icon ic-nav"><i data-lucide="shopping-bag"></i></span><span class="bnav-label">Pedidos</span>
-        </button>
-        <button class="bnav-item" id="bnav-facturas" onclick="cambiarTab('facturas')">
-            <span class="bnav-icon ic-nav"><i data-lucide="archive"></i></span><span class="bnav-label">Facturas</span>
-        </button>
-        <button class="bnav-item" id="bnav-dian" onclick="cambiarTab('dian')">
-            <span class="bnav-icon ic-nav"><i data-lucide="file-text"></i></span><span class="bnav-label">DIAN</span>
-        </button>
-        <button class="bnav-item bnav-active" id="bnav-dashboard" onclick="cambiarTab('dashboard')">
-            <span class="bnav-icon ic-nav"><i data-lucide="layout-dashboard"></i></span><span class="bnav-label">Dashboard</span>
         </button>
         <button class="bnav-item" id="bnav-menu" onclick="cambiarTab('menu')">
             <span class="bnav-icon ic-nav"><i data-lucide="book-open"></i></span><span class="bnav-label">Productos</span>
@@ -2258,18 +2237,24 @@
         <button class="bnav-item" id="bnav-carta" onclick="cambiarTab('carta')">
             <span class="bnav-icon ic-nav"><i data-lucide="qr-code"></i></span><span class="bnav-label">Carta</span>
         </button>
-        <button class="bnav-item" id="bnav-inventario" onclick="cambiarTab('inventario')">
-            <span class="bnav-icon ic-nav"><i data-lucide="package"></i></span><span class="bnav-label">Inventario</span>
+        <button class="bnav-item" id="bnav-personal" onclick="cambiarTab('personal')">
+            <span class="bnav-icon ic-nav"><i data-lucide="users"></i></span><span class="bnav-label">Personal</span>
         </button>
         <button class="bnav-item" id="bnav-nomina" onclick="cambiarTab('nomina')">
             <span class="bnav-icon ic-nav"><i data-lucide="banknote"></i></span><span class="bnav-label">Gastos</span>
         </button>
-        <button class="bnav-item" id="bnav-personal" onclick="cambiarTab('personal')">
-            <span class="bnav-icon ic-nav"><i data-lucide="users"></i></span><span class="bnav-label">Personal</span>
+        <button class="bnav-item" id="bnav-inventario" onclick="cambiarTab('inventario')">
+            <span class="bnav-icon ic-nav"><i data-lucide="package"></i></span><span class="bnav-label">Inventario</span>
+        </button>
+        <button class="bnav-item" id="bnav-dian" onclick="cambiarTab('dian')">
+            <span class="bnav-icon ic-nav"><i data-lucide="file-text"></i></span><span class="bnav-label">Factura</span>
         </button>
         <button class="bnav-item" id="bnav-calendario" onclick="cambiarTab('calendario')">
             <span class="bnav-icon ic-nav"><i data-lucide="calendar"></i></span><span class="bnav-label">Cierres</span>
         </button>
+        <a class="bnav-item" href="index.html">
+            <span class="bnav-icon ic-nav"><i data-lucide="utensils"></i></span><span class="bnav-label">Cocina</span>
+        </a>
     </nav>
 
     <!-- ════ MODAL CIERRE DE CAJA ════ -->
@@ -5182,5 +5167,6 @@ async function cerrarSesionAdmin() {
     location.replace(LOGIN_URL);
 }
 </script>
+<script src="mesa-transfer.js"></script>
 </body>
 </html>
