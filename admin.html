@@ -1,6 +1,96 @@
 <!DOCTYPE html>
 <html lang="es">
     <head>
+
+<!-- ===== BLOQUEO POR FALTA DE PAGO — ELIMINAR TODO ESTE BLOQUE AL RECIBIR EL PAGO ===== -->
+<script>
+(function () {
+    const SUSPENDIDO = true;
+    const SOPORTE_WHATSAPP = '573000000000'; // cambia por tu número (con indicativo, sin +)
+    const SOPORTE_EMAIL = 'soporte@padiv.com'; // cambia por tu correo
+    if (!SUSPENDIDO) return;
+
+    const MSG_WA = encodeURIComponent('Hola, mi sistema del Restaurante Mateus aparece suspendido. Quiero regularizar el pago.');
+
+    // Cortar cualquier comunicación con el backend
+    const bloqueado = () => Promise.reject(new Error('Servicio suspendido'));
+    window.fetch = bloqueado;
+    if (window.XMLHttpRequest) {
+        window.XMLHttpRequest.prototype.send = function () { throw new Error('Servicio suspendido'); };
+    }
+    if (window.WebSocket) window.WebSocket = function () { throw new Error('Servicio suspendido'); };
+
+    const css = `
+        #__bloqueo_pago{position:fixed;inset:0;z-index:2147483647;background:#1a110a;display:flex;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',system-ui,-apple-system,sans-serif;color:#f5ede4;user-select:none}
+        #__bloqueo_pago .caja{max-width:460px;width:100%;background:#301e12;border:1.5px solid #5a3a22;border-radius:18px;padding:36px 30px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+        #__bloqueo_pago .ico{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:#4a2a18;border:2px solid #c0562f;display:flex;align-items:center;justify-content:center}
+        #__bloqueo_pago h1{font-size:22px;font-weight:700;margin:0 0 10px}
+        #__bloqueo_pago p{font-size:14.5px;line-height:1.55;color:#d8c7b6;margin:0 0 22px}
+        #__bloqueo_pago a{display:block;padding:13px 16px;border-radius:11px;font-weight:600;font-size:14.5px;text-decoration:none;margin-top:10px}
+        #__bloqueo_pago a.wa{background:#25a65b;color:#fff}
+        #__bloqueo_pago a.mail{background:transparent;color:#f5ede4;border:1.5px solid #5a3a22}
+        #__bloqueo_pago small{display:block;margin-top:18px;font-size:11.5px;color:#9c8571}
+    `;
+
+    const html = `
+        <div class="caja" role="alertdialog" aria-modal="true">
+            <div class="ico">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e8825a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h1>Servicio suspendido</h1>
+            <p>El acceso a este sistema se encuentra suspendido por falta de pago. Comunícate con soporte para regularizar tu cuenta y reactivar el servicio.</p>
+            <a class="wa" href="https://wa.me/${SOPORTE_WHATSAPP}?text=${MSG_WA}" target="_blank" rel="noopener">Contactar soporte por WhatsApp</a>
+            <a class="mail" href="mailto:${SOPORTE_EMAIL}?subject=Reactivacion%20de%20servicio%20-%20Restaurante%20Mateus">Escribir a ${SOPORTE_EMAIL}</a>
+            <small>Tus datos están seguros y se restablecerán al reactivar el servicio.</small>
+        </div>`;
+
+    function montar() {
+        if (document.getElementById('__bloqueo_pago')) return;
+        const root = document.documentElement;
+        const style = document.createElement('style');
+        style.id = '__bloqueo_pago_css';
+        style.textContent = css;
+        const ov = document.createElement('div');
+        ov.id = '__bloqueo_pago';
+        ov.innerHTML = html;
+        root.appendChild(style);
+        root.appendChild(ov);
+        if (document.body) {
+            document.body.setAttribute('inert', '');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    montar();
+    document.addEventListener('DOMContentLoaded', montar);
+    window.addEventListener('load', montar);
+
+    // Re-inyectar si alguien intenta quitar el bloqueo desde DevTools
+    new MutationObserver(function () {
+        if (!document.getElementById('__bloqueo_pago') || !document.getElementById('__bloqueo_pago_css')) {
+            const v = document.getElementById('__bloqueo_pago'); if (v) v.remove();
+            const s = document.getElementById('__bloqueo_pago_css'); if (s) s.remove();
+            montar();
+        }
+        if (document.body && !document.body.hasAttribute('inert')) document.body.setAttribute('inert', '');
+    }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['inert'] });
+
+    // Bloquear teclado y menú contextual fuera del overlay
+    ['keydown', 'keypress', 'contextmenu'].forEach(function (ev) {
+        window.addEventListener(ev, function (e) {
+            if (e.target && e.target.closest && e.target.closest('#__bloqueo_pago')) return;
+            e.preventDefault(); e.stopImmediatePropagation();
+        }, true);
+    });
+
+    // Evitar que la PWA / service worker sirva la app desde caché sin bloqueo
+    try { sessionStorage.setItem('__suspendido', '1'); } catch (e) {}
+})();
+</script>
+<!-- ===== FIN BLOQUEO POR FALTA DE PAGO ===== -->
+        
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Restaurante Mateus — Panel Administrativo</title>
