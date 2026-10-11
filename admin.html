@@ -1261,7 +1261,8 @@
             </button>
 
             <button onclick="cambiarTab('facturas')" id="btn-tab-facturas" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
+                aria-hidden="true" tabindex="-1"
+                style="display:none;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
                 <span class="ic ic-md"><i data-lucide="archive"></i></span> Historial de Facturas
             </button>
 
@@ -1320,7 +1321,7 @@
             </button>
 
             <button onclick="cambiarTab('impresoras')" id="btn-tab-impresoras" class="tab-inactive w-full text-left"
-                style="display:none;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
+                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
                 <span class="ic ic-md"><i data-lucide="printer"></i></span> Impresoras y Drivers
             </button>
 
@@ -2533,6 +2534,14 @@
         const TABS = ['dashboard', 'pedidos', 'facturas', 'tomar-pedido', 'menu', 'carta', 'personal', 'nomina', 'inventario', 'dian', 'calendario', 'impresoras'];
 
         function cambiarTab(dest) {
+            // El historial de facturas se conserva en el sistema, pero solo se
+            // abre mediante el enlace directo admin.html#facturas.
+            if (dest === 'facturas' && location.hash !== '#facturas') {
+                history.replaceState(null, '', `${location.pathname}${location.search}#facturas`);
+            } else if (dest !== 'facturas' && location.hash === '#facturas') {
+                history.replaceState(null, '', `${location.pathname}${location.search}`);
+            }
+
             // 1. Ocultar todos los tabs de forma atómica
             TABS.forEach(t => {
                 const el  = document.getElementById(`tab-${t}`);
@@ -2585,6 +2594,11 @@
             });
             // iniciarDashboard() ya es llamado desde admin.js DOMContentLoaded en paralelo.
             // No se duplica aquí.
+            if (location.hash === '#facturas') cambiarTab('facturas');
+        });
+
+        window.addEventListener('hashchange', () => {
+            if (location.hash === '#facturas') cambiarTab('facturas');
         });
 
         // ═══ MÓDULO DIAN — historial local del día ═══
