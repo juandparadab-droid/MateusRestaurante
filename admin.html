@@ -2019,21 +2019,35 @@
                 </div>
             </section>
 
-            <!-- TAB: IMPRESORAS Y DRIVERS (solo funciona dentro de la app de escritorio) -->
+            <!-- TAB: IMPRESORAS Y DRIVERS -->
             <section id="tab-impresoras" style="display:none;flex-direction:column;gap:20px;">
                 <div class="card">
                     <h3 style="font-size:15px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;">
                         <span class="ic ic-md"><i data-lucide="printer"></i></span> Impresoras y drivers
                     </h3>
                     <p style="font-size:12px;color:var(--text-3);margin-top:3px;">
-                        Instala los drivers de las impresoras del restaurante. Windows pedirá permiso de administrador al abrir cada instalador.
+                        Descarga aquí los controladores de las impresoras del restaurante.
                     </p>
                 </div>
                 <div id="imp-aviso-web" style="display:none;padding:14px 18px;border-radius:14px;background:var(--amber-lt);border:1.5px solid rgba(154,108,26,.28);color:var(--amber);font-size:12.5px;font-weight:600;">
-                    Esta sección solo funciona dentro de la app de escritorio de Windows.
+                    Puedes descargar los controladores desde esta página. La detección e instalación automática de impresoras está disponible en la aplicación de escritorio para Windows.
+                </div>
+                <div class="card">
+                    <h4 style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:6px;">Descargas para Windows</h4>
+                    <p style="font-size:12px;color:var(--text-3);line-height:1.6;margin-bottom:14px;">
+                        Elige el controlador que corresponda al modelo de la impresora. Si no sabes cuál usar, revisa la etiqueta del equipo.
+                    </p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <a class="btn-olive" href="./driver-starpos.exe" download="Driver-Impresora-STARPOS.exe" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">
+                            Descargar driver STARPOS (.exe)
+                        </a>
+                        <a class="btn-ghost" href="./Driver-windows-sat-23t.rar" download="Driver-Impresora-SAT-23T.rar" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">
+                            Descargar driver SAT 23T (.rar)
+                        </a>
+                    </div>
                 </div>
                 <div id="imp-drivers" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
-                <div class="card">
+                <div id="imp-panel-nativo" class="card" style="display:none;">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
                         <h4 style="font-size:13px;font-weight:700;color:var(--text-1);">Impresoras detectadas en este equipo</h4>
                         <button type="button" class="btn-ghost" onclick="cargarImpresorasApp()">Actualizar</button>
@@ -4775,21 +4789,23 @@ const FACTURACION_ELECTRONICA_ACTIVA = false;
 })();
 
 // ════════════════════════════════════════════════════════════
-// IMPRESORAS Y DRIVERS — solo disponible dentro de la app de escritorio
-// (Electron expone window.mateusApp desde preload.js). En el navegador
-// normal la pestaña queda oculta.
+// IMPRESORAS Y DRIVERS — las descargas también funcionan desde el navegador.
+// La detección e instalación automática usa la API local de Electron.
 // ════════════════════════════════════════════════════════════
 async function cargarImpresorasApp() {
     const aviso = document.getElementById('imp-aviso-web');
     const cont = document.getElementById('imp-drivers');
     const lista = document.getElementById('imp-lista');
+    const panelNativo = document.getElementById('imp-panel-nativo');
     if (!cont || !lista) return;
     if (!window.mateusApp) {
         if (aviso) aviso.style.display = 'block';
+        if (panelNativo) panelNativo.style.display = 'none';
         cont.innerHTML = ''; lista.textContent = '—';
         return;
     }
     if (aviso) aviso.style.display = 'none';
+    if (panelNativo) panelNativo.style.display = 'block';
     try {
         const [drivers, impresoras] = await Promise.all([mateusApp.listarDrivers(), mateusApp.listarImpresoras()]);
         cont.innerHTML = drivers.map(d => `
