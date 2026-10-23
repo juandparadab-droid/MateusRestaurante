@@ -2119,7 +2119,7 @@ async function cargarGastosReal() {
                         <div style="font-size:11px;color:var(--text-3);">${_gastoFechaBonita(g.created_at)} · ${items.length} producto(s)</div>
                         <details><summary style="font-size:11px;color:var(--olive);cursor:pointer;">Ver productos y valores</summary><div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">${detalle || '<span style="font-size:11px;color:var(--text-3);">Sin productos detallados.</span>'}</div>${d.notes ? `<p style="font-size:11px;color:var(--text-3);margin-top:8px;">${_gastoEscHTML(d.notes)}</p>` : ''}</details>
                         <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:8px;"><span style="font-size:11px;color:var(--text-3);">Total registrado</span><strong class="mono" style="color:var(--red);">${formatCOP(g.amount)}</strong></div>
-                        <div style="display:flex;gap:7px;"><button type="button" class="btn-ghost" onclick="editarFacturaCompra('${_gastoEscHTML(g.id)}')">Editar factura</button><button type="button" class="btn-danger" onclick="eliminarGastoReal('${_gastoEscHTML(g.id)}')">Eliminar</button></div>
+                        <div style="display:flex;gap:7px;flex-wrap:wrap;"><button type="button" class="btn-ghost" onclick="imprimirFacturaCompra('${_gastoEscHTML(g.id)}')" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="printer"></i></span> Imprimir</button><button type="button" class="btn-ghost" onclick="editarFacturaCompra('${_gastoEscHTML(g.id)}')">Editar factura</button><button type="button" class="btn-danger" onclick="eliminarGastoReal('${_gastoEscHTML(g.id)}')">Eliminar</button></div>
                     </article>`;
                 }).join('');
             }
@@ -2279,6 +2279,76 @@ function editarFacturaCompra(idFactura) {
     actualizarTotalFacturaGasto();
     if (window.lucide) lucide.createIcons();
     document.getElementById('form-factura-gasto')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function imprimirFacturaCompra(idFactura) {
+    const g = window._gastosPorId?.[String(idFactura)];
+    const d = g?.invoice_data;
+    if (!g || !d || typeof d !== 'object') {
+        Toast.error('No se encontró el detalle de la factura. Actualiza la lista e intenta otra vez.');
+        return;
+    }
+
+    const proveedor = _gastoEscHTML(d.supplier_name || 'Proveedor');
+    const nit = _gastoEscHTML(d.supplier_nit || '');
+    const numero = _gastoEscHTML(d.invoice_number || 'Sin número');
+    const fecha = _gastoEscHTML(_gastoFechaBonita(g.created_at));
+    const notas = _gastoEscHTML(d.notes || '');
+    const logo = typeof d.supplier_logo === 'string' && /^data:image\/(png|jpeg|webp);base64,/i.test(d.supplier_logo)
+        ? `<img class="logo" src="${_gastoEscHTML(d.supplier_logo)}" alt="Logo del proveedor">`
+        : '';
+    const items = (Array.isArray(d.items) ? d.items : []).map(item => {
+        const cantidad = Number(item.quantity) || 0;
+        const valor = Number(item.unit_price) || 0;
+        return `<tr><td>${_gastoEscHTML(item.name || 'Producto')}</td><td class="num">${_gastoEscHTML(cantidad)}</td><td class="num">${formatCOP(valor)}</td><td class="num">${formatCOP(cantidad * valor)}</td></tr>`;
+    }).join('');
+    const subtotal = Number(d.subtotal) || 0;
+    const impuestos = Number(d.taxes) || 0;
+    const descuento = Number(d.discount) || 0;
+    const total = Number(g.amount ?? d.total) || 0;
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('title', 'Impresión de factura de compra');
+    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:1000px;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument;
+    if (!doc) {
+        iframe.remove();
+        Toast.error('El navegador no permitió preparar la impresión.');
+        return;
+    }
+
+    doc.open();
+    doc.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Factura ${numero} - ${proveedor}</title><style>
+        *{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#2d2118;margin:0;padding:24px;font-size:12px;line-height:1.45}.documento{max-width:760px;margin:0 auto}.encabezado{display:flex;align-items:center;gap:16px;border-bottom:2px solid #4a2d1c;padding-bottom:16px;margin-bottom:18px}.logo{width:72px;height:72px;object-fit:contain}.marca{font-size:11px;letter-spacing:2px;color:#8b755e;text-transform:uppercase}.titulo{font-size:22px;margin:3px 0;font-weight:700}.subtitulo{font-size:11px;color:#806d58}.datos{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin:16px 0 20px}.dato{padding:7px 0;border-bottom:1px solid #e8dfd2}.etiqueta{display:block;font-size:9px;color:#8b755e;text-transform:uppercase;letter-spacing:.7px}.valor{font-weight:600;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;margin:10px 0 18px}th{background:#f3ecdf;color:#66513e;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px}th,td{padding:9px 7px;border-bottom:1px solid #e8dfd2}.num{text-align:right;white-space:nowrap}.totales{width:min(100%,320px);margin-left:auto}.total-linea{display:flex;justify-content:space-between;padding:5px 0}.gran-total{border-top:2px solid #4a2d1c;margin-top:5px;padding-top:10px;font-size:16px;font-weight:700}.notas{border-top:1px solid #e8dfd2;margin-top:20px;padding-top:12px}.pie{margin-top:28px;text-align:center;font-size:9px;color:#8b755e}@page{margin:12mm}@media print{body{padding:0}.documento{max-width:none}tr,td,th{break-inside:avoid}}
+    </style></head><body><main class="documento"><header class="encabezado">${logo}<div><div class="marca">Restaurante Mateus · Registro interno</div><h1 class="titulo">Factura de compra</h1><div class="subtitulo">Copia de la información registrada en el sistema</div></div></header><section class="datos"><div class="dato"><span class="etiqueta">Proveedor</span><span class="valor">${proveedor}</span></div>${nit ? `<div class="dato"><span class="etiqueta">NIT / documento</span><span class="valor">${nit}</span></div>` : ''}<div class="dato"><span class="etiqueta">Número de factura</span><span class="valor">${numero}</span></div><div class="dato"><span class="etiqueta">Fecha de compra</span><span class="valor">${fecha}</span></div></section><table><thead><tr><th>Producto</th><th class="num">Cantidad</th><th class="num">Valor unitario</th><th class="num">Subtotal</th></tr></thead><tbody>${items || '<tr><td colspan="4">Sin productos detallados.</td></tr>'}</tbody></table><section class="totales"><div class="total-linea"><span>Subtotal</span><strong>${formatCOP(subtotal)}</strong></div><div class="total-linea"><span>Impuestos / cargos</span><strong>${formatCOP(impuestos)}</strong></div><div class="total-linea"><span>Descuento</span><strong>− ${formatCOP(descuento)}</strong></div><div class="total-linea gran-total"><span>Total</span><span>${formatCOP(total)}</span></div></section>${notas ? `<section class="notas"><strong>Observaciones</strong><div>${notas.replace(/\n/g, '<br>')}</div></section>` : ''}<footer class="pie">Documento interno de control de gastos · No reemplaza la factura emitida por el proveedor.</footer></main></body></html>`);
+    doc.close();
+
+    let impresa = false;
+    const lanzarImpresion = () => {
+        if (impresa) return;
+        impresa = true;
+        try {
+            const ventanaImpresion = iframe.contentWindow;
+            ventanaImpresion.addEventListener('afterprint', () => setTimeout(() => iframe.remove(), 500), { once: true });
+            ventanaImpresion.focus();
+            ventanaImpresion.print();
+        } catch (err) {
+            console.error('Error abriendo el diálogo de impresión:', err);
+            Toast.error('No se pudo abrir el diálogo de impresión.');
+            iframe.remove();
+            return;
+        }
+        setTimeout(() => iframe.remove(), 60000);
+    };
+    const logoImpresion = doc.querySelector('.logo');
+    if (logoImpresion && !logoImpresion.complete) {
+        logoImpresion.addEventListener('load', lanzarImpresion, { once: true });
+        logoImpresion.addEventListener('error', lanzarImpresion, { once: true });
+        setTimeout(lanzarImpresion, 1500);
+    } else {
+        setTimeout(lanzarImpresion, 100);
+    }
 }
 
 async function eliminarGastoReal(idGasto) {

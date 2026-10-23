@@ -1,7 +1,7 @@
 /* Caché del sitio y de los recursos CDN para apertura PWA sin internet. */
 'use strict';
 
-const CACHE_NAME = 'mateus-pwa-shell-v2';
+const CACHE_NAME = 'mateus-pwa-shell-v3';
 const SHELL_FILES = [
   './', './index.html', './admin.html', './privacidad.html',
   './app.js', './admin.js', './mateus-offline.js', './mateus-pwa-store.js', './pwa-register.js',
