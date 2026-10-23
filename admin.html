@@ -2030,6 +2030,7 @@
                             <div><label>Observaciones</label><textarea id="fg-notas" rows="2" maxlength="1000" placeholder="Opcional" style="resize:vertical;"></textarea></div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                                 <button type="submit" id="btn-guardar-factura-gasto" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;">Guardar factura como gasto</button>
+                                <button type="button" class="btn-ghost" onclick="abrirVistaPreviaFacturaGasto()" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="eye"></i></span> Vista previa</button>
                                 <button type="button" id="btn-cancelar-edicion-factura-gasto" class="btn-ghost" onclick="cancelarEdicionFacturaGasto()" style="display:none;">Cancelar edición</button>
                             </div>
                         </form>
@@ -2619,6 +2620,51 @@
                 <button onclick="cerrarModalFactura()" class="btn-ghost">Cancelar</button>
                 <button onclick="generarFacturaElectronica()" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="send"></i></span> Generar CUFE</button>
             </div>
+        </div>
+    </div>
+
+    <style>
+        .factura-preview-modal { display:none; position:fixed; inset:0; z-index:10050; padding:18px; background:rgba(25,16,10,.66); align-items:center; justify-content:center; }
+        .factura-preview-dialog { width:min(980px,100%); max-height:94vh; overflow:auto; display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,.78fr); gap:18px; background:var(--surface-1,#fffdf9); border:1px solid var(--border,#e7d9c2); border-radius:18px; padding:20px; box-shadow:0 24px 80px rgba(0,0,0,.28); }
+        .factura-preview-paper-wrap { min-height:360px; max-height:72vh; overflow:auto; display:flex; justify-content:center; align-items:flex-start; padding:14px; background:#eee8dd; border-radius:12px; }
+        .factura-ticket-preview { flex:none; background:#fff; color:#000; box-shadow:0 4px 18px rgba(0,0,0,.16); font-family:'Courier New',Consolas,monospace; line-height:1.35; padding:4mm 4mm 8mm; overflow-wrap:anywhere; }
+        .factura-ticket-preview .ft-center { text-align:center; }
+        .factura-ticket-preview .ft-brand { display:block; font-weight:800; overflow-wrap:anywhere; }
+        .factura-ticket-preview .ft-title { font-size:1.2em; font-weight:800; margin:4px 0; }
+        .factura-ticket-preview .ft-small { font-size:.82em; }
+        .factura-ticket-preview .ft-meta { margin:3px 0; }
+        .factura-ticket-preview .ft-rule { border:0; border-top:1px dashed #222; margin:7px 0; }
+        .factura-ticket-preview .ft-items { width:100%; border-collapse:collapse; }
+        .factura-ticket-preview .ft-items td { padding:4px 0; vertical-align:top; }
+        .factura-ticket-preview .ft-items .ft-qty { width:12mm; font-weight:700; }
+        .factura-ticket-preview .ft-items .ft-price { text-align:right; white-space:nowrap; font-weight:700; }
+        .factura-ticket-preview .ft-total { display:flex; justify-content:space-between; gap:6px; margin-top:5px; }
+        .factura-ticket-preview .ft-grand { font-weight:800; border-top:1px solid #000; padding-top:6px; font-size:1.14em; }
+        .factura-ticket-preview .ft-footer { margin-top:8px; font-size:.82em; }
+        @media(max-width:700px) { .factura-preview-modal{padding:8px}.factura-preview-dialog{grid-template-columns:1fr;padding:14px;gap:12px}.factura-preview-paper-wrap{min-height:260px;max-height:45vh} }
+    </style>
+    <div id="modal-preview-factura-gasto" class="factura-preview-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-preview-factura">
+        <div class="factura-preview-dialog">
+            <section>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+                    <div><h2 id="titulo-preview-factura" style="font-size:18px;margin:0;color:var(--text-1);">Vista previa del tiquete</h2><p style="margin:4px 0 0;font-size:12px;color:var(--text-3);">Así saldrá en la impresora térmica.</p></div>
+                    <button type="button" class="btn-ghost" onclick="cerrarVistaPreviaFacturaGasto()" aria-label="Cerrar vista previa">✕</button>
+                </div>
+                <div class="factura-preview-paper-wrap"><div id="factura-ticket-preview" class="factura-ticket-preview"></div></div>
+            </section>
+            <section style="display:flex;flex-direction:column;gap:12px;">
+                <div><label for="fg-print-encabezado">Encabezado del tiquete</label><input id="fg-print-encabezado" maxlength="80" value="RESTAURANTE MATEUS"></div>
+                <div><label for="fg-print-pie">Mensaje al final</label><input id="fg-print-pie" maxlength="120" value="Registro interno de gastos"></div>
+                <div><label for="fg-print-ancho">Ancho del rollo</label><select id="fg-print-ancho"><option value="80">80 mm</option><option value="58">58 mm</option></select></div>
+                <div><label for="fg-print-tamano">Tamaño del texto</label><select id="fg-print-tamano"><option value="normal">Normal</option><option value="grande">Grande</option></select></div>
+                <p style="font-size:11px;line-height:1.5;color:var(--text-3);margin:0;">Puedes ajustar el encabezado y el formato aquí. Para modificar proveedor, productos o valores, pulsa “Editar datos”; los cambios se reflejan en esta vista. El formato se conserva en este equipo.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button type="button" class="btn-ghost" onclick="volverAEditarFacturaCompra()">Editar datos</button>
+                    <button type="button" class="btn-ghost" onclick="guardarFormatoFacturaGasto()">Guardar formato</button>
+                    <button type="button" class="btn-olive" onclick="guardarEImprimirFacturaCompra()" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="printer"></i></span> Guardar e imprimir</button>
+                </div>
+                <button type="button" class="btn-ghost" onclick="cerrarVistaPreviaFacturaGasto()">Cerrar vista previa</button>
+            </section>
         </div>
     </div>
 

@@ -2119,7 +2119,7 @@ async function cargarGastosReal() {
                         <div style="font-size:11px;color:var(--text-3);">${_gastoFechaBonita(g.created_at)} · ${items.length} producto(s)</div>
                         <details><summary style="font-size:11px;color:var(--olive);cursor:pointer;">Ver productos y valores</summary><div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">${detalle || '<span style="font-size:11px;color:var(--text-3);">Sin productos detallados.</span>'}</div>${d.notes ? `<p style="font-size:11px;color:var(--text-3);margin-top:8px;">${_gastoEscHTML(d.notes)}</p>` : ''}</details>
                         <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:8px;"><span style="font-size:11px;color:var(--text-3);">Total registrado</span><strong class="mono" style="color:var(--red);">${formatCOP(g.amount)}</strong></div>
-                        <div style="display:flex;gap:7px;flex-wrap:wrap;"><button type="button" class="btn-ghost" onclick="imprimirFacturaCompra('${_gastoEscHTML(g.id)}')" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="printer"></i></span> Imprimir</button><button type="button" class="btn-ghost" onclick="editarFacturaCompra('${_gastoEscHTML(g.id)}')">Editar factura</button><button type="button" class="btn-danger" onclick="eliminarGastoReal('${_gastoEscHTML(g.id)}')">Eliminar</button></div>
+                        <div style="display:flex;gap:7px;flex-wrap:wrap;"><button type="button" class="btn-ghost" onclick="abrirVistaPreviaFacturaGasto('${_gastoEscHTML(g.id)}')" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="eye"></i></span> Vista previa / imprimir</button><button type="button" class="btn-ghost" onclick="editarFacturaCompra('${_gastoEscHTML(g.id)}')">Editar factura</button><button type="button" class="btn-danger" onclick="eliminarGastoReal('${_gastoEscHTML(g.id)}')">Eliminar</button></div>
                     </article>`;
                 }).join('');
             }
@@ -2170,6 +2170,7 @@ function _gfMostrarLogo(valor) {
         img.style.display = _facturaGastoLogoActual ? 'block' : 'none';
     }
     if (quitar) quitar.style.display = _facturaGastoLogoActual ? 'inline-flex' : 'none';
+    actualizarVistaPreviaFacturaGasto();
 }
 
 let _facturaGastoLogoActual = null;
@@ -2222,6 +2223,7 @@ function agregarLineaFacturaGasto(datos = {}) {
         <button type="button" class="btn-danger" aria-label="Quitar producto" onclick="this.closest('.fg-linea').remove();actualizarTotalFacturaGasto()" style="padding:5px 8px;">×</button>`;
     cont.appendChild(fila);
     actualizarTotalFacturaGasto();
+    actualizarVistaPreviaFacturaGasto();
 }
 
 function actualizarTotalFacturaGasto() {
@@ -2251,6 +2253,7 @@ function cancelarEdicionFacturaGasto() {
     const cancelar = document.getElementById('btn-cancelar-edicion-factura-gasto');
     if (cancelar) cancelar.style.display = 'none';
     actualizarTotalFacturaGasto();
+    actualizarVistaPreviaFacturaGasto();
     if (window.lucide) lucide.createIcons();
 }
 
@@ -2277,83 +2280,193 @@ function editarFacturaCompra(idFactura) {
     const cancelar = document.getElementById('btn-cancelar-edicion-factura-gasto');
     if (cancelar) cancelar.style.display = 'inline-flex';
     actualizarTotalFacturaGasto();
+    actualizarVistaPreviaFacturaGasto();
     if (window.lucide) lucide.createIcons();
     document.getElementById('form-factura-gasto')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function imprimirFacturaCompra(idFactura) {
-    const g = window._gastosPorId?.[String(idFactura)];
-    const d = g?.invoice_data;
-    if (!g || !d || typeof d !== 'object') {
-        Toast.error('No se encontró el detalle de la factura. Actualiza la lista e intenta otra vez.');
-        return;
-    }
+const FACTURA_TICKET_CONFIG_KEY = 'mateus_factura_ticket_config_v1';
+let _facturaVentanaPendienteImpresion = null;
 
-    const proveedor = _gastoEscHTML(d.supplier_name || 'Proveedor');
-    const nit = _gastoEscHTML(d.supplier_nit || '');
-    const numero = _gastoEscHTML(d.invoice_number || 'Sin número');
-    const fecha = _gastoEscHTML(_gastoFechaBonita(g.created_at));
-    const notas = _gastoEscHTML(d.notes || '');
-    const logo = typeof d.supplier_logo === 'string' && /^data:image\/(png|jpeg|webp);base64,/i.test(d.supplier_logo)
-        ? `<img class="logo" src="${_gastoEscHTML(d.supplier_logo)}" alt="Logo del proveedor">`
-        : '';
-    const items = (Array.isArray(d.items) ? d.items : []).map(item => {
-        const cantidad = Number(item.quantity) || 0;
-        const valor = Number(item.unit_price) || 0;
-        return `<article class="producto"><div class="producto-linea"><strong>${_gastoEscHTML(item.name || 'Producto')}</strong><strong>${formatCOP(cantidad * valor)}</strong></div><div class="producto-meta">${_gastoEscHTML(cantidad)} × ${formatCOP(valor)} c/u</div></article>`;
-    }).join('');
-    const subtotal = Number(d.subtotal) || 0;
-    const impuestos = Number(d.taxes) || 0;
-    const descuento = Number(d.discount) || 0;
-    const total = Number(g.amount ?? d.total) || 0;
+function _facturaTicketConfigCargar() {
+    const base = { header: 'RESTAURANTE MATEUS', footer: 'Registro interno de gastos', width: '80', fontSize: 'normal' };
+    try {
+        const guardado = JSON.parse(localStorage.getItem(FACTURA_TICKET_CONFIG_KEY) || '{}');
+        return {
+            header: String(guardado.header || base.header).slice(0, 80),
+            footer: String(guardado.footer ?? base.footer).slice(0, 120),
+            width: ['58', '80'].includes(String(guardado.width)) ? String(guardado.width) : base.width,
+            fontSize: guardado.fontSize === 'grande' ? 'grande' : 'normal',
+        };
+    } catch (_) { return base; }
+}
 
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('title', 'Impresión de factura de compra');
-    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:1000px;border:0;';
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument;
-    if (!doc) {
-        iframe.remove();
-        Toast.error('El navegador no permitió preparar la impresión.');
-        return;
-    }
-
-    doc.open();
-    doc.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Factura ${numero} - ${proveedor}</title><style>
-        *{box-sizing:border-box}html,body{width:80mm;margin:0}body{font-family:Arial,Helvetica,sans-serif;color:#2d2118;padding:3mm;font-size:10pt;line-height:1.35}.documento{width:74mm;margin:0 auto;padding:3mm 0}.encabezado{display:flex;align-items:center;gap:3mm;border-bottom:1px solid #4a2d1c;padding-bottom:3mm;margin-bottom:3mm}.logo{width:15mm;height:15mm;object-fit:contain}.marca{font-size:7pt;letter-spacing:.7px;color:#66513e;text-transform:uppercase}.titulo{font-size:15pt;margin:1mm 0;font-weight:700}.subtitulo{font-size:8pt;color:#66513e}.datos{margin:3mm 0}.dato{display:flex;gap:2mm;padding:1.2mm 0;border-bottom:1px dashed #b9aa98}.etiqueta{width:30mm;flex:0 0 30mm;font-size:7pt;color:#66513e;text-transform:uppercase}.valor{font-weight:600;overflow-wrap:anywhere}.productos{margin:3mm 0}.producto{padding:2mm 0;border-bottom:1px dashed #b9aa98;break-inside:avoid}.producto-linea{display:flex;justify-content:space-between;gap:2mm;font-size:9pt}.producto-linea strong:first-child{overflow-wrap:anywhere}.producto-linea strong:last-child{white-space:nowrap}.producto-meta{font-size:8pt;color:#66513e;margin-top:.5mm}.totales{margin-top:3mm;border-top:1px solid #4a2d1c;padding-top:2mm}.total-linea{display:flex;justify-content:space-between;gap:2mm;padding:1mm 0;font-size:9pt}.gran-total{border-top:1px solid #4a2d1c;margin-top:1mm;padding-top:2mm;font-size:12pt;font-weight:700}.notas{border-top:1px dashed #b9aa98;margin-top:3mm;padding-top:2mm;overflow-wrap:anywhere}.pie{margin-top:5mm;text-align:center;font-size:7pt;color:#66513e}@page{margin:0}@media print{html,body{width:80mm!important;margin:0!important;padding:0!important}.documento{width:74mm;margin:0 auto;padding:3mm 0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-    </style></head><body><main class="documento"><header class="encabezado">${logo}<div><div class="marca">Restaurante Mateus · Registro interno</div><h1 class="titulo">Factura de compra</h1><div class="subtitulo">Copia de la información registrada</div></div></header><section class="datos"><div class="dato"><span class="etiqueta">Proveedor</span><span class="valor">${proveedor}</span></div>${nit ? `<div class="dato"><span class="etiqueta">NIT / documento</span><span class="valor">${nit}</span></div>` : ''}<div class="dato"><span class="etiqueta">Número de factura</span><span class="valor">${numero}</span></div><div class="dato"><span class="etiqueta">Fecha de compra</span><span class="valor">${fecha}</span></div></section><section class="productos">${items || '<div class="producto">Sin productos detallados.</div>'}</section><section class="totales"><div class="total-linea"><span>Subtotal</span><strong>${formatCOP(subtotal)}</strong></div><div class="total-linea"><span>Impuestos / cargos</span><strong>${formatCOP(impuestos)}</strong></div><div class="total-linea"><span>Descuento</span><strong>− ${formatCOP(descuento)}</strong></div><div class="total-linea gran-total"><span>Total</span><span>${formatCOP(total)}</span></div></section>${notas ? `<section class="notas"><strong>Observaciones</strong><div>${notas.replace(/\n/g, '<br>')}</div></section>` : ''}<footer class="pie">Registro interno de gastos. No reemplaza la factura emitida por el proveedor.</footer></main></body></html>`);
-    doc.close();
-
-    let impresa = false;
-    const lanzarImpresion = () => {
-        if (impresa) return;
-        impresa = true;
-        try {
-            const contenido = doc.querySelector('.documento');
-            const altoMm = Math.max(60, Math.ceil(((contenido?.scrollHeight || 220) * 25.4) / 96) + 2);
-            const estiloPagina = doc.createElement('style');
-            estiloPagina.textContent = `@page{size:80mm ${altoMm}mm;margin:0}`;
-            doc.head.appendChild(estiloPagina);
-            const ventanaImpresion = iframe.contentWindow;
-            ventanaImpresion.addEventListener('afterprint', () => setTimeout(() => iframe.remove(), 500), { once: true });
-            ventanaImpresion.focus();
-            ventanaImpresion.print();
-        } catch (err) {
-            console.error('Error abriendo el diálogo de impresión:', err);
-            Toast.error('No se pudo abrir el diálogo de impresión.');
-            iframe.remove();
-            return;
-        }
-        setTimeout(() => iframe.remove(), 60000);
+function _facturaTicketConfigDesdeFormulario() {
+    return {
+        header: document.getElementById('fg-print-encabezado')?.value.trim().slice(0, 80) || 'RESTAURANTE MATEUS',
+        footer: document.getElementById('fg-print-pie')?.value.trim().slice(0, 120) || '',
+        width: document.getElementById('fg-print-ancho')?.value === '58' ? '58' : '80',
+        fontSize: document.getElementById('fg-print-tamano')?.value === 'grande' ? 'grande' : 'normal',
     };
-    const logoImpresion = doc.querySelector('.logo');
-    if (logoImpresion && !logoImpresion.complete) {
-        logoImpresion.addEventListener('load', lanzarImpresion, { once: true });
-        logoImpresion.addEventListener('error', lanzarImpresion, { once: true });
-        setTimeout(lanzarImpresion, 1500);
-    } else {
-        setTimeout(lanzarImpresion, 100);
+}
+
+function guardarFormatoFacturaGasto(notificar = true) {
+    const config = _facturaTicketConfigDesdeFormulario();
+    try {
+        localStorage.setItem(FACTURA_TICKET_CONFIG_KEY, JSON.stringify(config));
+        if (notificar) Toast.ok('Formato del tiquete guardado en este equipo.');
+    } catch (err) {
+        console.error('No se pudo guardar el formato del tiquete:', err);
+        if (notificar) Toast.error('No se pudo guardar el formato en este equipo.');
     }
+    actualizarVistaPreviaFacturaGasto();
+}
+
+function _facturaDatosDesdeFormulario() {
+    const fecha = document.getElementById('fg-fecha')?.value || _gastosHoyBogota();
+    const amounts = actualizarTotalFacturaGasto();
+    const items = [...document.querySelectorAll('#fg-lineas .fg-linea')].map(fila => ({
+        name: fila.querySelector('.fg-item-nombre')?.value.trim() || '',
+        quantity: Number(fila.querySelector('.fg-item-cantidad')?.value) || 0,
+        unit_price: Number(fila.querySelector('.fg-item-valor')?.value) || 0,
+    })).filter(item => item.name);
+    return {
+        supplier_name: document.getElementById('fg-proveedor')?.value.trim() || 'Proveedor',
+        supplier_nit: document.getElementById('fg-nit')?.value.trim() || '',
+        invoice_number: document.getElementById('fg-numero')?.value.trim() || 'Sin número',
+        supplier_logo: _facturaGastoLogoActual,
+        created_at: _gastoFechaISO(fecha),
+        items,
+        subtotal: amounts.subtotal,
+        taxes: amounts.taxes,
+        discount: amounts.discount,
+        total: amounts.total,
+        notes: document.getElementById('fg-notas')?.value.trim() || '',
+    };
+}
+
+function _facturaDatosDesdeRegistro(g) {
+    const d = g?.invoice_data || {};
+    return {
+        ...d,
+        supplier_name: d.supplier_name || g?.description || 'Proveedor',
+        invoice_number: d.invoice_number || 'Sin número',
+        created_at: g?.created_at,
+        total: Number(g?.amount ?? d.total) || 0,
+        items: Array.isArray(d.items) ? d.items : [],
+    };
+}
+
+function _facturaTicketMarkup(datos, config) {
+    const logo = typeof datos.supplier_logo === 'string' && /^data:image\/(png|jpeg|webp);base64,/i.test(datos.supplier_logo)
+        ? `<img src="${_gastoEscHTML(datos.supplier_logo)}" alt="Logo" style="display:block;max-width:18mm;max-height:18mm;object-fit:contain;margin:0 auto 5px;">`
+        : '';
+    const items = (datos.items || []).map(item => {
+        const cantidad = Number(item.quantity) || 0;
+        const valorUnitario = Number(item.unit_price) || 0;
+        return `<tr><td class="ft-qty">${_gastoEscHTML(cantidad)}×</td><td>${_gastoEscHTML(item.name || 'Producto')}<br><small>${formatCOP(valorUnitario)} c/u</small></td><td class="ft-price">${formatCOP(cantidad * valorUnitario)}</td></tr>`;
+    }).join('');
+    const fecha = datos.created_at ? _gastoFechaBonita(datos.created_at) : 'Fecha de compra';
+    const nit = datos.supplier_nit ? `<div class="ft-meta"><strong>NIT:</strong> ${_gastoEscHTML(datos.supplier_nit)}</div>` : '';
+    return `<div class="ft-center">${logo}<strong class="ft-brand">${_gastoEscHTML(config.header || 'RESTAURANTE MATEUS')}</strong><div class="ft-title">FACTURA DE COMPRA</div><div class="ft-small">Copia de registro interno</div></div><hr class="ft-rule"><div class="ft-meta"><strong>Proveedor:</strong> ${_gastoEscHTML(datos.supplier_name || 'Proveedor')}</div>${nit}<div class="ft-meta"><strong>Factura:</strong> ${_gastoEscHTML(datos.invoice_number || 'Sin número')}</div><div class="ft-meta"><strong>Fecha:</strong> ${_gastoEscHTML(fecha)}</div><hr class="ft-rule"><table class="ft-items"><tbody>${items || '<tr><td colspan="3" class="ft-empty">Agrega productos en el formulario.</td></tr>'}</tbody></table><hr class="ft-rule"><div class="ft-total"><span>Subtotal</span><strong>${formatCOP(datos.subtotal)}</strong></div><div class="ft-total"><span>Impuestos / cargos</span><strong>${formatCOP(datos.taxes)}</strong></div><div class="ft-total"><span>Descuento</span><strong>− ${formatCOP(datos.discount)}</strong></div><div class="ft-total ft-grand"><span>TOTAL</span><strong>${formatCOP(datos.total)}</strong></div>${datos.notes ? `<hr class="ft-rule"><div class="ft-meta"><strong>Observaciones:</strong><br>${_gastoEscHTML(datos.notes).replace(/\n/g, '<br>')}</div>` : ''}<hr class="ft-rule"><div class="ft-center ft-footer">${_gastoEscHTML(config.footer || '')}<br>No reemplaza la factura emitida por el proveedor.</div>`;
+}
+
+function actualizarVistaPreviaFacturaGasto() {
+    const preview = document.getElementById('factura-ticket-preview');
+    if (!preview) return;
+    const config = _facturaTicketConfigDesdeFormulario();
+    const ancho = config.width === '58' ? 58 : 80;
+    preview.style.width = `${ancho}mm`;
+    preview.style.fontSize = config.fontSize === 'grande' ? '16px' : '14px';
+    preview.innerHTML = _facturaTicketMarkup(_facturaDatosDesdeFormulario(), config);
+}
+
+function abrirVistaPreviaFacturaGasto(idFactura = '') {
+    if (idFactura) {
+        const g = window._gastosPorId?.[String(idFactura)];
+        if (!g) { Toast.error('No se encontró la factura. Actualiza la lista e intenta otra vez.'); return; }
+        editarFacturaCompra(idFactura);
+    }
+    const config = _facturaTicketConfigCargar();
+    document.getElementById('fg-print-encabezado').value = config.header;
+    document.getElementById('fg-print-pie').value = config.footer;
+    document.getElementById('fg-print-ancho').value = config.width;
+    document.getElementById('fg-print-tamano').value = config.fontSize;
+    actualizarVistaPreviaFacturaGasto();
+    const modal = document.getElementById('modal-preview-factura-gasto');
+    if (modal) modal.style.display = 'flex';
+    if (window.lucide) lucide.createIcons();
+}
+
+function cerrarVistaPreviaFacturaGasto() {
+    const modal = document.getElementById('modal-preview-factura-gasto');
+    if (modal) modal.style.display = 'none';
+}
+
+function volverAEditarFacturaCompra() {
+    cerrarVistaPreviaFacturaGasto();
+    const proveedor = document.getElementById('fg-proveedor');
+    proveedor?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    proveedor?.focus({ preventScroll: true });
+}
+
+function _uuidFacturaCompra() {
+    if (window.crypto?.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+}
+
+function guardarEImprimirFacturaCompra() {
+    const form = document.getElementById('form-factura-gasto');
+    if (!form?.reportValidity()) return;
+    const fecha = document.getElementById('fg-fecha')?.value;
+    const proveedor = document.getElementById('fg-proveedor')?.value.trim();
+    const items = [...document.querySelectorAll('#fg-lineas .fg-linea')].map(fila => ({
+        name: fila.querySelector('.fg-item-nombre')?.value.trim() || '',
+        quantity: Number(fila.querySelector('.fg-item-cantidad')?.value) || 0,
+    })).filter(item => item.name && item.quantity > 0);
+    const amounts = actualizarTotalFacturaGasto();
+    if (!fecha || !proveedor) { Toast.error('Indica el proveedor y la fecha antes de imprimir.'); return; }
+    if (!items.length) { Toast.error('Agrega al menos un producto con cantidad válida antes de imprimir.'); return; }
+    if (amounts.total <= 0) { Toast.error('El total debe ser mayor que cero antes de imprimir.'); return; }
+    const ventana = window.open('', 'factura_compra_termica', 'width=380,height=640');
+    if (!ventana) {
+        Toast.error('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes para este sitio.');
+        return;
+    }
+    ventana.document.write('<!doctype html><html lang="es"><meta charset="utf-8"><title>Preparando tiquete</title><body style="font:16px Arial;padding:24px">Guardando factura y preparando la impresora…</body></html>');
+    _facturaVentanaPendienteImpresion = ventana;
+    guardarFormatoFacturaGasto(false);
+    form.requestSubmit();
+}
+
+function _imprimirFacturaCompraTermica(factura, config, ventana) {
+    if (!ventana || ventana.closed) return;
+    const ancho = config.width === '58' ? 58 : 80;
+    const baseFont = config.fontSize === 'grande' ? 16 : 14;
+    const datos = _facturaDatosDesdeRegistro(factura);
+    let impresionIniciada = false;
+    const lanzarImpresion = () => {
+        if (impresionIniciada || ventana.closed) return;
+        impresionIniciada = true;
+        ventana.focus();
+        ventana.print();
+    };
+    ventana.onload = lanzarImpresion;
+    ventana.onafterprint = () => ventana.close();
+    ventana.document.open();
+    ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Factura ${_gastoEscHTML(datos.invoice_number)} · ${_gastoEscHTML(datos.supplier_name)}</title><style>
+        @page{size:${ancho}mm auto;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;width:${ancho}mm;font-family:'Courier New',Consolas,monospace;font-size:${baseFont}px;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ticket{width:${ancho}mm;padding:4mm 4mm 10mm}.ft-center{text-align:center}.ft-brand{font-size:${baseFont}px;letter-spacing:.35px;font-weight:800;overflow-wrap:anywhere}.ft-title{font-size:${baseFont + 3}px;font-weight:800;margin:4px 0}.ft-small{font-size:${Math.max(10, baseFont - 2)}px}.ft-rule{border:0;border-top:1px dashed #000;margin:7px 0}.ft-meta{margin:3px 0;overflow-wrap:anywhere}.ft-items{width:100%;border-collapse:collapse}.ft-items td{padding:4px 0;vertical-align:top}.ft-qty{width:10mm;font-weight:bold}.ft-price{text-align:right;white-space:nowrap;font-weight:bold}.ft-items small{font-size:${Math.max(10, baseFont - 2)}px}.ft-total{display:flex;justify-content:space-between;gap:5px;margin-top:5px}.ft-grand{font-weight:bold;font-size:${baseFont + 2}px;border-top:1px solid #000;padding-top:6px;margin-top:7px}.ft-footer{font-size:${Math.max(10, baseFont - 2)}px;text-align:center;overflow-wrap:anywhere;margin-top:8px}
+    </style></head><body><main class="ticket">${_facturaTicketMarkup(datos, config)}</main></body></html>`);
+    ventana.document.close();
+    setTimeout(lanzarImpresion, 900);
+    setTimeout(() => { if (!ventana.closed) ventana.close(); }, 60000);
+}
+
+function imprimirFacturaCompra(idFactura) {
+    abrirVistaPreviaFacturaGasto(idFactura);
 }
 
 async function eliminarGastoReal(idGasto) {
@@ -2421,6 +2534,18 @@ document.addEventListener('DOMContentLoaded', () => {
         agregarLineaFacturaGasto();
 
         document.getElementById('fg-logo')?.addEventListener('change', e => _gfProcesarLogo(e.target.files?.[0]));
+        formFactura.addEventListener('input', actualizarVistaPreviaFacturaGasto);
+        ['fg-print-encabezado', 'fg-print-pie', 'fg-print-ancho', 'fg-print-tamano'].forEach(id => {
+            const control = document.getElementById(id);
+            control?.addEventListener('input', actualizarVistaPreviaFacturaGasto);
+            control?.addEventListener('change', () => guardarFormatoFacturaGasto(false));
+        });
+        document.getElementById('modal-preview-factura-gasto')?.addEventListener('click', e => {
+            if (e.target.id === 'modal-preview-factura-gasto') cerrarVistaPreviaFacturaGasto();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') cerrarVistaPreviaFacturaGasto();
+        });
         formFactura.addEventListener('submit', async e => {
             e.preventDefault();
             const fecha = document.getElementById('fg-fecha').value;
@@ -2452,14 +2577,17 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             const description = `Factura ${invoice_data.invoice_number || 'de compra'} · ${invoice_data.supplier_name}`;
             const id = document.getElementById('factura-gasto-id').value;
+            const savedId = id || _uuidFacturaCompra();
             const row = {
                 expense_type: 'Factura de compra', description, amount: amounts.total,
-                created_at: _gastoFechaISO(fecha), invoice_data,
+                created_at: _gastoFechaISO(fecha), invoice_data, id: savedId,
             };
             try {
                 const query = supabaseClient.from('operating_expenses');
+                const datosFactura = { ...row };
+                delete datosFactura.id;
                 const { error } = id
-                    ? await query.update(row).eq('id', id)
+                    ? await query.update(datosFactura).eq('id', id)
                     : await query.insert([row]);
                 if (error) {
                     if (/invoice_data|column/i.test(error.message || '')) {
@@ -2467,11 +2595,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     throw error;
                 }
+                const facturaGuardada = { ...(window._gastosPorId?.[String(savedId)] || {}), ...row };
+                const ventanaImpresion = _facturaVentanaPendienteImpresion;
+                const configImpresion = ventanaImpresion ? _facturaTicketConfigDesdeFormulario() : null;
+                _facturaVentanaPendienteImpresion = null;
                 if (filtroFactura) filtroFactura.value = fecha;
                 cancelarEdicionFacturaGasto();
                 Toast.ok(id ? 'Factura actualizada y gasto sincronizado.' : 'Factura guardada como gasto del restaurante.');
                 await cargarGastosReal();
+                if (ventanaImpresion) {
+                    cerrarVistaPreviaFacturaGasto();
+                    _imprimirFacturaCompraTermica(facturaGuardada, configImpresion, ventanaImpresion);
+                }
             } catch (err) {
+                if (_facturaVentanaPendienteImpresion && !_facturaVentanaPendienteImpresion.closed) _facturaVentanaPendienteImpresion.close();
+                _facturaVentanaPendienteImpresion = null;
                 console.error('Error guardando factura de compra:', err);
                 Toast.error(`No se guardó la factura: ${err.message || 'error desconocido'}`, 9000);
             }
