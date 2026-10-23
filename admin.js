@@ -1,4 +1,3 @@
-
 // ============================================================
 // RESTAURANTE MATEUS — PANEL DE ADMINISTRACIÓN
 // admin.js · Versión 3.7
@@ -86,7 +85,9 @@
 const SUPABASE_URL      = "https://guqgyuefsdedstfbhxvo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_zSGT_1Qr1QVI3aTPWOMwdQ_jqMqxnA-";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.MateusOffline?.createClient
+    ? window.MateusOffline.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
 // CONSTANTES TRIBUTARIAS — ESTATUTO TRIBUTARIO COLOMBIA
@@ -1958,9 +1959,82 @@ async function alternarVisibilidadPlatoReal(idPlato, estadoActual) {
 // ============================================================
 // 4. NÓMINA Y GASTOS OPERACIONALES
 // ============================================================
+function _gastosHoyBogota() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+}
+
+function _gastoFechaISO(fecha) {
+    return new Date(`${fecha}T12:00:00-05:00`).toISOString();
+}
+
+function _gastoRangoDia(fecha) {
+    return {
+        inicio: new Date(`${fecha}T00:00:00-05:00`).toISOString(),
+        fin: new Date(`${fecha}T23:59:59.999-05:00`).toISOString(),
+    };
+}
+
+function _gastoEscHTML(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[c]);
+}
+
+function _gastoFechaBonita(valor) {
+    if (!valor) return '—';
+    const fecha = new Date(valor);
+    return Number.isNaN(fecha.getTime()) ? '—' : fecha.toLocaleString('es-CO', {
+        timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    });
+}
+
+function cambiarSubseccionGastos(seccion) {
+    const esFactura = seccion === 'facturas';
+    const panelGastos = document.getElementById('panel-gastos-restaurante');
+    const panelFacturas = document.getElementById('panel-facturas-gastos');
+    const btnGastos = document.getElementById('btn-subtab-gastos');
+    const btnFacturas = document.getElementById('btn-subtab-facturas-gastos');
+    if (panelGastos) panelGastos.style.display = esFactura ? 'none' : 'grid';
+    if (panelFacturas) panelFacturas.style.display = esFactura ? 'grid' : 'none';
+    if (btnGastos) {
+        btnGastos.className = esFactura ? 'btn-ghost' : 'btn-olive';
+        btnGastos.setAttribute('aria-selected', String(!esFactura));
+    }
+    if (btnFacturas) {
+        btnFacturas.className = esFactura ? 'btn-olive' : 'btn-ghost';
+        btnFacturas.setAttribute('aria-selected', String(esFactura));
+    }
+    if (window.lucide) lucide.createIcons();
+    cargarGastosReal();
+}
+
+function gastosIrHoy() {
+    const filtro = document.getElementById('gasto-filtro-fecha');
+    if (filtro) filtro.value = _gastosHoyBogota();
+    cargarGastosReal();
+}
+
+function facturasGastoIrHoy() {
+    const filtro = document.getElementById('factura-gasto-filtro-fecha');
+    if (filtro) filtro.value = _gastosHoyBogota();
+    cargarGastosReal();
+}
+
 async function cargarGastosReal() {
     const tbody = document.getElementById('tabla-gastos');
     if (!tbody) return;
+
+    const hoy = _gastosHoyBogota();
+    const filtroGastos = document.getElementById('gasto-filtro-fecha');
+    const filtroFacturas = document.getElementById('factura-gasto-filtro-fecha');
+    const fechaGastos = filtroGastos?.value || hoy;
+    const fechaFacturas = filtroFacturas?.value || hoy;
+    if (filtroGastos && !filtroGastos.value) filtroGastos.value = hoy;
+    if (filtroFacturas && !filtroFacturas.value) filtroFacturas.value = hoy;
+    const fechaConsulta = document.getElementById('panel-facturas-gastos')?.style.display === 'grid'
+        ? fechaFacturas : fechaGastos;
+    const rango = _gastoRangoDia(fechaConsulta);
 
     tbody.innerHTML = `
         <tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">
@@ -1968,88 +2042,257 @@ async function cargarGastosReal() {
         </td></tr>`;
 
     try {
-        const _ahora2    = new Date();
-        const _offsetMs2 = 5 * 60 * 60 * 1000;
-        const _hoyL2     = new Date(_ahora2.getTime() - _offsetMs2);
-        const _yyyy2     = _hoyL2.getUTCFullYear();
-        const _mm2       = String(_hoyL2.getUTCMonth() + 1).padStart(2, '0');
-        const _dd2       = String(_hoyL2.getUTCDate()).padStart(2, '0');
-        // [v3.7 · FIX-EGRESOS] Usar el mismo corte del último cierre que usa
-        // el Dashboard. Antes esta pestaña contaba el día completo mientras
-        // el Dashboard contaba desde el último cierre: dos ventanas distintas
-        // sobrescribiendo la misma variable globalEgresos.
-        const _ini2      = _resolverInicioDiaEfectivo(`${_yyyy2}-${_mm2}-${_dd2}T00:00:00-05:00`);
-        const _fin2      = `${_yyyy2}-${_mm2}-${_dd2}T23:59:59-05:00`;
-
         const { data: egresos, error } = await supabaseClient
             .from('operating_expenses')
             .select('*')
-            .gte('created_at', _ini2)
-            .lte('created_at', _fin2)
+            .gte('created_at', rango.inicio)
+            .lte('created_at', rango.fin)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        globalEgresos = (egresos || []).reduce(
-            (acc, g) => acc + (parseFloat(g.amount) || 0), 0
-        );
+        // Los reportes de caja siempre usan el día actual y el corte del último
+        // cierre. Consultar un día anterior para editarlo no altera esos totales.
+        if (fechaConsulta === hoy) {
+            const inicioHoy = _resolverInicioDiaEfectivo(_gastoRangoDia(hoy).inicio);
+            globalEgresos = (egresos || []).reduce((acc, g) => {
+                const fechaGasto = new Date(g.created_at || '').getTime();
+                return fechaGasto >= new Date(inicioHoy).getTime()
+                    ? acc + (parseFloat(g.amount) || 0) : acc;
+            }, 0);
+            const elTotalGastos = document.getElementById('total-gastos');
+            if (elTotalGastos) elTotalGastos.textContent = formatCOP(globalEgresos);
+        }
 
-        const elTotalGastos = document.getElementById('total-gastos');
-        if (elTotalGastos) elTotalGastos.textContent = formatCOP(globalEgresos);
+        const listaFacturas = document.getElementById('lista-facturas-gasto');
+        const porId = {};
+        (egresos || []).forEach(g => { porId[String(g.id)] = g; });
+        window._gastosPorId = { ...(window._gastosPorId || {}), ...porId };
+        const facturasCompra = (egresos || []).filter(g =>
+            g.expense_type === 'Factura de compra' && g.invoice_data && typeof g.invoice_data === 'object'
+        );
+        const gastosSimples = (egresos || []).filter(g => !facturasCompra.includes(g));
 
         tbody.innerHTML = '';
 
-        if (!egresos || egresos.length === 0) {
+        if (gastosSimples.length === 0) {
             tbody.innerHTML = `
                 <tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-3);font-size:12.5px;">
                     Sin salidas registradas.
                 </td></tr>`;
-            return;
-        }
-
-        egresos.forEach(g => {
-            const hora = new Date(g.created_at).toLocaleTimeString('es-CO', {
-                hour: '2-digit', minute: '2-digit'
-            });
-            const descEscapada = (g.description || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        } else gastosSimples.forEach(g => {
+            const tipo = _gastoEscHTML(g.expense_type || 'Otros');
+            const descripcion = _gastoEscHTML(g.description || 'Sin descripción');
             tbody.insertAdjacentHTML('beforeend', `
                 <tr class="tbody-row">
                     <td>
-                        <span style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">${g.expense_type}</span>
+                        <span style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">${tipo}</span>
                     </td>
-                    <td style="color:var(--text-1);font-size:13px;">${g.description}</td>
+                    <td style="color:var(--text-1);font-size:13px;">${descripcion}</td>
                     <td style="text-align:right;">
                         <span class="mono" style="font-size:13px;font-weight:600;color:var(--red);">- ${formatCOP(g.amount)}</span>
                     </td>
-                    <td style="text-align:center;font-size:11.5px;color:var(--text-3);" class="mono">${hora}</td>
+                    <td style="text-align:center;font-size:11.5px;color:var(--text-3);" class="mono">${_gastoFechaBonita(g.created_at)}</td>
                     <td style="text-align:center;">
-                        <button onclick="eliminarGastoReal('${g.id}','${descEscapada}',${parseFloat(g.amount) || 0})" title="Eliminar gasto"
-                            style="background:none;border:none;cursor:pointer;color:var(--red);padding:4px 8px;border-radius:6px;opacity:0.7;display:inline-flex;align-items:center;"
-                            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+                        <button type="button" onclick="editarGastoReal('${_gastoEscHTML(g.id)}')" title="Editar gasto" class="btn-ghost" style="padding:5px 8px;margin-right:3px;">Editar</button>
+                        <button type="button" onclick="eliminarGastoReal('${_gastoEscHTML(g.id)}')" title="Eliminar gasto" class="btn-danger" style="padding:5px 8px;">Eliminar</button>
                     </td>
                 </tr>`);
         });
+
+        if (listaFacturas) {
+            if (!facturasCompra.length) {
+                listaFacturas.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:22px;color:var(--text-3);font-size:12.5px;">No hay facturas de compra para ${_gastoEscHTML(fechaConsulta)}.</p>`;
+            } else {
+                listaFacturas.innerHTML = facturasCompra.map(g => {
+                    const d = g.invoice_data || {};
+                    const nombre = _gastoEscHTML(d.supplier_name || g.description || 'Proveedor');
+                    const numero = _gastoEscHTML(d.invoice_number || 'Sin número');
+                    const nit = _gastoEscHTML(d.supplier_nit || '');
+                    const logo = typeof d.supplier_logo === 'string' && /^data:image\/(png|jpeg|webp);base64,/i.test(d.supplier_logo)
+                        ? `<img src="${_gastoEscHTML(d.supplier_logo)}" alt="Logo ${nombre}" style="width:48px;height:48px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:10px;padding:3px;">`
+                        : `<span class="ic ic-xl" style="width:48px;height:48px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;"><i data-lucide="store"></i></span>`;
+                    const items = Array.isArray(d.items) ? d.items : [];
+                    const detalle = items.map(i => `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--text-2);"><span>${_gastoEscHTML(i.quantity)} × ${_gastoEscHTML(i.name)}</span><span class="mono">${formatCOP((Number(i.quantity) || 0) * (Number(i.unit_price) || 0))}</span></div>`).join('');
+                    return `<article class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">${logo}<div style="min-width:0;flex:1;"><strong style="font-size:13px;display:block;overflow-wrap:anywhere;">${nombre}</strong><span style="font-size:11px;color:var(--text-3);">Factura ${numero}${nit ? ` · NIT ${nit}` : ''}</span></div></div>
+                        <div style="font-size:11px;color:var(--text-3);">${_gastoFechaBonita(g.created_at)} · ${items.length} producto(s)</div>
+                        <details><summary style="font-size:11px;color:var(--olive);cursor:pointer;">Ver productos y valores</summary><div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">${detalle || '<span style="font-size:11px;color:var(--text-3);">Sin productos detallados.</span>'}</div>${d.notes ? `<p style="font-size:11px;color:var(--text-3);margin-top:8px;">${_gastoEscHTML(d.notes)}</p>` : ''}</details>
+                        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:8px;"><span style="font-size:11px;color:var(--text-3);">Total registrado</span><strong class="mono" style="color:var(--red);">${formatCOP(g.amount)}</strong></div>
+                        <div style="display:flex;gap:7px;"><button type="button" class="btn-ghost" onclick="editarFacturaCompra('${_gastoEscHTML(g.id)}')">Editar factura</button><button type="button" class="btn-danger" onclick="eliminarGastoReal('${_gastoEscHTML(g.id)}')">Eliminar</button></div>
+                    </article>`;
+                }).join('');
+            }
+        }
 
         if (window.lucide) lucide.createIcons();
 
     } catch (err) {
         console.error('Error cargando egresos:', err);
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--red);">No se pudieron cargar los gastos: ${_gastoEscHTML(err.message || 'Error de conexión')}</td></tr>`;
     }
 }
 
-// ============================================================
-// [v3.7] ELIMINAR GASTO — para corregir salidas registradas
-// por error (monto equivocado, duplicado, prueba, etc.)
-// ============================================================
-async function eliminarGastoReal(idGasto, descripcion, monto) {
-    if (!confirm(`⚠️ ¿Eliminar el gasto "${descripcion}" por ${formatCOP(monto)}?\n\nEsta acción no se puede deshacer y ajustará los totales del día.`)) return;
+function editarGastoReal(idGasto) {
+    const g = window._gastosPorId?.[String(idGasto)];
+    if (!g) { Toast.error('No se encontró el gasto. Actualiza la lista e intenta otra vez.'); return; }
+    document.getElementById('gasto-id').value = g.id;
+    document.getElementById('gasto-tipo').value = g.expense_type || 'Otros';
+    document.getElementById('gasto-descripcion').value = g.description || '';
+    document.getElementById('gasto-monto').value = Number(g.amount) || 0;
+    document.getElementById('gasto-fecha').value = new Date(g.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+    document.getElementById('btn-guardar-gasto').innerHTML = '<span class="ic ic-sm"><i data-lucide="save"></i></span> Guardar cambios';
+    document.getElementById('btn-cancelar-edicion-gasto').style.display = 'inline-flex';
+    if (window.lucide) lucide.createIcons();
+    document.getElementById('form-gasto')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelarEdicionGasto() {
+    const form = document.getElementById('form-gasto');
+    form?.reset();
+    const id = document.getElementById('gasto-id');
+    if (id) id.value = '';
+    const fecha = document.getElementById('gasto-fecha');
+    if (fecha) fecha.value = _gastosHoyBogota();
+    const btn = document.getElementById('btn-guardar-gasto');
+    if (btn) btn.innerHTML = '<span class="ic ic-sm"><i data-lucide="save"></i></span> Registrar gasto';
+    const cancelar = document.getElementById('btn-cancelar-edicion-gasto');
+    if (cancelar) cancelar.style.display = 'none';
+    if (window.lucide) lucide.createIcons();
+}
+
+function _gfMostrarLogo(valor) {
+    _facturaGastoLogoActual = valor || null;
+    const img = document.getElementById('fg-logo-preview');
+    const quitar = document.getElementById('fg-logo-quitar');
+    if (img) {
+        img.src = _facturaGastoLogoActual || '';
+        img.style.display = _facturaGastoLogoActual ? 'block' : 'none';
+    }
+    if (quitar) quitar.style.display = _facturaGastoLogoActual ? 'inline-flex' : 'none';
+}
+
+let _facturaGastoLogoActual = null;
+
+function quitarLogoFacturaGasto() {
+    const input = document.getElementById('fg-logo');
+    if (input) input.value = '';
+    _gfMostrarLogo(null);
+}
+
+async function _gfProcesarLogo(file) {
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) { Toast.error('Selecciona una imagen PNG, JPG o WebP.'); return; }
+    if (file.size > 8 * 1024 * 1024) { Toast.error('El logo debe pesar menos de 8 MB.'); return; }
+    try {
+        const source = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+            reader.readAsDataURL(file);
+        });
+        const image = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('La imagen no es válida.'));
+            img.src = source;
+        });
+        const escala = Math.min(1, 480 / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * escala));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * escala));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        const comprimida = canvas.toDataURL('image/webp', 0.82);
+        if (comprimida.length > 900000) throw new Error('No se pudo comprimir el logo a un tamaño seguro. Prueba con una imagen más pequeña.');
+        _gfMostrarLogo(comprimida);
+    } catch (err) {
+        Toast.error(err.message || 'No se pudo procesar el logo.');
+    }
+}
+
+function agregarLineaFacturaGasto(datos = {}) {
+    const cont = document.getElementById('fg-lineas');
+    if (!cont) return;
+    const fila = document.createElement('div');
+    fila.className = 'fg-linea';
+    fila.style.cssText = 'display:grid;grid-template-columns:minmax(100px,1fr) 75px 115px 34px;gap:6px;align-items:center;';
+    fila.innerHTML = `<input class="fg-item-nombre" maxlength="160" aria-label="Nombre del producto" placeholder="Producto" value="${_gastoEscHTML(datos.name || '')}">
+        <input class="fg-item-cantidad" type="number" aria-label="Cantidad" min="0.001" step="0.001" placeholder="1" value="${_gastoEscHTML(datos.quantity ?? 1)}" oninput="actualizarTotalFacturaGasto()">
+        <input class="fg-item-valor" type="number" aria-label="Valor unitario" min="0" step="1" placeholder="0" value="${_gastoEscHTML(datos.unit_price ?? '')}" oninput="actualizarTotalFacturaGasto()">
+        <button type="button" class="btn-danger" aria-label="Quitar producto" onclick="this.closest('.fg-linea').remove();actualizarTotalFacturaGasto()" style="padding:5px 8px;">×</button>`;
+    cont.appendChild(fila);
+    actualizarTotalFacturaGasto();
+}
+
+function actualizarTotalFacturaGasto() {
+    const lineas = [...(document.querySelectorAll('#fg-lineas .fg-linea') || [])];
+    const subtotal = lineas.reduce((s, fila) => s + (Number(fila.querySelector('.fg-item-cantidad')?.value) || 0) * (Number(fila.querySelector('.fg-item-valor')?.value) || 0), 0);
+    const impuestos = Math.max(0, Number(document.getElementById('fg-impuestos')?.value) || 0);
+    const descuento = Math.max(0, Number(document.getElementById('fg-descuento')?.value) || 0);
+    const total = Math.max(0, subtotal + impuestos - descuento);
+    const el = document.getElementById('fg-total');
+    if (el) el.textContent = formatCOP(total);
+    return { subtotal: Math.round(subtotal), taxes: Math.round(impuestos), discount: Math.round(descuento), total: Math.round(total) };
+}
+
+function cancelarEdicionFacturaGasto() {
+    document.getElementById('form-factura-gasto')?.reset();
+    const id = document.getElementById('factura-gasto-id');
+    if (id) id.value = '';
+    const fecha = document.getElementById('fg-fecha');
+    if (fecha) fecha.value = _gastosHoyBogota();
+    document.getElementById('fg-lineas').innerHTML = '';
+    agregarLineaFacturaGasto();
+    _gfMostrarLogo(null);
+    const titulo = document.getElementById('titulo-form-factura-gasto');
+    if (titulo) titulo.innerHTML = '<span class="ic ic-md"><i data-lucide="receipt-text"></i></span> Registrar factura de compra';
+    const guardar = document.getElementById('btn-guardar-factura-gasto');
+    if (guardar) guardar.textContent = 'Guardar factura como gasto';
+    const cancelar = document.getElementById('btn-cancelar-edicion-factura-gasto');
+    if (cancelar) cancelar.style.display = 'none';
+    actualizarTotalFacturaGasto();
+    if (window.lucide) lucide.createIcons();
+}
+
+function editarFacturaCompra(idFactura) {
+    const g = window._gastosPorId?.[String(idFactura)];
+    if (!g || !g.invoice_data) { Toast.error('No se encontró el detalle de esta factura. Actualiza la lista.'); return; }
+    cambiarSubseccionGastos('facturas');
+    const d = g.invoice_data;
+    document.getElementById('factura-gasto-id').value = g.id;
+    document.getElementById('fg-proveedor').value = d.supplier_name || '';
+    document.getElementById('fg-nit').value = d.supplier_nit || '';
+    document.getElementById('fg-numero').value = d.invoice_number || '';
+    document.getElementById('fg-fecha').value = new Date(g.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+    document.getElementById('fg-impuestos').value = Number(d.taxes) || 0;
+    document.getElementById('fg-descuento').value = Number(d.discount) || 0;
+    document.getElementById('fg-notas').value = d.notes || '';
+    document.getElementById('fg-lineas').innerHTML = '';
+    (Array.isArray(d.items) && d.items.length ? d.items : [{}]).forEach(agregarLineaFacturaGasto);
+    _gfMostrarLogo(d.supplier_logo || null);
+    const titulo = document.getElementById('titulo-form-factura-gasto');
+    if (titulo) titulo.innerHTML = '<span class="ic ic-md"><i data-lucide="file-pen-line"></i></span> Editar toda la factura';
+    const guardar = document.getElementById('btn-guardar-factura-gasto');
+    if (guardar) guardar.textContent = 'Guardar cambios de la factura';
+    const cancelar = document.getElementById('btn-cancelar-edicion-factura-gasto');
+    if (cancelar) cancelar.style.display = 'inline-flex';
+    actualizarTotalFacturaGasto();
+    if (window.lucide) lucide.createIcons();
+    document.getElementById('form-factura-gasto')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function eliminarGastoReal(idGasto) {
+    const g = window._gastosPorId?.[String(idGasto)];
+    if (!g) { Toast.error('No se encontró el registro. Actualiza la lista e intenta otra vez.'); return; }
+    const nombre = g.invoice_data?.supplier_name || g.description || g.expense_type || 'gasto';
+    if (!confirm(`¿Eliminar "${nombre}" por ${formatCOP(g.amount)}?\n\nEsta acción no se puede deshacer.`)) return;
     try {
         const { error } = await supabaseClient
             .from('operating_expenses')
             .delete()
-            .eq('id', idGasto);
+            .eq('id', g.id);
         if (error) throw error;
-        Toast.ok(`Gasto "${descripcion}" eliminado. Totales actualizados.`);
+        Toast.ok('Registro eliminado.');
         cargarGastosReal();
     } catch (err) {
         console.error('Error eliminando gasto:', err);
@@ -2063,22 +2306,99 @@ document.addEventListener('DOMContentLoaded', () => {
         formGasto.addEventListener('submit', async (e) => {
             e.preventDefault();
             const expense_type = document.getElementById('gasto-tipo').value;
-            const description  = document.getElementById('gasto-descripcion').value;
+            const description  = document.getElementById('gasto-descripcion').value.trim();
             const amount       = parseFloat(document.getElementById('gasto-monto').value);
+            const fecha        = document.getElementById('gasto-fecha').value;
+            const id           = document.getElementById('gasto-id').value;
+            if (!fecha || !description || !Number.isFinite(amount) || amount < 0) {
+                Toast.error('Completa la fecha, descripción y un valor válido.');
+                return;
+            }
             try {
-                const { error } = await supabaseClient
-                    .from('operating_expenses')
-                    .insert([{ expense_type, description, amount }]);
+                const query = supabaseClient.from('operating_expenses');
+                const { error } = id
+                    ? await query.update({ expense_type, description, amount, created_at: _gastoFechaISO(fecha) }).eq('id', id)
+                    : await query.insert([{ expense_type, description, amount, created_at: _gastoFechaISO(fecha) }]);
                 if (error) throw error;
-                formGasto.reset();
-                Toast.ok(`Salida de ${formatCOP(amount)} registrada correctamente.`);
+                if (document.getElementById('gasto-filtro-fecha')) document.getElementById('gasto-filtro-fecha').value = fecha;
+                cancelarEdicionGasto();
+                Toast.ok(id ? 'Gasto actualizado.' : `Gasto de ${formatCOP(amount)} registrado.`);
                 cargarGastosReal();
             } catch (err) {
                 console.error('Error insertando gasto:', err);
-                // [v3.7 · FIX-EGRESOS] Mostrar el motivo real del fallo para
-                // que un error de permisos/red no pase desapercibido y el
-                // gasto no se pierda sin que nadie lo note.
-                Toast.error(`No se guardó el gasto: ${err.message || 'error desconocido'}. Verifica e inténtalo de nuevo.`, 8000);
+                Toast.error(`No se guardó el gasto: ${err.message || 'error desconocido'}.`, 8000);
+            }
+        });
+    }
+
+    const formFactura = document.getElementById('form-factura-gasto');
+    if (formFactura) {
+        const hoy = _gastosHoyBogota();
+        const fechaGasto = document.getElementById('gasto-fecha');
+        const fechaFactura = document.getElementById('fg-fecha');
+        const filtroGastos = document.getElementById('gasto-filtro-fecha');
+        const filtroFactura = document.getElementById('factura-gasto-filtro-fecha');
+        if (fechaGasto && !fechaGasto.value) fechaGasto.value = hoy;
+        if (fechaFactura && !fechaFactura.value) fechaFactura.value = hoy;
+        if (filtroGastos && !filtroGastos.value) filtroGastos.value = hoy;
+        if (filtroFactura && !filtroFactura.value) filtroFactura.value = hoy;
+        [fechaGasto, fechaFactura, filtroGastos, filtroFactura].filter(Boolean).forEach(input => { input.max = hoy; });
+        agregarLineaFacturaGasto();
+
+        document.getElementById('fg-logo')?.addEventListener('change', e => _gfProcesarLogo(e.target.files?.[0]));
+        formFactura.addEventListener('submit', async e => {
+            e.preventDefault();
+            const fecha = document.getElementById('fg-fecha').value;
+            const items = [...document.querySelectorAll('#fg-lineas .fg-linea')].map(fila => ({
+                name: fila.querySelector('.fg-item-nombre')?.value.trim() || '',
+                quantity: Number(fila.querySelector('.fg-item-cantidad')?.value) || 0,
+                unit_price: Number(fila.querySelector('.fg-item-valor')?.value) || 0,
+            })).filter(i => i.name && i.quantity > 0);
+            const amounts = actualizarTotalFacturaGasto();
+            if (!fecha || !document.getElementById('fg-proveedor').value.trim()) {
+                Toast.error('Indica el nombre del proveedor y la fecha de la factura.');
+                return;
+            }
+            if (!items.length) { Toast.error('Agrega al menos un producto con cantidad válida.'); return; }
+            if (amounts.total <= 0) { Toast.error('El total de la factura debe ser mayor que cero.'); return; }
+
+            const invoice_data = {
+                version: 1,
+                supplier_name: document.getElementById('fg-proveedor').value.trim(),
+                supplier_nit: document.getElementById('fg-nit').value.trim(),
+                invoice_number: document.getElementById('fg-numero').value.trim(),
+                supplier_logo: _facturaGastoLogoActual,
+                items: items.map(i => ({ ...i, subtotal: Math.round(i.quantity * i.unit_price) })),
+                subtotal: amounts.subtotal,
+                taxes: amounts.taxes,
+                discount: amounts.discount,
+                total: amounts.total,
+                notes: document.getElementById('fg-notas').value.trim(),
+            };
+            const description = `Factura ${invoice_data.invoice_number || 'de compra'} · ${invoice_data.supplier_name}`;
+            const id = document.getElementById('factura-gasto-id').value;
+            const row = {
+                expense_type: 'Factura de compra', description, amount: amounts.total,
+                created_at: _gastoFechaISO(fecha), invoice_data,
+            };
+            try {
+                const query = supabaseClient.from('operating_expenses');
+                const { error } = id
+                    ? await query.update(row).eq('id', id)
+                    : await query.insert([row]);
+                if (error) {
+                    if (/invoice_data|column/i.test(error.message || '')) {
+                        throw new Error('Falta habilitar el detalle de facturas en Supabase. Ejecuta una vez el archivo operating_expenses_invoice_data.sql y vuelve a guardar.');
+                    }
+                    throw error;
+                }
+                if (filtroFactura) filtroFactura.value = fecha;
+                cancelarEdicionFacturaGasto();
+                Toast.ok(id ? 'Factura actualizada y gasto sincronizado.' : 'Factura guardada como gasto del restaurante.');
+                await cargarGastosReal();
+            } catch (err) {
+                console.error('Error guardando factura de compra:', err);
+                Toast.error(`No se guardó la factura: ${err.message || 'error desconocido'}`, 9000);
             }
         });
     }
@@ -3412,14 +3732,20 @@ async function _renderEditorAdmin() {
     const tablas = (tablasData || []).map(t => ({ id: t.id, label: t.label || String(t.number || '') }));
     _adminEditor.tablas = tablas;
 
-    const opcionesMenu = (menuItems || []).map(m => {
-        const p = m.portions_today != null ? ` (${m.portions_today} disp.)` : '';
-        return `<option value="${m.id}" data-precio="${m.price}" data-nombre="${m.name.replace(/"/g,'&quot;')}">${m.name} — ${formatCOP(m.price)}${p}</option>`;
-    }).join('');
+    _adminEditor.menu = menuItems || [];
 
     const filasItems = _adminEditor.itemsEdit.filter(it => !it.eliminado).map(it => _renderFilaItemAdmin(it)).join('');
 
     document.getElementById('eca-body').innerHTML = `
+        <div style="position:sticky;top:0;z-index:6;margin:-20px -24px 16px;padding:14px 24px 12px;background:var(--surface);border-bottom:1.5px solid var(--border);">
+            <div style="position:relative;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input id="eca-buscar" type="search" autocomplete="off" placeholder="Buscar producto para agregar…"
+                    oninput="_ecaBuscar(this.value)" onkeydown="_ecaBuscarTecla(event)"
+                    style="width:100%;box-sizing:border-box;padding:10px 14px 10px 38px;border-radius:999px;font-size:14px;">
+            </div>
+            <div id="eca-resultados" style="display:none;position:absolute;left:24px;right:24px;top:calc(100% - 4px);background:var(--surface);border:1.5px solid var(--border);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:min(260px,38vh);overflow-y:auto;"></div>
+        </div>
         <div style="margin-bottom:16px;">
             <p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;">
                 Orden <span class="mono">${pedido.order_number}</span></p>
@@ -3430,22 +3756,6 @@ async function _renderEditorAdmin() {
                 <p style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;">Ítems de la comanda</p>
             </div>
             <div id="eca-items-lista" style="padding:0;">${filasItems || '<p style="padding:16px;font-size:12.5px;color:var(--text-3);">Sin ítems.</p>'}</div>
-        </div>
-        <div style="border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
-            <div style="background:var(--surface-2);padding:10px 14px;border-bottom:1.5px solid var(--border);">
-                <p style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;">Agregar producto</p>
-            </div>
-            <div style="padding:14px;display:flex;flex-direction:column;gap:10px;">
-                <select id="eca-sel-producto" style="border-radius:999px;font-size:13px;">
-                    <option value="">— Selecciona un producto —</option>${opcionesMenu}
-                </select>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <button onclick="_ecaDecQty()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--olive-bd);background:var(--olive-lt);color:var(--olive);font-size:16px;cursor:pointer;font-family:'DM Sans',sans-serif;">−</button>
-                    <span id="eca-nueva-qty" style="font-size:14px;font-weight:600;color:var(--text-1);min-width:24px;text-align:center;">1</span>
-                    <button onclick="_ecaIncQty()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--olive-bd);background:var(--olive-lt);color:var(--olive);font-size:16px;cursor:pointer;font-family:'DM Sans',sans-serif;">+</button>
-                    <button onclick="_ecaAgregarItem()" class="btn-olive" style="flex:1;min-width:120px;height:36px;">+ Agregar al pedido</button>
-                </div>
-            </div>
         </div>
         ${(pedido.notes || '').includes('[MESA]') ? `
         <div style="border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
@@ -3475,6 +3785,7 @@ async function _renderEditorAdmin() {
         </div>`;
 
     window._ecaNuevaQty = 1;
+    if (window.innerWidth > 768) setTimeout(() => document.getElementById('eca-buscar')?.focus(), 60);
 }
 
 function _renderFilaItemAdmin(it) {
@@ -3506,29 +3817,81 @@ window._ecaDecQty = function() {
     const el = document.getElementById('eca-nueva-qty');
     if (el) el.textContent = window._ecaNuevaQty;
 };
-window._ecaAgregarItem = function() {
-    const sel = document.getElementById('eca-sel-producto');
-    if (!sel || !sel.value) { Toast.error('Selecciona un producto.'); return; }
-    const opt    = sel.options[sel.selectedIndex];
-    const nombre = opt.dataset.nombre || opt.text.split(' — ')[0].trim();
-    const precio = parseFloat(opt.dataset.precio) || 0;
-    const qty    = window._ecaNuevaQty || 1;
-    const existente = _adminEditor.itemsEdit.find(it => !it.eliminado && it.menuItemId === sel.value && it.esNuevo);
+function _ecaNorm(t) {
+    return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+window._ecaBuscar = function (q) {
+    const box = document.getElementById('eca-resultados');
+    if (!box) return;
+    const palabras = _ecaNorm(q).trim().split(/\s+/).filter(Boolean);
+    _adminEditor.primerResultado = null;
+    if (!palabras.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    const res = (_adminEditor.menu || [])
+        .filter(m => { const n = _ecaNorm(m.name); return palabras.every(p => n.includes(p)); })
+        .slice(0, 15);
+
+    if (!res.length) {
+        box.innerHTML = '<p style="padding:14px;font-size:12.5px;color:var(--text-3);text-align:center;">Sin resultados.</p>';
+        box.style.display = 'block';
+        return;
+    }
+    _adminEditor.primerResultado = res[0].id;
+    box.innerHTML = res.map(m => {
+        const enPedido = _adminEditor.itemsEdit
+            .filter(it => !it.eliminado && String(it.menuItemId) === String(m.id))
+            .reduce((a, it) => a + it.cantidad, 0);
+        const disp = m.portions_today != null
+            ? `<span style="font-size:10.5px;color:${m.portions_today > 0 ? 'var(--text-3)' : 'var(--red)'};">${m.portions_today} disp.</span>` : '';
+        const badge = enPedido
+            ? `<span style="background:var(--olive-lt);color:var(--olive);border:1.5px solid var(--olive-bd);border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:700;">×${enPedido} en pedido</span>` : '';
+        return `<button type="button" onclick="_ecaAgregarProducto('${m.id}')"
+            style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 14px;background:transparent;border:none;border-bottom:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;"
+            onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+            <span style="min-width:0;">
+                <span style="display:block;font-size:13px;font-weight:600;color:var(--text-1);">${m.name}</span>
+                <span style="display:flex;gap:8px;align-items:center;margin-top:2px;">${disp}${badge}</span>
+            </span>
+            <span style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span class="mono" style="font-size:12.5px;font-weight:600;color:var(--olive);">${formatCOP(m.price)}</span>
+                <span style="width:26px;height:26px;border-radius:50%;background:var(--olive);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">+</span>
+            </span>
+        </button>`;
+    }).join('');
+    box.style.display = 'block';
+};
+
+window._ecaBuscarTecla = function (ev) {
+    if (ev.key === 'Enter') {
+        ev.preventDefault();
+        if (_adminEditor.primerResultado) _ecaAgregarProducto(_adminEditor.primerResultado);
+    } else if (ev.key === 'Escape') {
+        ev.stopPropagation();
+        ev.target.value = '';
+        _ecaBuscar('');
+    }
+};
+
+window._ecaAgregarProducto = function (menuItemId) {
+    const m = (_adminEditor.menu || []).find(x => String(x.id) === String(menuItemId));
+    if (!m) return;
+    const existente = _adminEditor.itemsEdit.find(it => !it.eliminado && it.esNuevo && String(it.menuItemId) === String(m.id));
     if (existente) {
-        existente.cantidad += qty;
+        existente.cantidad += 1;
     } else {
         _adminEditor.itemsEdit.push({
-            id: `new-${Date.now()}`, menuItemId: sel.value, nombre, precio,
-            cantidad: qty, item_status: 'pending', esNuevo: true, eliminado: false,
+            id: `new-${Date.now()}`, menuItemId: m.id, nombre: m.name, precio: Number(m.price) || 0,
+            cantidad: 1, item_status: 'pending', esNuevo: true, eliminado: false,
         });
     }
-    sel.value = '';
-    window._ecaNuevaQty = 1;
-    const qtyEl = document.getElementById('eca-nueva-qty');
-    if (qtyEl) qtyEl.textContent = '1';
     _ecaRefrescarLista();
-    Toast.ok(`"${nombre}" agregado.`);
+    Toast.ok(`"${m.name}" agregado.`);
+    const inp = document.getElementById('eca-buscar');
+    if (inp) { inp.value = ''; inp.focus(); }
+    _ecaBuscar('');
 };
+
 window._ecaCambiarCantidad = function(itemId, delta) {
     const it = _adminEditor.itemsEdit.find(i => i.id === itemId);
     if (!it || it.eliminado) return;
@@ -3713,6 +4076,7 @@ function cerrarModalEditarComanda() {
     _adminEditor.orderId   = null;
     _adminEditor.pedido    = null;
     _adminEditor.itemsEdit = [];
+    _adminEditor.menu      = [];
     _adminEditor.guardando = false;
 }
 

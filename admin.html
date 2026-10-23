@@ -782,6 +782,15 @@
                     grid-template-columns: 1fr !important;
                     width: 100% !important;
                 }
+                #panel-gastos-restaurante,
+                #panel-facturas-gastos {
+                    grid-template-columns: 1fr !important;
+                    width: 100% !important;
+                }
+                #fg-lineas .fg-linea {
+                    grid-template-columns: minmax(80px,1fr) 58px 88px 30px !important;
+                    gap: 4px !important;
+                }
 
                 .dian-grid {
                     grid-template-columns: 1fr !important;
@@ -1903,33 +1912,55 @@
             </section>
 
             <!-- TAB: GASTOS OPERATIVOS -->
-            <section id="tab-nomina" style="display:none;grid-template-columns:1fr 2fr;gap:20px;align-items:start;"
-                class="gastos-grid">
+            <section id="tab-nomina" style="display:none;flex-direction:column;gap:16px;">
+                <div role="tablist" aria-label="Administración de gastos" style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button type="button" id="btn-subtab-gastos" class="btn-olive" role="tab" aria-selected="true" onclick="cambiarSubseccionGastos('gastos')">
+                        <span class="ic ic-sm"><i data-lucide="wallet"></i></span> Gastos del restaurante
+                    </button>
+                    <button type="button" id="btn-subtab-facturas-gastos" class="btn-ghost" role="tab" aria-selected="false" onclick="cambiarSubseccionGastos('facturas')">
+                        <span class="ic ic-sm"><i data-lucide="receipt-text"></i></span> Facturas de compra
+                    </button>
+                </div>
+
+                <div id="panel-gastos-restaurante" style="display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,2fr);gap:20px;align-items:start;">
                 <div class="card">
                     <h3 style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:18px;display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="file-pen-line"></i></span> Registrar
-                        Salida de Caja</h3>
+                        Gasto del Restaurante</h3>
                     <form id="form-gasto" style="display:flex;flex-direction:column;gap:14px;">
+                        <input type="hidden" id="gasto-id">
                         <div>
                             <label>Categoría Contable</label>
                             <select id="gasto-tipo">
                                 <option value="Nomina Cocina">Nómina — Operación Cocina</option>
                                 <option value="Nomina Mesero">Nómina — Pago Diario Mesero</option>
                                 <option value="Insumos Plaza">Insumos — Compras en Plaza</option>
+                                <option value="Servicios">Servicios públicos / Internet</option>
+                                <option value="Mantenimiento">Mantenimiento y reparaciones</option>
                                 <option value="Otros">Gastos Varios Operativos</option>
                             </select>
                         </div>
                         <div><label>Descripción</label><input type="text" id="gasto-descripcion"
                                 placeholder="Ej: Pago diario Carlos Torres" required></div>
+                        <div><label>Fecha del gasto</label><input type="date" id="gasto-fecha" required></div>
                         <div><label>Valor ($ COP)</label><input type="number" id="gasto-monto" placeholder="Ej: 60000"
-                                required></div>
-                        <button type="submit" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span> Registrar Movimiento</button>
+                                min="0" step="1" required></div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button type="submit" id="btn-guardar-gasto" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span> Registrar gasto</button>
+                            <button type="button" id="btn-cancelar-edicion-gasto" class="btn-ghost" onclick="cancelarEdicionGasto()" style="display:none;">Cancelar</button>
+                        </div>
                     </form>
                 </div>
 
                 <div class="card" style="padding:0;overflow:hidden;">
                     <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);">
-                        <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md" style="color:var(--red);"><i data-lucide="arrow-down-circle"></i></span> Historial de Salidas de Caja
-                        </h3>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                            <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md" style="color:var(--red);"><i data-lucide="arrow-down-circle"></i></span> Gastos registrados</h3>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <label for="gasto-filtro-fecha" style="margin:0;">Fecha:</label>
+                                <input type="date" id="gasto-filtro-fecha" onchange="cargarGastosReal()" style="width:auto;">
+                                <button type="button" class="btn-ghost" onclick="gastosIrHoy()" style="padding:7px 12px;">Hoy</button>
+                            </div>
+                        </div>
                     </div>
                     <div style="overflow-x:auto;">
                         <table style="width:100%;border-collapse:collapse;">
@@ -1938,7 +1969,7 @@
                                     <th>Categoría</th>
                                     <th>Descripción</th>
                                     <th style="text-align:right;">Monto</th>
-                                    <th style="text-align:center;">Hora</th>
+                                    <th style="text-align:center;">Fecha y hora</th>
                                     <th style="text-align:center;">Acciones</th>
                                 </tr>
                             </thead>
@@ -1950,6 +1981,69 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                </div>
+
+                <div id="panel-facturas-gastos" style="display:none;grid-template-columns:minmax(300px,1fr) minmax(0,2fr);gap:20px;align-items:start;">
+                    <div class="card">
+                        <h3 id="titulo-form-factura-gasto" style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:16px;display:flex;align-items:center;gap:7px;">
+                            <span class="ic ic-md"><i data-lucide="receipt-text"></i></span> Registrar factura de compra
+                        </h3>
+                        <form id="form-factura-gasto" style="display:flex;flex-direction:column;gap:12px;">
+                            <input type="hidden" id="factura-gasto-id">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                <div><label>Proveedor / nombre de la factura</label><input id="fg-proveedor" maxlength="160" required placeholder="Nombre del proveedor"></div>
+                                <div><label>NIT o documento</label><input id="fg-nit" maxlength="60" placeholder="Opcional"></div>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                <div><label>Número de factura</label><input id="fg-numero" maxlength="80" placeholder="Ej: FE-00125"></div>
+                                <div><label>Fecha de compra</label><input type="date" id="fg-fecha" required></div>
+                            </div>
+                            <div>
+                                <label>Logo del proveedor (opcional)</label>
+                                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                    <img id="fg-logo-preview" alt="Vista previa del logo" style="display:none;width:58px;height:58px;object-fit:contain;border:1px solid var(--border);border-radius:10px;background:#fff;padding:4px;">
+                                    <input type="file" id="fg-logo" accept="image/png,image/jpeg,image/webp" style="max-width:320px;">
+                                    <button type="button" class="btn-ghost" id="fg-logo-quitar" onclick="quitarLogoFacturaGasto()" style="display:none;padding:7px 12px;">Quitar logo</button>
+                                </div>
+                                <p style="font-size:11px;color:var(--text-3);margin-top:5px;">La imagen se reduce y se guarda junto con la factura para verla también sin internet.</p>
+                            </div>
+                            <div class="card" style="padding:12px;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+                                    <h4 style="font-size:13px;font-weight:700;color:var(--text-1);">Productos de la factura</h4>
+                                    <button type="button" class="btn-ghost" onclick="agregarLineaFacturaGasto()" style="padding:7px 12px;">+ Producto</button>
+                                </div>
+                                <div style="display:grid;grid-template-columns:minmax(100px,1fr) 75px 115px 34px;gap:6px;margin-bottom:5px;font-size:10px;color:var(--text-3);font-weight:700;">
+                                    <span>PRODUCTO</span><span>CANT.</span><span>VALOR UNIT.</span><span></span>
+                                </div>
+                                <div id="fg-lineas" style="display:flex;flex-direction:column;gap:7px;"></div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+                                    <div><label>Impuestos / cargos</label><input type="number" id="fg-impuestos" min="0" step="1" value="0" oninput="actualizarTotalFacturaGasto()"></div>
+                                    <div><label>Descuento</label><input type="number" id="fg-descuento" min="0" step="1" value="0" oninput="actualizarTotalFacturaGasto()"></div>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);margin-top:12px;padding-top:10px;">
+                                    <span style="font-size:12px;font-weight:700;color:var(--text-2);">TOTAL DE LA FACTURA</span>
+                                    <strong id="fg-total" class="mono" style="font-size:16px;color:var(--olive);">$0</strong>
+                                </div>
+                            </div>
+                            <div><label>Observaciones</label><textarea id="fg-notas" rows="2" maxlength="1000" placeholder="Opcional" style="resize:vertical;"></textarea></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <button type="submit" id="btn-guardar-factura-gasto" class="btn-olive" style="display:inline-flex;align-items:center;gap:6px;">Guardar factura como gasto</button>
+                                <button type="button" id="btn-cancelar-edicion-factura-gasto" class="btn-ghost" onclick="cancelarEdicionFacturaGasto()" style="display:none;">Cancelar edición</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card" style="padding:0;overflow:hidden;">
+                        <div style="padding:18px 20px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                            <h3 style="font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="files"></i></span> Facturas de compra registradas</h3>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <label for="factura-gasto-filtro-fecha" style="margin:0;">Fecha:</label>
+                                <input type="date" id="factura-gasto-filtro-fecha" onchange="cargarGastosReal()" style="width:auto;">
+                                <button type="button" class="btn-ghost" onclick="facturasGastoIrHoy()" style="padding:7px 12px;">Hoy</button>
+                            </div>
+                        </div>
+                        <div id="lista-facturas-gasto" style="padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div>
                     </div>
                 </div>
             </section>
@@ -2570,7 +2664,7 @@
 
             if (target) {
                 target.style.cssText = dest === 'nomina'
-                    ? 'display:grid;'
+                    ? 'display:flex;flex-direction:column;gap:16px;'
                     : 'display:flex;flex-direction:column;gap:24px;';
             }
             if (btnTarget) { btnTarget.classList.remove('tab-inactive'); btnTarget.classList.add('tab-active'); }
