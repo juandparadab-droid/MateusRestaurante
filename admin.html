@@ -3,8 +3,16 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Restaurante Mateus — Panel Administrativo</title>
+        <title>Restaurante Mateus — Administración del menú</title>
         <meta name="theme-color" content="#301e12">
+        <style>html:not(.menu-admin-authenticated) body{visibility:hidden}</style>
+        <script>
+            if (sessionStorage.getItem('user_role') === 'admin' && sessionStorage.getItem('user_name') === 'admin') {
+                document.documentElement.classList.add('menu-admin-authenticated');
+            } else {
+                location.replace('index.html');
+            }
+        </script>
         <link rel="manifest" href="manifest.webmanifest">
         <link rel="icon" type="image/jpg" href="logo.jpg">
         <script src="mateus-pwa-store.js"></script>
@@ -760,7 +768,10 @@
                     width: 100% !important;
                 }
 
-                #form-nuevo-plato>div:nth-child(2) {
+                #form-nuevo-plato>div:nth-child(1),
+                #form-nuevo-plato>div:nth-child(5),
+                #form-nuevo-plato>div:nth-child(6),
+                #form-nuevo-plato>div:last-child {
                     grid-column: span 2;
                 }
 
@@ -1225,19 +1236,15 @@
                 <img src="logo.jpg" alt="Restaurante Mateus" style="width:100%;height:100%;object-fit:cover;">
             </div>
             <div>
-                <h1 style="font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text-1);line-height:1.2;">
+                    <h1 style="font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text-1);line-height:1.2;">
                     Restaurante Mateus</h1>
-                <p style="font-size:10.5px;color:var(--text-3);">Panel Administrativo · Bucaramanga, Santander</p>
+                <p style="font-size:10.5px;color:var(--text-3);">Administración del menú público</p>
             </div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
-            <span id="fecha-actual" class="mono" style="font-size:12px;color:var(--text-3);">—</span>
-            <button id="btn-cierre-caja" onclick="ejecutarCierreCaja()"
-                style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);border-radius:999px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;"
-                onmouseover="this.style.background='rgba(192,57,43,.16)'"
-                onmouseout="this.style.background='var(--red-lt)'">
-                <span class="ic ic-sm" style="margin-right:4px;"><i data-lucide="lock"></i></span> Cierre de Caja (Z)
-            </button>
+            <a href="carta.html" target="_blank" rel="noopener" class="btn-ghost" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;padding:7px 14px;">
+                <span class="ic ic-sm"><i data-lucide="external-link"></i></span><span class="btn-menu-publico-txt">Ver menú público</span>
+            </a>
             <button id="btn-cerrar-sesion" type="button" onclick="cerrarSesionAdmin()" title="Cerrar sesión"
                 style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);color:var(--text-2);border:1.5px solid var(--border-2);border-radius:999px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s,color .2s,border-color .2s;"
                 onmouseover="this.style.background='var(--surface-3)';this.style.color='var(--text-1)'"
@@ -1250,98 +1257,21 @@
     <div style="display:flex;width:100%;overflow-x:hidden;" class="layout-wrapper">
 
         <!-- ════ SIDEBAR ════ -->
-        <aside
-            id="sidebar-admin"
-            style="width:236px;height:calc(100vh - 102px);background:var(--surface);border-right:1.5px solid var(--border);padding:20px 12px 28px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;flex-shrink:0;overflow-y:auto;position:sticky;top:0;">
-
-            <!-- BLOQUE 1: OPERACIÓN DIARIA -->
-            <p class="text-xs font-semibold uppercase tracking-wider"
-                style="color:var(--text-3);padding:0 8px 10px;">
-                Operación Diaria</p>
-
-            <button onclick="cambiarTab('tomar-pedido')" id="btn-tab-tomar-pedido" class="tab-active w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="clipboard-list"></i></span> Tomar Pedido / Mesas
+        <aside id="sidebar-admin" style="width:236px;height:calc(100vh - 58px);background:var(--surface);border-right:1.5px solid var(--border);padding:20px 12px 28px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;flex-shrink:0;position:sticky;top:0;">
+            <p class="text-xs font-semibold uppercase tracking-wider" style="color:var(--text-3);padding:0 8px 10px;">Administrar menú</p>
+            <button onclick="cambiarTab('menu')" id="btn-tab-menu" class="tab-active w-full text-left" style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
+                <span class="ic ic-md"><i data-lucide="utensils"></i></span> Productos y disponibilidad
             </button>
-
-            <button onclick="cambiarTab('pedidos')" id="btn-tab-pedidos" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="shopping-bag"></i></span> Historial de Pedidos
+            <button onclick="cambiarTab('carta')" id="btn-tab-carta" class="tab-inactive w-full text-left" style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
+                <span class="ic ic-md"><i data-lucide="qr-code"></i></span> Categorías y código QR
             </button>
-
-            <button onclick="cambiarTab('facturas')" id="btn-tab-facturas" class="tab-inactive w-full text-left"
-                aria-hidden="true" tabindex="-1"
-                style="display:none;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="archive"></i></span> Historial de Facturas
-            </button>
-
-            <button onclick="cambiarTab('dian')" id="btn-tab-dian" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="file-text"></i></span> Facturación DIAN
-            </button>
-
-            <button onclick="ejecutarCierreCaja()" id="btn-tab-cierre-caja" class="w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;font-family:'DM Sans',sans-serif;background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-bd);"
-                onmouseover="this.style.background='rgba(192,57,43,.16)'"
-                onmouseout="this.style.background='var(--red-lt)'">
-                <span class="ic ic-md"><i data-lucide="lock"></i></span> Apertura y Cierre de Caja
-            </button>
-
-            <div style="height:1.5px;background:var(--border);margin:12px 4px;"></div>
-
-            <!-- BLOQUE 2: ADMINISTRACIÓN Y CONTROL -->
-            <p class="text-xs font-semibold uppercase tracking-wider"
-                style="color:var(--text-3);padding:2px 8px 10px;">
-                Administración y Control</p>
-
-            <button onclick="cambiarTab('dashboard')" id="btn-tab-dashboard" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="layout-dashboard"></i></span> Dashboard Contable
-            </button>
-
-            <button onclick="cambiarTab('menu')" id="btn-tab-menu" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="book-open"></i></span> Control de Menú
-            </button>
-
-            <button onclick="cambiarTab('carta')" id="btn-tab-carta" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="qr-code"></i></span> Carta Digital / QR
-            </button>
-
-            <button onclick="cambiarTab('inventario')" id="btn-tab-inventario" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="package"></i></span> Inventario General
-            </button>
-
-            <button onclick="cambiarTab('nomina')" id="btn-tab-nomina" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="banknote"></i></span> Gastos Operativos
-            </button>
-
-            <button onclick="cambiarTab('personal')" id="btn-tab-personal" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="users"></i></span> Control de Personal
-            </button>
-
-            <button onclick="cambiarTab('calendario')" id="btn-tab-calendario" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="calendar"></i></span> Calendario de Cierres
-            </button>
-
-            <button onclick="cambiarTab('impresoras')" id="btn-tab-impresoras" class="tab-inactive w-full text-left"
-                style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);">
-                <span class="ic ic-md"><i data-lucide="printer"></i></span> Impresoras y Drivers
-            </button>
-
-
         </aside>
 
         <!-- ════ MAIN ════ -->
         <main style="flex:1;padding:28px;overflow-y:auto;min-width:0;box-sizing:border-box;">
 
             <!-- TAB: DASHBOARD -->
-            <section id="tab-dashboard" style="display:flex;flex-direction:column;gap:24px;">
+            <section id="tab-dashboard" style="display:none;flex-direction:column;gap:24px;">
 
                 <div id="panel-apertura-caja" class="card"
                     style="background:var(--olive-soft);border-color:var(--olive-bd);">
@@ -1669,50 +1599,32 @@
             </section>
 
             <!-- TAB: MENÚ -->
-            <section id="tab-menu" style="display:none;flex-direction:column;gap:20px;">
-                <div class="card" style="background:var(--surface-2);border-style:dashed;">
-                    <p
-                        style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
-                        <span class="ic ic-sm"><i data-lucide="hash"></i></span> Estructura de Códigos del Catálogo</p>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                        <span class="range-badge range-01"><span class="ic ic-sm"><i data-lucide="leaf"></i></span> 01–10 · Vegetales, Salsas e Ingredientes Base</span>
-                        <span class="range-badge range-11"><span class="ic ic-sm"><i data-lucide="beef"></i></span> 11–30 · Carnes, Proteínas y Cortes</span>
-                        <span class="range-badge range-31"><span class="ic ic-sm"><i data-lucide="soup"></i></span> 31–50 · Acompañamientos y Principios</span>
-                        <span class="range-badge range-51"><span class="ic ic-sm"><i data-lucide="cup-soda"></i></span> 51–70 · Bebidas y Jugos</span>
-                        <span class="range-badge range-71"><span class="ic ic-sm"><i data-lucide="star"></i></span> 71+ · Platos a la Carta y Especiales</span>
-                    </div>
-                </div>
-
+            <section id="tab-menu" style="display:flex;flex-direction:column;gap:20px;">
                 <div class="card">
                     <div style="margin-bottom:18px;">
-                        <h3 style="font-size:15px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="utensils-crossed"></i></span> Editor Modular del Catálogo
+                        <h3 style="font-size:15px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:7px;"><span class="ic ic-md"><i data-lucide="utensils-crossed"></i></span> Productos del menú
                         </h3>
-                        <p style="font-size:12px;color:var(--text-3);margin-top:3px;">Asigna un código único según la
-                            estructura de rangos. Las proteínas ya incluyen su salsa. Porciones en 0 → se bloquea
-                            automáticamente.</p>
+                        <p style="font-size:12px;color:var(--text-3);margin-top:3px;">Agrega productos y edita su nombre, precio, categoría, descripción, foto y disponibilidad.</p>
                     </div>
                     <form id="form-nuevo-plato"
-                        style="display:grid;grid-template-columns:80px 1fr 130px 140px 160px auto;gap:12px;align-items:end;">
+                        style="display:grid;grid-template-columns:minmax(190px,1.4fr) minmax(130px,.8fr) minmax(160px,1fr) minmax(130px,.8fr);gap:12px;align-items:end;">
                         <div>
-                            <label>Código *</label>
-                            <input type="number" id="menu-codigo" placeholder="Ej: 12" min="1" max="999" required>
-                        </div>
-                        <div>
-                            <label>Nombre del Plato o Componente</label>
+                            <label>Nombre del producto</label>
                             <input type="text" id="menu-nombre"
-                                placeholder="Ej: Bagre en Salsa Criolla · Fríjoles · Limonada" required>
+                                placeholder="Ej: Bagre en salsa criolla" maxlength="160" required>
                         </div>
                         <div>
                             <label>Precio / Valor ($)</label>
                             <input type="number" id="menu-precio" placeholder="Ej: 16000" required>
                         </div>
                         <div>
-                            <label>Tipo de Componente</label>
+                            <label>Categoría del menú</label>
                             <select id="menu-tipo">
                                 <option value="executive_lunch">Proteína con Salsa</option>
                                 <option value="side">Principio / Acompañamiento</option>
                                 <option value="drink">Bebida / Refresco</option>
                                 <option value="a_la_carte">Plato a la Carta</option>
+                                <option value="soup">Sopa</option>
                                 <option value="dessert">Postre</option>
                             </select>
                         </div>
@@ -1720,10 +1632,19 @@
                             <label>Porciones del Día</label>
                             <input type="number" id="menu-porciones" placeholder="Ej: 30" min="0">
                         </div>
+                        <div style="grid-column:span 2;">
+                            <label>Descripción (opcional)</label>
+                            <textarea id="menu-descripcion" rows="2" maxlength="500" placeholder="Describe el producto para quienes consulten la carta" style="resize:vertical;"></textarea>
+                        </div>
+                        <div style="grid-column:span 2;">
+                            <label>Foto del producto (opcional)</label>
+                            <input type="file" id="menu-imagen" accept="image/png,image/jpeg,image/webp">
+                            <small style="display:block;color:var(--text-3);margin-top:4px;">PNG, JPG o WebP; máximo 8 MB.</small>
+                        </div>
                         <div>
                             <label>&nbsp;</label>
                             <button type="submit" class="btn-olive" style="height:40px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><span class="ic ic-sm"><i data-lucide="save"></i></span>
-                                Registrar</button>
+                                Agregar producto</button>
                         </div>
                     </form>
                 </div>
@@ -2334,37 +2255,13 @@
     </div>
 
     <!-- ════ BOTTOM NAV (móvil) ════ -->
-    <nav id="bottom-nav" aria-label="Navegación principal">
-        <button class="bnav-item bnav-active" id="bnav-dashboard" onclick="cambiarTab('dashboard')">
-            <span class="bnav-icon ic-nav"><i data-lucide="layout-dashboard"></i></span><span class="bnav-label">Dashboard</span>
-        </button>
-        <button class="bnav-item" id="bnav-pedidos" onclick="cambiarTab('pedidos')">
-            <span class="bnav-icon ic-nav"><i data-lucide="shopping-bag"></i></span><span class="bnav-label">Pedidos</span>
-        </button>
-        <button class="bnav-item" id="bnav-menu" onclick="cambiarTab('menu')">
-            <span class="bnav-icon ic-nav"><i data-lucide="book-open"></i></span><span class="bnav-label">Productos</span>
+    <nav id="bottom-nav" aria-label="Navegación del menú">
+        <button class="bnav-item bnav-active" id="bnav-menu" onclick="cambiarTab('menu')">
+            <span class="bnav-icon ic-nav"><i data-lucide="utensils"></i></span><span class="bnav-label">Productos</span>
         </button>
         <button class="bnav-item" id="bnav-carta" onclick="cambiarTab('carta')">
-            <span class="bnav-icon ic-nav"><i data-lucide="qr-code"></i></span><span class="bnav-label">Carta</span>
+            <span class="bnav-icon ic-nav"><i data-lucide="qr-code"></i></span><span class="bnav-label">Carta y QR</span>
         </button>
-        <button class="bnav-item" id="bnav-personal" onclick="cambiarTab('personal')">
-            <span class="bnav-icon ic-nav"><i data-lucide="users"></i></span><span class="bnav-label">Personal</span>
-        </button>
-        <button class="bnav-item" id="bnav-nomina" onclick="cambiarTab('nomina')">
-            <span class="bnav-icon ic-nav"><i data-lucide="banknote"></i></span><span class="bnav-label">Gastos</span>
-        </button>
-        <button class="bnav-item" id="bnav-inventario" onclick="cambiarTab('inventario')">
-            <span class="bnav-icon ic-nav"><i data-lucide="package"></i></span><span class="bnav-label">Inventario</span>
-        </button>
-        <button class="bnav-item" id="bnav-dian" onclick="cambiarTab('dian')">
-            <span class="bnav-icon ic-nav"><i data-lucide="file-text"></i></span><span class="bnav-label">Factura</span>
-        </button>
-        <button class="bnav-item" id="bnav-calendario" onclick="cambiarTab('calendario')">
-            <span class="bnav-icon ic-nav"><i data-lucide="calendar"></i></span><span class="bnav-label">Cierres</span>
-        </button>
-        <a class="bnav-item" href="index.html">
-            <span class="bnav-icon ic-nav"><i data-lucide="utensils"></i></span><span class="bnav-label">Cocina</span>
-        </a>
     </nav>
 
     <!-- ════ MODAL CIERRE DE CAJA ════ -->
@@ -2685,16 +2582,10 @@
         document.addEventListener('DOMContentLoaded', ajustarSidebar);
 
         // ═══ GESTIÓN DE TABS ═══
-        const TABS = ['dashboard', 'pedidos', 'facturas', 'tomar-pedido', 'menu', 'carta', 'personal', 'nomina', 'inventario', 'dian', 'calendario', 'impresoras'];
+        const TABS = ['menu', 'carta'];
 
         function cambiarTab(dest) {
-            // El historial de facturas se conserva en el sistema, pero solo se
-            // abre mediante el enlace directo admin.html#facturas.
-            if (dest === 'facturas' && location.hash !== '#facturas') {
-                history.replaceState(null, '', `${location.pathname}${location.search}#facturas`);
-            } else if (dest !== 'facturas' && location.hash === '#facturas') {
-                history.replaceState(null, '', `${location.pathname}${location.search}`);
-            }
+            if (!TABS.includes(dest)) dest = 'menu';
 
             // 1. Ocultar todos los tabs de forma atómica
             TABS.forEach(t => {
@@ -2708,11 +2599,9 @@
             const target    = document.getElementById(`tab-${dest}`);
             const btnTarget = document.getElementById(`btn-tab-${dest}`);
 
-            if (target) {
-                target.style.cssText = dest === 'nomina'
-                    ? 'display:flex;flex-direction:column;gap:16px;'
-                    : 'display:flex;flex-direction:column;gap:24px;';
-            }
+            if (target) target.style.cssText = dest === 'menu'
+                ? 'display:flex;flex-direction:column;gap:20px;'
+                : 'display:flex;flex-direction:column;gap:20px;';
             if (btnTarget) { btnTarget.classList.remove('tab-inactive'); btnTarget.classList.add('tab-active'); }
 
             // 3. Sincronizar Bottom Nav (móvil)
@@ -2721,38 +2610,22 @@
             if (bnavEl) bnavEl.classList.add('bnav-active');
 
             // 4. Disparar carga de datos — solo cuando el contenedor ya es visible
-            if (dest === 'dashboard')  cargarDashboardReal();
-            if (dest === 'pedidos')    cargarHistorialPedidos();
-            if (dest === 'facturas')   cargarHistorialFacturas();
-            if (dest === 'tomar-pedido') _tpAbrirTabTomarPedido();
             if (dest === 'menu')       cargarSlotsMenuReal();
             if (dest === 'carta')      cargarTabCarta();
-            if (dest === 'personal')   renderPersonal();
-            if (dest === 'nomina')     cargarGastosReal();
-            if (dest === 'inventario') cargarInventarioReal();
-            if (dest === 'calendario') cargarCalendarioCierres();
-            if (dest === 'impresoras') cargarImpresorasApp();
         }
 
         // ═══ INICIALIZACIÓN ═══
-        // NOTA: admin.js ya tiene su propio DOMContentLoaded que llama cargarDashboardReal().
-        // Este bloque solo inicializa la visibilidad de tabs usando la misma lógica atómica.
+        // El panel solo abre la gestión del menú; caja y pedidos no se inicializan aquí.
         document.addEventListener('DOMContentLoaded', () => {
             // Inicializar visibilidad de tabs
             TABS.forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (!el) return;
-                el.style.cssText = t === 'dashboard'
-                    ? 'display:flex;flex-direction:column;gap:24px;'
+                el.style.cssText = t === 'menu'
+                    ? 'display:flex;flex-direction:column;gap:20px;'
                     : 'display:none;';
             });
-            // iniciarDashboard() ya es llamado desde admin.js DOMContentLoaded en paralelo.
-            // No se duplica aquí.
-            if (location.hash === '#facturas') cambiarTab('facturas');
-        });
-
-        window.addEventListener('hashchange', () => {
-            if (location.hash === '#facturas') cambiarTab('facturas');
+            cargarSlotsMenuReal();
         });
 
         // ═══ MÓDULO DIAN — historial local del día ═══
@@ -4983,10 +4856,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    _tpActualizarBannerMesero();
-    renderGridMesasPedido();
-});
 </script>
 
 
@@ -5005,13 +4874,13 @@ const CARTA_CFG_DEFECTO = {
     aviso: '',
     categorias_ocultas: [],
     categorias_nombres: {},
-    categorias_orden: [4, 1, 2, 3, 5, 6],
+    categorias_orden: [4, 1, 2, 3, 7, 5, 6],
     mostrar_disponibilidad: true,
     ocultar_agotados: false,
 };
 // Mismos números de categoría que usa carta.html (CATS[...].ord)
-const CARTA_CAT_DEFECTO = { 1: 'Proteínas', 2: 'Principios', 3: 'Bebidas', 4: 'A la Carta', 5: 'Postres', 6: 'Salsas' };
-const CARTA_ORDEN_DEFECTO = [4, 1, 2, 3, 5, 6]; // A la Carta primero
+const CARTA_CAT_DEFECTO = { 1: 'Proteínas', 2: 'Principios', 3: 'Bebidas', 4: 'A la Carta', 5: 'Postres', 6: 'Salsas', 7: 'Sopas' };
+const CARTA_ORDEN_DEFECTO = [4, 1, 2, 3, 7, 5, 6]; // A la Carta primero
 function _cartaOrdenValido(arr) {
     const v = [];
     (Array.isArray(arr) ? arr : []).map(Number).forEach(n => { if (CARTA_CAT_DEFECTO[n] && !v.includes(n)) v.push(n); });
@@ -5229,7 +5098,6 @@ async function cargarPropinasDashboard() {
             return r;
         };
     }
-    setTimeout(cargarPropinasDashboard, 1500);
 })();
 
 // ════════════════════════════════════════════════════════════
@@ -5318,7 +5186,7 @@ const LOGIN_URL = 'index.html';
 async function cerrarSesionAdmin() {
     const ok = await MateusConfirm.show({
         titulo: '¿Cerrar sesión?',
-        mensaje: 'Saldrás del panel administrativo. Los pedidos y el dashboard no se modifican.',
+        mensaje: 'Saldrás del panel de edición. El menú público seguirá disponible.',
         textoConfirmar: 'Cerrar sesión',
         textoCancelar: 'Cancelar',
         peligro: true,

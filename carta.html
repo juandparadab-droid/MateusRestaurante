@@ -245,6 +245,7 @@
   /* ── CATEGORY SECTION ── */
   .category-section {
     margin-bottom: 52px;
+    animation: fadeUp .4s ease both;
   }
 
   @keyframes fadeUp {
@@ -315,6 +316,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    animation: fadeUp .35s ease both;
   }
 
   .card::before {
@@ -442,100 +444,6 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── ANIMACIÓN DE ENTRADA ── */
-  @keyframes enterUp    { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-  @keyframes enterPop   { from { opacity: 0; transform: scale(.6) rotate(-6deg); } to { opacity: 1; transform: none; } }
-  @keyframes enterFade  { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes enterSlide { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
-  @keyframes enterLine  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  @keyframes enterCard  { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
-
-  body.listo .logo-img            { animation: enterPop  .7s cubic-bezier(.2,.9,.3,1.2) .05s backwards; }
-  body.listo header h1            { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .20s backwards; }
-  body.listo .header-sub          { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .32s backwards; }
-  body.listo .header-city         { animation: enterUp   .7s cubic-bezier(.2,.8,.2,1) .42s backwards; }
-  body.listo #status-bar          { animation: enterFade .6s ease .55s backwards; }
-  body.listo #filters.animar .pill { animation: enterUp   .5s cubic-bezier(.2,.8,.2,1) calc(.6s + var(--p, 0) * .05s) backwards; }
-
-  body.listo main.animar .category-header { animation: enterSlide .55s cubic-bezier(.2,.8,.2,1) calc(.55s + var(--c, 0) * .12s) backwards; }
-  main.animar .category-section { position: relative; }
-  body.listo main.animar .card            { animation: enterCard  .6s cubic-bezier(.2,.8,.2,1) calc(.7s + var(--i, 0) * .06s) backwards; }
-  body.listo main.animar .ornament        { animation: enterFade  .6s ease .9s backwards; }
-
-  /* Cambio de categoría: sin el retraso inicial de la página */
-  body.listo main.animar.cambio .category-header { animation-delay: calc(var(--c, 0) * .08s); }
-  body.listo main.animar.cambio .card            { animation-delay: calc(var(--i, 0) * .05s); }
-  body.listo main.animar.cambio .ornament        { animation-delay: .2s; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .logo-img, header h1, .header-sub, .header-city, #status-bar, #filters.animar .pill,
-    main.animar .category-header, main.animar .card, main.animar .ornament { animation: none !important; }
-  }
-
-  /* ── PANTALLA DE ENTRADA (5 s) ── */
-  body.splash-on { overflow: hidden; }
-  #splash {
-    position: fixed; inset: 0; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; padding: 24px; text-align: center;
-    background: radial-gradient(ellipse at 50% 40%, #4A3021 0%, #301E12 55%, #1F1209 100%);
-    animation: splashOut .7s ease 4.3s forwards;
-  }
-  @keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-  @keyframes splashLogo {
-    0%   { opacity: 0; transform: scale(.55) rotate(-8deg); }
-    55%  { opacity: 1; transform: scale(1.06) rotate(1deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  @keyframes splashRise { from { opacity: 0; transform: translateY(16px); letter-spacing: .3em; } to { opacity: 1; transform: none; } }
-  @keyframes splashRing { from { transform: scale(.7); opacity: .55; } to { transform: scale(1.9); opacity: 0; } }
-  @keyframes splashBar  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  @keyframes splashOrn  { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: none; } }
-
-  .splash-logo-wrap { position: relative; width: 112px; height: 112px; margin-bottom: 18px; }
-  .splash-logo-wrap::before, .splash-logo-wrap::after {
-    content: ''; position: absolute; inset: 0; border-radius: 26px; border: 1.5px solid rgba(214,200,174,.7);
-    animation: splashRing 2.2s ease-out infinite .6s backwards;
-  }
-  .splash-logo-wrap::after { animation-delay: 1.5s; }
-  .splash-logo {
-    position: relative; width: 100%; height: 100%; object-fit: contain; display: block;
-    background: #D6C8AE; border-radius: 26px; border: 1.5px solid var(--border-2);
-    box-shadow: 0 0 0 1.5px rgba(214,200,174,.25), 0 14px 50px rgba(0,0,0,.55), 0 0 60px rgba(214,200,174,.12);
-    animation: splashLogo 1.1s cubic-bezier(.2,.9,.3,1.1) .15s backwards;
-  }
-  .splash-name {
-    font-family: var(--serif); font-weight: 300; color: #F3ECDD; line-height: 1.1;
-    font-size: clamp(2rem, 8vw, 3rem); letter-spacing: .06em;
-    animation: splashRise 1s cubic-bezier(.2,.8,.2,1) .9s backwards;
-  }
-  .splash-name span { color: #D6C8AE; font-style: italic; }
-  .splash-sub {
-    font-family: var(--sans); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: #D6C8AE;
-    margin-top: 6px; animation: splashRise 1s cubic-bezier(.2,.8,.2,1) 1.25s backwards;
-  }
-  .splash-city {
-    font-family: var(--serif); font-style: italic; font-size: 14px; color: rgba(243,236,221,.6);
-    animation: splashRise 1s cubic-bezier(.2,.8,.2,1) 1.5s backwards;
-  }
-  .splash-orn {
-    display: flex; align-items: center; gap: 10px; margin: 18px 0 0;
-    animation: splashOrn .9s ease 1.8s backwards; transform-origin: center;
-  }
-  .splash-orn i { display: block; width: 46px; height: 1px; background: linear-gradient(90deg, transparent, #D6C8AE); }
-  .splash-orn i:last-child { background: linear-gradient(90deg, #D6C8AE, transparent); }
-  .splash-orn b { width: 7px; height: 7px; background: #D6C8AE; transform: rotate(45deg); display: block; }
-  .splash-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(214,200,174,.14); overflow: hidden; }
-  .splash-bar::after {
-    content: ''; display: block; height: 100%; background: #D6C8AE; transform-origin: left;
-    animation: splashBar 4.4s cubic-bezier(.4,.1,.3,1) forwards;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #splash { animation-duration: .4s; animation-delay: 1.6s; }
-    #splash *, #splash *::before, #splash *::after { animation: none !important; }
-    .splash-bar::after { transform: none; }
-  }
-
   /* ── FOOTER ── */
   footer {
     text-align: center;
@@ -616,38 +524,14 @@
   #aviso-carta[hidden] { display: none; }
 </style>
 </head>
-<body class="splash-on">
-
-<!-- PANTALLA DE ENTRADA -->
-<div id="splash" aria-hidden="true">
-  <div class="splash-logo-wrap">
-    <img class="splash-logo" src="logo.jpg" alt="" onerror="this.parentNode.style.display='none'">
-  </div>
-  <h1 class="splash-name">Restaurante <span>Mateus</span></h1>
-  <p class="splash-sub">Carta del día</p>
-  <p class="splash-city">Mesa de los santos, Colombia</p>
-  <div class="splash-orn"><i></i><b></b><i></i></div>
-  <div class="splash-bar"></div>
-</div>
-<script>
-  // La entrada dura 5 s: la página empieza a animarse mientras el telón se disuelve.
-  (function () {
-    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var t0 = reduce ? 1600 : 4400, t1 = reduce ? 2100 : 5000;
-    setTimeout(function () { document.body.classList.add('listo'); }, t0);
-    setTimeout(function () {
-      document.body.classList.remove('splash-on');
-      var sp = document.getElementById('splash'); if (sp) sp.remove();
-    }, t1);
-  })();
-</script>
+<body>
 
 <!-- HEADER -->
 <header>
   <img class="logo-img" src="logo.jpg" alt="Restaurante Mateus" onerror="this.style.display='none'">
   <h1 id="carta-nombre">Restaurante <span>Mateus</span></h1>
   <p class="header-sub" id="carta-subtitulo">Carta del día</p>
-  <p class="header-city" id="carta-ciudad">Mesa de los santos, Santander / Colombia</p>
+  <p class="header-city" id="carta-ciudad">Bucaramanga, Colombia</p>
 </header>
 
 <!-- AVISO (se edita desde el panel admin → Carta Digital) -->
@@ -699,13 +583,14 @@ const CATS = {
   a_la_carte:      { lbl: 'A la Carta',  ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', ord: 4 },
   dessert:         { lbl: 'Postres',     ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M6 2h12l2 6H4L6 2z"/><path d="M4 8c0 8 2 12 8 12s8-4 8-12"/></svg>', ord: 5 },
   sauce:           { lbl: 'Salsas',      ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M8 2h8"/><path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2"/><path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/></svg>', ord: 6 },
+  soup:            { lbl: 'Sopas',       ico: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M3 21h18"/><path d="M8 3v4"/><path d="M12 2v5"/><path d="M16 3v4"/></svg>', ord: 7 },
 };
 
 /* ── NOMBRES Y ORDEN DE CATEGORÍAS (editables desde admin → Carta Digital) ──
-   La clave de cada categoría es su número (1 Proteínas … 6 Salsas), el mismo que usa
+   La clave de cada categoría es su número (1 Proteínas … 7 Sopas), el mismo que usa
    categorias_ocultas. El nombre mostrado y la posición salen de CONFIG. */
-const CAT_NOMBRES_DEFECTO = { 1: 'Proteínas', 2: 'Principios', 3: 'Bebidas', 4: 'A la Carta', 5: 'Postres', 6: 'Salsas' };
-const CAT_ORDEN_DEFECTO   = [4, 1, 2, 3, 5, 6];   // A la Carta primero
+const CAT_NOMBRES_DEFECTO = { 1: 'Proteínas', 2: 'Principios', 3: 'Bebidas', 4: 'A la Carta', 5: 'Postres', 6: 'Salsas', 7: 'Sopas' };
+const CAT_ORDEN_DEFECTO   = [4, 1, 2, 3, 7, 5, 6];   // A la Carta primero
 
 function catNombre(ord) {
   const n = ((CONFIG.categorias_nombres || {})[ord] || '').toString().trim();
@@ -736,9 +621,9 @@ const CONFIG_DEFAULT = {
   ciudad:                 'Bucaramanga, Colombia',
   nota_pie:               'Precios en pesos colombianos · IVA incluido',
   aviso:                  '',
-  categorias_ocultas:     [],     // números de categoría (1 Proteínas … 6 Salsas)
+  categorias_ocultas:     [],     // números de categoría (1 Proteínas … 7 Sopas)
   categorias_nombres:     {},     // { 4: 'Especialidades', … } — vacío = nombre por defecto
-  categorias_orden:       [4, 1, 2, 3, 5, 6],
+  categorias_orden:       [4, 1, 2, 3, 7, 5, 6],
   mostrar_disponibilidad: true,
   ocultar_agotados:       false,
 };
@@ -849,12 +734,12 @@ function groupItems(items) {
 
 /* ── RENDER FILTERS ── */
 function renderFilters(cats) {
-  const allBtn = `<button class="pill ${activeFilter === 'all' ? 'active' : ''}" data-filter="all" style="--p:0">
+  const allBtn = `<button class="pill ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">
     <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;vertical-align:-2px;"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></span> Todo
   </button>`;
 
-  const pills = cats.map((c, n) => `
-    <button class="pill ${String(activeFilter) === String(c.ord) ? 'active' : ''}" data-filter="${c.ord}" style="--p:${n + 1}">
+  const pills = cats.map(c => `
+    <button class="pill ${String(activeFilter) === String(c.ord) ? 'active' : ''}" data-filter="${c.ord}">
       <span class="ico">${c.ico}</span> ${c.lbl}
     </button>
   `).join('');
@@ -865,22 +750,27 @@ function renderFilters(cats) {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.filter;
       renderFilters(cats);
-      renderCarta(true, true);
+      renderCarta();
     });
   });
 }
 
 /* ── CARD HTML ── */
+function escapeCardText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 function cardHTML(item, idx) {
-  const name  = item.name  || 'Sin nombre';
-  const desc  = item.description || '';
+  const name  = escapeCardText(item.name || 'Sin nombre');
+  const desc  = escapeCardText(item.description || '');
   const price = fmt(item.price);
   const chip  = portionChip(item.portions_today);
-  const isAlaCarte = item.item_type === 'a_la_carte';
-  const imgUrl = isAlaCarte && item.image_url ? item.image_url : null;
+  const imgUrl = /^https:\/\//i.test(item.image_url || '') ? escapeCardText(item.image_url) : null;
 
   return `
-    <article class="card" style="--i:${Math.min(idx, 16)}">
+    <article class="card" style="animation-delay:${idx * 0.04}s">
       ${imgUrl ? `<img class="card-img" src="${imgUrl}" alt="${name}" loading="lazy">` : ''}
       <h3 class="card-name">${name}</h3>
       ${desc ? `<p class="card-desc">${desc}</p>` : ''}
@@ -893,9 +783,7 @@ function cardHTML(item, idx) {
 }
 
 /* ── RENDER CARTA ── */
-let animTimer;
-let cartaAnimada = false;
-function renderCarta(animar = false, cambio = false) {
+function renderCarta() {
   const filtered = activeFilter === 'all'
     ? allItems
     : allItems.filter(i => String(CATS[i.item_type]?.ord) === String(activeFilter));
@@ -907,33 +795,24 @@ function renderCarta(animar = false, cambio = false) {
 
   const groups = groupItems(filtered);
   let html = '';
-  let cardIdx = 0;
 
   groups.forEach((group, gi) => {
     const { meta, items } = group;
     html += `
       <section class="category-section" id="cat-${meta.ord}">
-        <div class="category-header" style="--c:${gi}">
+        <div class="category-header">
           <span class="cat-ico">${meta.ico}</span>
           <h2 class="cat-title">${meta.lbl}</h2>
           <span class="cat-count">${items.length} ${items.length === 1 ? 'plato' : 'platos'}</span>
         </div>
         <div class="items-grid">
-          ${items.map(item => cardHTML(item, cardIdx++)).join('')}
+          ${items.map((item, i) => cardHTML(item, i)).join('')}
         </div>
       </section>
       ${gi < groups.length - 1 ? '<div class="ornament">· · ·</div>' : ''}
     `;
   });
 
-  clearTimeout(animTimer);
-  mainEl.classList.remove('animar', 'cambio');
-  if (animar) {
-    void mainEl.offsetWidth;
-    mainEl.classList.add('animar');
-    if (cambio) mainEl.classList.add('cambio');
-    animTimer = setTimeout(() => mainEl.classList.remove('animar', 'cambio'), 3000);
-  }
   mainEl.innerHTML = html;
 }
 
@@ -974,13 +853,8 @@ async function fetchItems() {
       });
 
     const cats = getUniqCategories(allItems);
-    if (!cartaAnimada) {
-      filtersEl.classList.add('animar');
-      setTimeout(() => filtersEl.classList.remove('animar'), 1800);
-    }
     renderFilters(cats);
-    renderCarta(!cartaAnimada);
-    cartaAnimada = true;
+    renderCarta();
 
     setStatus('', `${allItems.length} platos disponibles · en vivo`);
   } catch (err) {

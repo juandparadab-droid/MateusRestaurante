@@ -172,8 +172,16 @@ const MAPA_TIPO = {
     side:            { label: 'Principio',           icono: '🍲', porciones: 50, badgeClass: 'badge-side'    },
     drink:           { label: 'Bebida',              icono: '🍹', porciones: 20, badgeClass: 'badge-drink'   },
     a_la_carte:      { label: 'A la Carta',          icono: '✨', porciones: 15, badgeClass: 'badge-carte'   },
-    soup:            { label: 'Sopa',                icono: '🍜', porciones: 20, badgeClass: 'badge-dessert' },
+    soup:            { label: 'Sopas',               icono: '🍜', porciones: 20, badgeClass: 'badge-dessert' },
+    dessert:         { label: 'Postres',             icono: '🍰', porciones: 20, badgeClass: 'badge-dessert' },
+    sauce:           { label: 'Salsas',              icono: '🫙', porciones: 20, badgeClass: 'badge-side'    },
 };
+
+const OPCIONES_TIPO_MENU = [
+    ['executive_lunch', 'Proteínas'], ['protein', 'Proteínas'], ['side', 'Principios'],
+    ['drink', 'Bebidas'], ['a_la_carte', 'A la Carta'], ['soup', 'Sopas'],
+    ['dessert', 'Postres'], ['sauce', 'Salsas'],
+];
 
 function getRangoByCodigo(codigo) {
     const n = parseInt(codigo) || 0;
@@ -1540,19 +1548,13 @@ async function cargarSlotsMenuReal() {
                 <div class="card menu-card" style="display:flex;flex-direction:column;gap:12px;animation-delay:${animIdx * 40}ms;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                            <span style="font-size:11px;font-weight:700;color:${rango.color};background:rgba(0,0,0,.04);border:1.5px solid rgba(0,0,0,.07);border-radius:999px;padding:3px 9px;flex-shrink:0;" class="mono">#${codigo}</span>
-                            <span class="badge ${cfg.badgeClass}">${cfg.icono} ${cfg.label}</span>
+                            <select aria-label="Categoría de ${_escTicket(item.name || 'producto')}" onchange="actualizarCategoriaPlatoReal('${item.id}', this.value)" style="max-width:100%;font-size:11px;font-weight:700;padding:6px 9px;border-radius:999px;">
+                                ${OPCIONES_TIPO_MENU.map(([tipo, etiqueta]) => `<option value="${tipo}" ${item.item_type === tipo ? 'selected' : ''}>${etiqueta}</option>`).join('')}
+                            </select>
                         </div>
-                        <button onclick="eliminarComponenteCatalogo('${item.id}','${nombreEscapado}')"
-                            style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:15px;padding:0;flex-shrink:0;transition:color .2s;"
-                            onmouseover="this.style.color='var(--red)'"
-                            onmouseout="this.style.color='var(--text-3)'"
-                            title="Dar de baja">🗑️</button>
                     </div>
 
-                    <h4 style="font-size:13.5px;font-weight:600;color:var(--text-1);line-height:1.4;margin:0;">
-                        ${item.name}
-                    </h4>
+                    <div><label style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Nombre del producto</label><input type="text" maxlength="160" value="${_escTicket(item.name || '')}" onchange="actualizarNombrePlatoReal('${item.id}', this.value)" style="font-weight:600;"></div>
 
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:12px;">
                         <div>
@@ -1569,21 +1571,20 @@ async function cargarSlotsMenuReal() {
                         </div>
                     </div>
 
-                    ${item.item_type === 'a_la_carte' ? `
                     <div style="background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;">
-                        <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:0;">Descripción (carta)</p>
-                        <textarea rows="2"
-                            placeholder="Descripción breve del plato…"
+                        <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:0;">Descripción del producto</p>
+                            <textarea rows="2"
+                            placeholder="Describe brevemente el producto…"
                             onchange="actualizarDescripcionPlato('${item.id}', this.value)"
-                            style="width:100%;resize:vertical;background:var(--surface-1);border:1.5px solid var(--border);border-radius:8px;color:var(--text-1);font-size:12.5px;padding:8px;font-family:'DM Sans',sans-serif;line-height:1.4;">${(item.description || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
-                        <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:0;">Imagen del plato</p>
-                        ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);">` : ''}
+                                style="width:100%;resize:vertical;background:var(--surface-1);border:1.5px solid var(--border);border-radius:8px;color:var(--text-1);font-size:12.5px;padding:8px;font-family:'DM Sans',sans-serif;line-height:1.4;">${_escTicket(item.description || '')}</textarea>
+                        <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:0;">Foto del producto</p>
+                        ${item.image_url ? `<img src="${_escTicket(item.image_url)}" alt="${_escTicket(item.name)}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);">` : ''}
                         <label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface-1);color:var(--text-2);cursor:pointer;">
                             <i data-lucide="upload" style="width:13px;height:13px;"></i>
                             ${item.image_url ? 'Cambiar imagen' : 'Subir imagen'}
                             <input type="file" accept="image/*" style="display:none;" onchange="subirImagenPlato('${item.id}', this)">
                         </label>
-                    </div>` : ''}
+                    </div>
 
                     <div style="display:flex;align-items:center;justify-content:space-between;border-top:1.5px solid var(--border);padding-top:10px;">
                         ${_vistaMenuAdmin === 'inactivos'
@@ -1637,11 +1638,18 @@ document.addEventListener('DOMContentLoaded', () => {
         formNuevoPlato.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const product_code   = parseInt(document.getElementById('menu-codigo').value) || null;
             const name           = document.getElementById('menu-nombre').value.trim();
             const price          = parseFloat(document.getElementById('menu-precio').value);
             const item_type      = document.getElementById('menu-tipo').value;
-            const portions_today = parseInt(document.getElementById('menu-porciones').value) || null;
+            const portionsValue  = document.getElementById('menu-porciones').value;
+            const portions_today = portionsValue === '' ? null : (parseInt(portionsValue, 10) || 0);
+            const description    = document.getElementById('menu-descripcion').value.trim();
+            const imageFile       = document.getElementById('menu-imagen').files?.[0] || null;
+
+            if (imageFile && (!/^image\/(png|jpeg|webp)$/i.test(imageFile.type) || imageFile.size > 8 * 1024 * 1024)) {
+                Toast.error('La foto debe ser PNG, JPG o WebP y pesar menos de 8 MB.');
+                return;
+            }
 
             if (item_type === 'sauce') {
                 Toast.error('El tipo "sauce" no está disponible como tipo independiente.');
@@ -1676,7 +1684,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     side:            'Principio',
                     drink:           'Bebida',
                     a_la_carte:      'A la Carta',
-                    soup:            'Sopa',
+                    soup:            'Sopas',
+                    dessert:         'Postres',
+                    sauce:           'Salsas',
                 };
                 const nombreCategoria = mapaCategoria[item_type] || 'General';
 
@@ -1704,27 +1714,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     price,
                     item_type,
                     is_active: true,
+                    description,
                 };
                 if (portions_today !== null) payload.portions_today = portions_today;
-                if (product_code) payload.product_code = product_code;
 
-                const { error: errItem } = await supabaseClient
+                const { data: itemCreado, error: errItem } = await supabaseClient
                     .from('menu_items')
-                    .insert([payload]);
+                    .insert([payload])
+                    .select('id')
+                    .single();
 
                 if (errItem) {
-                    if (errItem.code === '42703' && payload.product_code) {
-                        delete payload.product_code;
-                        const { error: errRetry } = await supabaseClient
-                            .from('menu_items').insert([payload]);
-                        if (errRetry) {
-                            if (errRetry.code === '23505') {
-                                Toast.error(`Ya existe un plato llamado "${name}" en el catálogo.`);
-                                return;
-                            }
-                            throw errRetry;
-                        }
-                    } else if (errItem.code === '23505') {
+                    if (errItem.code === '23505') {
                         Toast.error(`Ya existe un plato llamado "${name}" en el catálogo.`);
                         return;
                     } else {
@@ -1732,11 +1733,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                document.getElementById('menu-codigo').value    = '';
-                document.getElementById('menu-nombre').value    = '';
-                document.getElementById('menu-precio').value    = '';
-                document.getElementById('menu-porciones').value = '';
-                Toast.ok(`"${name}" registrado en el catálogo correctamente.`);
+                let avisoFoto = '';
+                if (imageFile && itemCreado?.id) {
+                    try {
+                        await _guardarImagenPlatoArchivo(itemCreado.id, imageFile);
+                    } catch (errFoto) {
+                        console.error('Producto creado, pero no se pudo guardar la foto:', errFoto);
+                        avisoFoto = ' El producto se guardó, pero la foto no pudo subirse.';
+                    }
+                }
+
+                formNuevoPlato.reset();
+                Toast.ok(`"${name}" agregado al menú.${avisoFoto}`);
                 cargarSlotsMenuReal();
 
             } catch (err) {
@@ -1841,40 +1849,87 @@ async function actualizarDescripcionPlato(idPlato, descripcion) {
     }
 }
 
-// ============================================================
-// SUBIR IMAGEN (a_la_carte) → Supabase Storage bucket: menu-images
-// ============================================================
+async function actualizarNombrePlatoReal(idPlato, nombre) {
+    const limpio = String(nombre || '').trim();
+    if (!limpio) { Toast.error('El nombre del producto no puede quedar vacío.'); cargarSlotsMenuReal(); return; }
+    try {
+        const { error } = await supabaseClient.from('menu_items').update({ name: limpio }).eq('id', idPlato);
+        if (error) throw error;
+        Toast.ok('Nombre del producto actualizado.');
+    } catch (err) {
+        console.error('Error actualizando nombre del producto:', err);
+        Toast.error('No se pudo guardar el nombre.');
+        cargarSlotsMenuReal();
+    }
+}
+
+async function actualizarCategoriaPlatoReal(idPlato, tipo) {
+    const etiqueta = OPCIONES_TIPO_MENU.find(([valor]) => valor === tipo)?.[1];
+    if (!etiqueta) { Toast.error('Selecciona una categoría válida.'); cargarSlotsMenuReal(); return; }
+    const nombreCategoria = ({
+        executive_lunch: 'Proteína con Salsa', protein: 'Proteína con Salsa', side: 'Principio',
+        drink: 'Bebida', a_la_carte: 'A la Carta', soup: 'Sopas', dessert: 'Postres', sauce: 'Salsas',
+    })[tipo];
+    try {
+        const { data: plato, error: errorPlato } = await supabaseClient.from('menu_items')
+            .select('restaurant_id').eq('id', idPlato).maybeSingle();
+        if (errorPlato) throw errorPlato;
+        const restaurantId = plato?.restaurant_id;
+        let categoryId = null;
+        if (restaurantId) {
+            const { error: errorCategoria } = await supabaseClient.from('menu_categories').upsert(
+                [{ restaurant_id: restaurantId, name: nombreCategoria, slot_type: 'single', display_order: 0 }],
+                { onConflict: 'restaurant_id,name', ignoreDuplicates: true }
+            );
+            if (errorCategoria) throw errorCategoria;
+            const { data: categoria, error: errorLectura } = await supabaseClient.from('menu_categories')
+                .select('id').eq('restaurant_id', restaurantId).eq('name', nombreCategoria).maybeSingle();
+            if (errorLectura) throw errorLectura;
+            categoryId = categoria?.id || null;
+        }
+        const cambios = { item_type: tipo };
+        if (categoryId) cambios.category_id = categoryId;
+        const { error } = await supabaseClient.from('menu_items').update(cambios).eq('id', idPlato);
+        if (error) throw error;
+        Toast.ok(`Categoría actualizada: ${etiqueta}.`);
+        cargarSlotsMenuReal();
+    } catch (err) {
+        console.error('Error actualizando categoría del producto:', err);
+        Toast.error('No se pudo cambiar la categoría: ' + (err.message || 'error desconocido'));
+        cargarSlotsMenuReal();
+    }
+}
+
+async function _guardarImagenPlatoArchivo(idPlato, file) {
+    if (!file || !/^image\/(png|jpeg|webp)$/i.test(file.type) || file.size > 8 * 1024 * 1024) {
+        throw new Error('Elige una foto PNG, JPG o WebP de máximo 8 MB.');
+    }
+    const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' })[file.type.toLowerCase()];
+    const path = `platos/${idPlato}.${ext}`;
+    const { error: upErr } = await supabaseClient.storage.from('menu-images')
+        .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) throw upErr;
+    const { data: urlData } = supabaseClient.storage.from('menu-images').getPublicUrl(path);
+    const publicUrl = urlData.publicUrl + '?t=' + Date.now();
+    const { error: dbErr } = await supabaseClient.from('menu_items')
+        .update({ image_url: publicUrl }).eq('id', idPlato);
+    if (dbErr) throw dbErr;
+    return publicUrl;
+}
+
+// Subir o reemplazar la foto de cualquier producto desde su tarjeta.
 async function subirImagenPlato(idPlato, input) {
     const file = input.files && input.files[0];
     if (!file) return;
-
-    const ext  = file.name.split('.').pop();
-    const path = `platos/${idPlato}.${ext}`;
-
     try {
-        Toast.info('Subiendo imagen…');
-        const { error: upErr } = await supabaseClient.storage
-            .from('menu-images')
-            .upload(path, file, { upsert: true, contentType: file.type });
-        if (upErr) throw upErr;
-
-        const { data: urlData } = supabaseClient.storage
-            .from('menu-images')
-            .getPublicUrl(path);
-
-        const publicUrl = urlData.publicUrl + '?t=' + Date.now();
-
-        const { error: dbErr } = await supabaseClient
-            .from('menu_items')
-            .update({ image_url: publicUrl })
-            .eq('id', idPlato);
-        if (dbErr) throw dbErr;
-
-        Toast.ok('Imagen subida correctamente.');
+        Toast.info('Subiendo foto…');
+        await _guardarImagenPlatoArchivo(idPlato, file);
+        Toast.ok('Foto del producto actualizada.');
         cargarSlotsMenuReal();
     } catch (err) {
-        console.error('Error subiendo imagen:', err);
-        Toast.error('No se pudo subir la imagen: ' + (err.message || err));
+        console.error('Error subiendo foto del producto:', err);
+        Toast.error('No se pudo guardar la foto: ' + (err.message || err));
+        input.value = '';
     }
 }
 
@@ -3372,41 +3427,6 @@ async function eliminarCierre(id, fecha) {
         Toast.error('Error al eliminar: ' + err.message);
     }
 }
-
-// ============================================================
-// INICIALIZACIÓN PRINCIPAL
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-    const elFecha = document.getElementById('fecha-actual');
-    if (elFecha) {
-        elFecha.textContent = new Date().toLocaleDateString('es-CO', {
-            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-        });
-    }
-
-    setTimeout(() => cargarDashboardReal(), 50);
-
-    (async () => {
-        if (!window.MateusCore) return;
-        const { data: rest } = await supabaseClient
-            .from('restaurants').select('id').limit(1).maybeSingle();
-        const rId = rest?.id;
-        if (!rId) return;
-        MateusCore.suscribirRealtime(rId);
-        MateusCore.on('onOrderChange', () => {
-            const tabDash = document.getElementById('tab-dashboard');
-            if (tabDash && tabDash.style.display !== 'none') setTimeout(() => cargarDashboardReal(), 400);
-        });
-        MateusCore.on('onMenuItemChange', () => {
-            const tabMenu = document.getElementById('tab-menu');
-            if (tabMenu && tabMenu.style.display !== 'none') setTimeout(() => cargarSlotsMenuReal(), 300);
-        });
-        MateusCore.on('onInventoryChange', () => {
-            const tabInv = document.getElementById('tab-inventario');
-            if (tabInv && tabInv.style.display !== 'none') setTimeout(() => cargarInventarioReal(), 300);
-        });
-    })();
-});
 
 // ============================================================
 // MÓDULO A: CONTROL DE ACCESO

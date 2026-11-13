@@ -36,7 +36,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_zSGT_1Qr1QVI3aTPWOMwdQ_jqMqxnA-";
 // El login de escritorio es local; los pedidos y el resto del Admin usan
 // la capa SQLite/Supabase que se carga en admin.html. En la web se conserva
 // el cliente remoto y el comportamiento existente.
-const supabaseClient = window.mateusApp?.offlineMode
+const supabaseClient = (window.mateusApp?.offlineMode || window.MateusPwaStore?.offlineMode)
     ? null
     : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const _supabase = supabaseClient;
@@ -45,9 +45,7 @@ const RESTAURANT_SLUG = "restaurante-mateus";
 let _restaurantId = null;
 
 const MATEUS_USERS = {
-    'admin':   { password: 'admin26',   role: 'admin',   label: 'Administrador', emoji: '👑' },
-    'cocina':  { password: 'cocina26',  role: 'cocina',  label: 'Cocina',        emoji: '🍳' },
-    'cliente': { password: 'cliente26', role: 'cliente', label: 'Cliente',       emoji: '👤' },
+    'admin': { password: 'admin26', role: 'admin', label: 'Administrador del menú', emoji: '✦' },
 };
 
 let _currentRole     = null;
@@ -101,8 +99,7 @@ window.Mateus = {
             _currentUser = userInput;
             sessionStorage.setItem('user_role', _currentRole);
             sessionStorage.setItem('user_name', _currentUser);
-            // Pantalla de entrada de 5 s; después cada rol va a su vista
-            // (admin → admin.html, cocina → cocina, cliente → menu.html).
+            // Acceso único: edición del menú y de su carta pública.
             if (window.MateusEntrada) MateusEntrada.reproducir(_currentRole, _currentUser, _iniciarApp);
             else _iniciarApp();
         }, 300);
@@ -332,34 +329,13 @@ function _mostrarLogin() {
 }
 
 function _iniciarApp() {
-    // El administrador entra directo a su panel. La vista de cocina solo se
-    // muestra si la pide expresamente (enlace "Pantalla Cocina": index.html?vista=cocina).
-    if (_currentRole === 'admin' && new URLSearchParams(window.location.search).get('vista') !== 'cocina') {
+    if (_currentRole === 'admin') {
         window.location.replace('admin.html');
         return;
     }
-    const scLogin = document.getElementById('screen-login');
-    if (scLogin) scLogin.style.display = 'none';
-    document.body.className = `role-${_currentRole}`;
-
-    const userData = MATEUS_USERS[_currentUser] || {};
-    const navEmoji    = document.getElementById('nav-emoji');
-    const navUsername = document.getElementById('nav-username');
-    if (navEmoji)    navEmoji.textContent    = userData.emoji || '';
-    if (navUsername) navUsername.textContent = _currentUser;
-
-    if (_currentRole === 'admin') {
-        document.getElementById('nav-admin')?.classList.add('visible');
-        _mostrarCocina();
-    } else if (_currentRole === 'cocina') {
-        _mostrarCocina();
-    } else if (_currentRole === 'cliente') {
-        _mostrarMsgLogin('Bienvenido. Redirigiendo…', 'success');
-        if (scLogin) scLogin.style.removeProperty('display');
-        setTimeout(() => {
-            window.location.href = `menu.html?usuario=${encodeURIComponent(_currentUser)}`;
-        }, 900);
-    }
+    sessionStorage.removeItem('user_role');
+    sessionStorage.removeItem('user_name');
+    _mostrarLogin();
 }
 
 function _mostrarCocina() {

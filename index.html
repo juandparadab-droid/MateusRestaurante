@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurante Mateus — Sistema Interno</title>
+    <title>Restaurante Mateus — Administración del menú</title>
+    <meta name="theme-color" content="#301e12">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/jpg" href="logo.jpg">
+    <script src="mateus-pwa-store.js"></script>
+    <script defer src="pwa-register.js"></script>
     <script>
         (function () {
             const desktop = !!window.mateusApp?.offlineMode;
+            const pwa = !!window.MateusPwaStore?.offlineMode;
             if (desktop) {
                 document.write('<link rel="stylesheet" href="./node_modules/@fontsource/cormorant-garamond/index.css">');
                 document.write('<link rel="stylesheet" href="./node_modules/@fontsource/dm-sans/index.css">');
@@ -17,7 +23,7 @@
                 document.write('<link rel="preconnect" href="https://fonts.googleapis.com">');
                 document.write('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
                 document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap">');
-                document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></' + 'script>');
+                if (!pwa) document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></' + 'script>');
                 document.write('<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></' + 'script>');
             }
         })();
@@ -656,15 +662,15 @@
             <div class="brand-divider anim-1"></div>
             <p class="brand-kicker anim-2">RESTAURANTE</p>
             <h1 class="brand-name anim-3">MATEUS</h1>
-            <p class="brand-tagline anim-4">SISTEMA INTERNO · MESA DE LOS SANTOS</p>
+            <p class="brand-tagline anim-4">GESTIÓN DEL MENÚ · MESA DE LOS SANTOS</p>
         </div>
     </section>
 
     <section class="login-card anim-card" id="login-card" aria-labelledby="login-title">
         <header class="login-card-heading">
-            <p class="login-eyebrow">ACCESO AL SISTEMA</p>
+            <p class="login-eyebrow">ADMINISTRACIÓN DEL MENÚ</p>
             <h2 class="login-title" id="login-title">Bienvenido</h2>
-            <p class="login-subtitle">Ingresa tus credenciales para continuar.</p>
+            <p class="login-subtitle">Ingresa para editar productos, precios, fotos y disponibilidad.</p>
         </header>
 
         <!-- Se conservan los identificadores que usa app.js para autenticar. -->
@@ -707,7 +713,7 @@
     </section>
 
     <p class="login-footer anim-4">
-        © 2026 Restaurante Mateus · Uso exclusivo del personal<br>
+        © 2026 Restaurante Mateus · Acceso de administración del menú<br>
         <a href="privacidad.html">Política de privacidad</a>
     </p>
 </div>
