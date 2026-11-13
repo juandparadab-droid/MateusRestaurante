@@ -826,7 +826,18 @@ function renderCarta() {
   });
 
   mainEl.innerHTML = html;
-  mainEl.querySelectorAll('.card').forEach(card => card.addEventListener('click', () => card.classList.toggle('show-description')));
+  mainEl.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      const wasOpen = card.classList.contains('show-description');
+      mainEl.querySelectorAll('.card.show-description').forEach(openCard => openCard.classList.remove('show-description'));
+      if (!wasOpen) card.classList.add('show-description');
+    });
+    card.addEventListener('pointerenter', () => {
+      mainEl.querySelectorAll('.card.show-description').forEach(openCard => {
+        if (openCard !== card) openCard.classList.remove('show-description');
+      });
+    });
+  });
 }
 
 /* ── TOAST ── */
