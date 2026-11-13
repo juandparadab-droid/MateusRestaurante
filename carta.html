@@ -7,28 +7,27 @@
 <link rel="icon" type="image/jpeg" href="logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    /* Paleta del panel admin: café oscuro del logo + crema */
-    --bg:        #F3ECDD;
-    --bg2:       #FFFDF9;
-    --bg3:       #FFFDF9;
-    --gold:      #301E12;   /* acento principal (antes dorado) */
-    --gold2:     #301E12;
-    --gold-dim:  rgba(48,30,18,0.07);
-    --gold-glow: rgba(48,30,18,0.06);
-    --text:      #241608;
-    --text-muted:#5B4630;
-    --text-dim:  #93816A;
-    --border:    #E3D8C3;
-    --border-2:  #D3C4A8;
-    --card-bg:   #FFFDF9;
+    --bg:        #edf2e6;
+    --bg2:       #f8f8ef;
+    --bg3:       #e3ebd8;
+    --gold:      #66824b;
+    --gold2:     #36553b;
+    --gold-dim:  rgba(91,125,65,.12);
+    --gold-glow: rgba(91,125,65,.18);
+    --text:      #26372b;
+    --text-muted:#526651;
+    --text-dim:  #7d8d74;
+    --border:    #d4dfca;
+    --border-2:  #a8bd97;
+    --card-bg:   #fffef8;
     --red:       #c0392b;
     --radius:    4px;
-    --serif:     'Playfair Display', Georgia, serif;
-    --sans:      'DM Sans', system-ui, sans-serif;
+    --serif:     'Lora', Georgia, serif;
+    --sans:      'Nunito Sans', system-ui, sans-serif;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -362,10 +361,10 @@
     transition: opacity .22s ease, max-height .28s ease, transform .22s ease;
   }
   .card:hover .card-desc, .card:focus-within .card-desc, .card.show-description .card-desc { opacity:1; max-height:180px; transform:translateY(0); }
+  .card.description-closed .card-desc { opacity:0!important; max-height:0!important; transform:translateY(8px)!important; padding-top:0; padding-bottom:0; }
   .card-img { border-radius:17px 17px 0 0; width:100%; aspect-ratio:1.5; object-fit:cover; }
-  .card-name { margin: 8px 18px 0; text-transform:capitalize; }
+  .card-name { margin: 8px 18px 0; }
   .card-footer { margin: 8px 18px 0; }
-  #carta-nombre, .cat-title { text-transform:capitalize; }
   header { animation: fadeUp .9s cubic-bezier(.2,.8,.2,1) both; }
 
   .card-footer {
@@ -450,11 +449,13 @@
   }
 
   .spinner {
-    width: 36px; height: 36px;
-    border: 2px solid var(--border);
-    border-top-color: var(--gold);
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold2);
+    border-right-color: #d28b54;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    box-shadow: 0 0 0 8px var(--gold-dim), 0 8px 24px rgba(38,55,43,.14);
+    animation: spin .85s cubic-bezier(.5,.1,.5,.9) infinite;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -604,7 +605,7 @@ const CATS = {
 /* ── NOMBRES Y ORDEN DE CATEGORÍAS (editables desde admin → Carta Digital) ──
    La clave de cada categoría es su número (1 Proteínas … 7 Sopas), el mismo que usa
    categorias_ocultas. El nombre mostrado y la posición salen de CONFIG. */
-const CAT_NOMBRES_DEFECTO = { 1: 'Proteínas', 2: 'Principios', 3: 'Bebidas', 4: 'A la Carta', 5: 'Postres', 6: 'Salsas', 7: 'Sopas' };
+const CAT_NOMBRES_DEFECTO = { 1: 'Proteínas', 2: 'Adicionales', 3: 'Bebidas', 4: 'A la Carta', 5: 'Postres', 6: 'Salsas', 7: 'Sopas' };
 const CAT_ORDEN_DEFECTO   = [4, 1, 2, 3, 7, 5, 6];   // A la Carta primero
 
 function catNombre(ord) {
@@ -828,13 +829,18 @@ function renderCarta() {
   mainEl.innerHTML = html;
   mainEl.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', () => {
-      const wasOpen = card.classList.contains('show-description');
+      const wasOpen = card.classList.contains('show-description') || (card.matches(':hover') && !card.classList.contains('description-closed'));
       mainEl.querySelectorAll('.card.show-description').forEach(openCard => openCard.classList.remove('show-description'));
-      if (!wasOpen) card.classList.add('show-description');
+      mainEl.querySelectorAll('.card.description-closed').forEach(openCard => openCard.classList.remove('description-closed'));
+      if (wasOpen) card.classList.add('description-closed');
+      else card.classList.add('show-description');
     });
     card.addEventListener('pointerenter', () => {
       mainEl.querySelectorAll('.card.show-description').forEach(openCard => {
         if (openCard !== card) openCard.classList.remove('show-description');
+      });
+      mainEl.querySelectorAll('.card.description-closed').forEach(openCard => {
+        if (openCard !== card) openCard.classList.remove('description-closed');
       });
     });
   });
