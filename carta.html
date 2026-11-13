@@ -360,8 +360,7 @@
     transform: translateY(8px);
     transition: opacity .22s ease, max-height .28s ease, transform .22s ease;
   }
-  .card:hover .card-desc, .card:focus-within .card-desc, .card.show-description .card-desc { opacity:1; max-height:180px; transform:translateY(0); }
-  .card.description-closed .card-desc { opacity:0!important; max-height:0!important; transform:translateY(8px)!important; padding-top:0; padding-bottom:0; }
+  .card.is-open .card-desc { opacity:1; max-height:180px; transform:translateY(0); }
   .card-img { border-radius:17px 17px 0 0; width:100%; aspect-ratio:1.5; object-fit:cover; }
   .card-name { margin: 8px 18px 0; }
   .card-footer { margin: 8px 18px 0; }
@@ -370,15 +369,15 @@
   .card-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 8px;
     margin-top: 4px;
   }
 
   .card-price {
-    font-family: var(--serif);
-    font-size: 1.35rem;
-    font-weight: 600;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 800;
     color: var(--gold2);
     letter-spacing: 0.02em;
   }
@@ -756,7 +755,7 @@ function renderFilters(cats) {
 
   const pills = cats.map(c => `
     <button class="pill ${String(activeFilter) === String(c.ord) ? 'active' : ''}" data-filter="${c.ord}">
-      <span class="ico">${c.ico}</span> ${c.lbl}
+      ${c.lbl}
     </button>
   `).join('');
 
@@ -814,7 +813,6 @@ function renderCarta() {
     html += `
       <section class="category-section" id="cat-${meta.ord}">
         <div class="category-header">
-          <span class="cat-ico">${meta.ico}</span>
           <h2 class="cat-title">${meta.lbl}</h2>
           <span class="cat-count">${items.length} ${items.length === 1 ? 'plato' : 'platos'}</span>
         </div>
@@ -828,20 +826,26 @@ function renderCarta() {
 
   mainEl.innerHTML = html;
   mainEl.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => {
-      const wasOpen = card.classList.contains('show-description') || (card.matches(':hover') && !card.classList.contains('description-closed'));
-      mainEl.querySelectorAll('.card.show-description').forEach(openCard => openCard.classList.remove('show-description'));
-      mainEl.querySelectorAll('.card.description-closed').forEach(openCard => openCard.classList.remove('description-closed'));
-      if (wasOpen) card.classList.add('description-closed');
-      else card.classList.add('show-description');
-    });
-    card.addEventListener('pointerenter', () => {
-      mainEl.querySelectorAll('.card.show-description').forEach(openCard => {
-        if (openCard !== card) openCard.classList.remove('show-description');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-expanded', 'false');
+    const toggleDescription = () => {
+      const opening = !card.classList.contains('is-open');
+      mainEl.querySelectorAll('.card.is-open').forEach(openCard => {
+        openCard.classList.remove('is-open');
+        openCard.setAttribute('aria-expanded', 'false');
       });
-      mainEl.querySelectorAll('.card.description-closed').forEach(openCard => {
-        if (openCard !== card) openCard.classList.remove('description-closed');
-      });
+      if (opening) {
+        card.classList.add('is-open');
+        card.setAttribute('aria-expanded', 'true');
+      }
+    };
+    card.addEventListener('click', toggleDescription);
+    card.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleDescription();
+      }
     });
   });
 }
