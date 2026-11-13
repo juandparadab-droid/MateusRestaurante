@@ -167,14 +167,14 @@ function formatCOP(valor) {
 // MAPA DE TIPOS DE PLATO
 // ============================================================
 const MAPA_TIPO = {
-    executive_lunch: { label: 'Proteína con Salsa', icono: '🥩', porciones: 35, badgeClass: 'badge-protein' },
-    protein:         { label: 'Proteína con Salsa', icono: '🥩', porciones: 35, badgeClass: 'badge-protein' },
-    side:            { label: 'Principio',           icono: '🍲', porciones: 50, badgeClass: 'badge-side'    },
-    drink:           { label: 'Bebida',              icono: '🍹', porciones: 20, badgeClass: 'badge-drink'   },
-    a_la_carte:      { label: 'A la Carta',          icono: '✨', porciones: 15, badgeClass: 'badge-carte'   },
-    soup:            { label: 'Sopas',               icono: '🍜', porciones: 20, badgeClass: 'badge-dessert' },
-    dessert:         { label: 'Postres',             icono: '🍰', porciones: 20, badgeClass: 'badge-dessert' },
-    sauce:           { label: 'Salsas',              icono: '🫙', porciones: 20, badgeClass: 'badge-side'    },
+    executive_lunch: { label: 'Proteína con Salsa', icono: '🥩', badgeClass: 'badge-protein' },
+    protein:         { label: 'Proteína con Salsa', icono: '🥩', badgeClass: 'badge-protein' },
+    side:            { label: 'Principio',           icono: '🍲', badgeClass: 'badge-side'    },
+    drink:           { label: 'Bebida',              icono: '🍹', badgeClass: 'badge-drink'   },
+    a_la_carte:      { label: 'A la Carta',          icono: '✨', badgeClass: 'badge-carte'   },
+    soup:            { label: 'Sopas',               icono: '🍜', badgeClass: 'badge-dessert' },
+    dessert:         { label: 'Postres',             icono: '🍰', badgeClass: 'badge-dessert' },
+    sauce:           { label: 'Salsas',              icono: '🫙', badgeClass: 'badge-side'    },
 };
 
 const OPCIONES_TIPO_MENU = [
@@ -1531,7 +1531,7 @@ async function cargarSlotsMenuReal() {
         }
 
         const itemsOrdenados = [...items].sort((a, b) => {
-            const orden = { protein: 1, executive_lunch: 1, side: 2, drink: 3, a_la_carte: 4, soup: 5 };
+            const orden = { protein: 1, executive_lunch: 1, side: 2, drink: 3, a_la_carte: 4, soup: 5, dessert: 6, sauce: 7 };
             const oA = orden[a.item_type] || 9;
             const oB = orden[b.item_type] || 9;
             if (oA !== oB) return oA - oB;
@@ -1539,7 +1539,7 @@ async function cargarSlotsMenuReal() {
         });
 
         itemsOrdenados.forEach((item, animIdx) => {
-            const cfg            = MAPA_TIPO[item.item_type] || { label: item.item_type, icono: '🍽️', porciones: 20, badgeClass: '' };
+            const cfg            = MAPA_TIPO[item.item_type] || { label: item.item_type, icono: '🍽️', badgeClass: '' };
             const nombreEscapado = (item.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const codigo         = '—';
             const rango          = { color: 'var(--text-3)' };
@@ -1564,10 +1564,11 @@ async function cargarSlotsMenuReal() {
                                 class="card-input" style="color:var(--olive);">
                         </div>
                         <div>
-                            <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Porciones hoy</p>
-                            <input type="number" value="${item.portions_today ?? cfg.porciones}"
+                            <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Porciones disponibles hoy</p>
+                            <input type="number" min="0" step="1" inputmode="numeric" placeholder="Sin límite" aria-label="Porciones disponibles hoy para ${_escTicket(item.name || 'producto')}" value="${item.portions_today ?? ''}"
                                 onchange="actualizarPorcionesHoy('${item.id}', this.value)"
                                 class="card-input" style="color:var(--amber);">
+                            <small style="display:block;color:var(--text-3);font-size:9px;margin-top:3px;">Vacío: sin límite · 0: agotado</small>
                         </div>
                     </div>
 
@@ -1641,13 +1642,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const name           = document.getElementById('menu-nombre').value.trim();
             const price          = parseFloat(document.getElementById('menu-precio').value);
             const item_type      = document.getElementById('menu-tipo').value;
-            const portionsValue  = document.getElementById('menu-porciones').value;
-            const portions_today = portionsValue === '' ? null : (parseInt(portionsValue, 10) || 0);
+            const portionsValue  = document.getElementById('menu-porciones').value.trim();
+            const portions_today = portionsValue === '' ? null : Number(portionsValue);
             const description    = document.getElementById('menu-descripcion').value.trim();
             const imageFile       = document.getElementById('menu-imagen').files?.[0] || null;
 
             if (imageFile && (!/^image\/(png|jpeg|webp)$/i.test(imageFile.type) || imageFile.size > 8 * 1024 * 1024)) {
                 Toast.error('La foto debe ser PNG, JPG o WebP y pesar menos de 8 MB.');
+                return;
+            }
+            if (portions_today !== null && (!Number.isInteger(portions_today) || portions_today < 0)) {
+                Toast.error('Las porciones deben ser un número entero igual o mayor que cero.');
                 return;
             }
 
@@ -1713,10 +1718,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     name,
                     price,
                     item_type,
-                    is_active: true,
+                    is_active: portions_today !== 0,
                     description,
                 };
-                if (portions_today !== null) payload.portions_today = portions_today;
+                payload.portions_today = portions_today;
 
                 const { data: itemCreado, error: errItem } = await supabaseClient
                     .from('menu_items')
@@ -1963,7 +1968,13 @@ function _actualizarSwitchDOM(idPlato, activo) {
 // ACTUALIZAR PORCIONES
 // ============================================================
 async function actualizarPorcionesHoy(idPlato, valor) {
-    const porciones = parseInt(valor) || 0;
+    const texto = String(valor ?? '').trim();
+    const porciones = texto === '' ? null : Number(texto);
+    if (porciones !== null && (!Number.isInteger(porciones) || porciones < 0)) {
+        Toast.error('Escribe un número entero igual o mayor que cero.');
+        cargarSlotsMenuReal();
+        return;
+    }
     const payload   = { portions_today: porciones };
     if (porciones === 0) {
         payload.is_active = false;
@@ -1985,6 +1996,7 @@ async function actualizarPorcionesHoy(idPlato, valor) {
             }
             throw error;
         }
+        Toast.ok(porciones === null ? 'Porciones sin límite.' : 'Porciones disponibles actualizadas.');
     } catch (err) {
         console.error('Error actualizando porciones:', err.message || err);
         if (porciones === 0) _actualizarSwitchDOM(idPlato, true);

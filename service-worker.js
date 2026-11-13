@@ -1,7 +1,7 @@
 /* Caché del sitio y de los recursos CDN para apertura PWA sin internet. */
 'use strict';
 
-const CACHE_NAME = 'mateus-pwa-shell-v5';
+const CACHE_NAME = 'mateus-pwa-shell-v7';
 const SHELL_FILES = [
   './', './index.html', './admin.html', './carta.html', './menu.html', './privacidad.html',
   './app.js', './admin.js', './mateus-offline.js', './mateus-pwa-store.js', './pwa-register.js',
@@ -12,8 +12,9 @@ const CDN_PREFIXES = [
   'https://cdn.jsdelivr.net/', 'https://unpkg.com/', 'https://cdnjs.cloudflare.com/',
 ];
 const CDN_PRELOAD = [
-  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap',
+  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap',
   'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap',
+  'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4',
   'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
