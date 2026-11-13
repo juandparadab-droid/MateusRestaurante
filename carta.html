@@ -380,14 +380,12 @@
     font-weight: 800;
     color: var(--gold2);
     letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
   }
 
-  .card-price sup {
-    font-size: .65em;
-    font-weight: 300;
-    color: var(--text-muted);
-    margin-right: 1px;
-  }
+  .card-price-currency { font-size:.82em; font-weight:700; color:var(--text-muted); }
 
   /* ── CHIPS ── */
   .chip {
@@ -459,9 +457,8 @@
   #menu-intro { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:radial-gradient(circle at 50% 38%,#60402b 0,#2c1b11 58%,#1c110b 100%); color:#f6ead6; transition:opacity .65s ease,visibility .65s ease; }
   #menu-intro.hide { opacity:0; visibility:hidden; }
   .intro-content { display:flex; flex-direction:column; align-items:center; gap:12px; animation:introRise 1.1s cubic-bezier(.18,.8,.25,1) both; }
-  .intro-mark { font:700 clamp(80px,22vw,132px)/.9 var(--serif); letter-spacing:-.08em; text-shadow:0 12px 35px rgba(0,0,0,.3); animation:markGlow 1.8s ease-in-out infinite alternate; }
-  .intro-name { font:700 12px/1 var(--sans); letter-spacing:.42em; text-transform:uppercase; }
-  .intro-caption { color:#cbb89a; font:600 9px/1 var(--sans); letter-spacing:.28em; text-transform:uppercase; }
+  .intro-logo { width:clamp(82px,22vw,126px); height:clamp(112px,30vw,174px); object-fit:contain; border-radius:12px; box-shadow:0 12px 35px rgba(0,0,0,.3); animation:markGlow 1.8s ease-in-out infinite alternate; }
+  .intro-caption { color:#cbb89a; font:600 10px/1 var(--sans); letter-spacing:.28em; text-transform:uppercase; }
   .intro-track { width:160px; height:2px; overflow:hidden; background:rgba(255,255,255,.18); margin-top:14px; }
   .intro-track::after { content:''; display:block; height:100%; width:38%; background:#d6ad77; animation:loadingSweep 1.25s ease-in-out infinite; }
   @keyframes introRise { from { opacity:0; transform:translateY(18px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
@@ -558,17 +555,9 @@
 </head>
 <body>
 
-<div id="menu-intro" aria-label="Cargando la carta del Restaurante Mateus" role="status">
-  <div class="intro-content"><div class="intro-mark">M</div><div class="intro-name">Restaurante Mateus</div><div class="intro-caption">Preparando tu carta</div><div class="intro-track"></div></div>
+<div id="menu-intro" aria-label="Cargando la carta" role="status">
+  <div class="intro-content"><img class="intro-logo" src="logo.png" alt="Logotipo del restaurante"><div class="intro-caption">Preparando la carta</div><div class="intro-track"></div></div>
 </div>
-
-<!-- HEADER -->
-<header>
-  <img class="logo-img" src="logo.jpg" alt="Restaurante Mateus" onerror="this.style.display='none'">
-  <h1 id="carta-nombre">Restaurante <span>Mateus</span></h1>
-  <p class="header-sub" id="carta-subtitulo">Carta del día</p>
-  <p class="header-city" id="carta-ciudad">Bucaramanga, Colombia</p>
-</header>
 
 <!-- AVISO (se edita desde el panel admin → Carta Digital) -->
 <div id="aviso-carta" hidden></div>
@@ -814,7 +803,7 @@ function cardHTML(item, idx) {
       ${imgUrl ? `<img class="card-img" src="${imgUrl}" alt="${name}" loading="lazy">` : ''}
       <h3 class="card-name">${name}</h3>
       ${desc ? `<p class="card-desc">${desc}</p>` : ''}
-      <div class="card-footer"><span class="card-price"><sup>$</sup>${price}</span></div>
+      <div class="card-footer"><span class="card-price"><span class="card-price-currency">$</span><span>${price}</span></span></div>
     </article>
   `;
 }

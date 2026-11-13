@@ -1607,11 +1607,13 @@ async function cargarSlotsMenuReal() {
                                 style="width:100%;resize:vertical;background:var(--surface-1);border:1.5px solid var(--border);border-radius:8px;color:var(--text-1);font-size:12.5px;padding:8px;font-family:'DM Sans',sans-serif;line-height:1.4;">${_escTicket(item.description || '')}</textarea>
                         <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:0;">Foto del producto</p>
                         ${item.image_url ? `<img src="${_escTicket(item.image_url)}" alt="${_escTicket(item.name)}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);">` : ''}
-                        <label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface-1);color:var(--text-2);cursor:pointer;">
-                            <i data-lucide="upload" style="width:13px;height:13px;"></i>
-                            ${item.image_url ? 'Cambiar imagen' : 'Subir imagen'}
-                            <input type="file" accept="image/*" style="display:none;" onchange="subirImagenPlato('${item.id}', this)">
-                        </label>
+                        <div style="display:flex;gap:8px;">
+                            <label style="display:inline-flex;flex:1;justify-content:center;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:8px 12px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface-1);color:var(--text-2);cursor:pointer;">
+                                <i data-lucide="upload" style="width:13px;height:13px;"></i>${item.image_url ? 'Cambiar imagen' : 'Subir imagen'}
+                                <input type="file" accept="image/*" style="display:none;" onchange="subirImagenPlato('${item.id}', this)">
+                            </label>
+                            ${item.image_url ? `<button type="button" onclick="eliminarImagenPlato('${item.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border-radius:999px;border:1.5px solid var(--red-bd);background:var(--red-lt);color:var(--red);font-size:11.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;"><i data-lucide="trash-2" style="width:13px;height:13px;"></i>Eliminar imagen</button>` : ''}
+                        </div>
                     </div>
 
                     <div style="display:flex;align-items:center;justify-content:space-between;border-top:1.5px solid var(--border);padding-top:10px;">
@@ -1967,6 +1969,31 @@ async function subirImagenPlato(idPlato, input) {
         console.error('Error subiendo foto del producto:', err);
         Toast.error('No se pudo guardar la foto: ' + (err.message || err));
         input.value = '';
+    }
+}
+
+async function eliminarImagenPlato(idPlato) {
+    if (!confirm('¿Eliminar la imagen de este producto?')) return;
+    try {
+        const { data: item, error: readError } = await supabaseClient.from('menu_items')
+            .select('image_url').eq('id', idPlato).maybeSingle();
+        if (readError) throw readError;
+        const { error } = await supabaseClient.from('menu_items').update({ image_url: null }).eq('id', idPlato);
+        if (error) throw error;
+        try {
+            const imageUrl = new URL(item?.image_url || '');
+            const marker = '/menu-images/';
+            const pathIndex = imageUrl.pathname.indexOf(marker);
+            if (pathIndex >= 0) {
+                const path = decodeURIComponent(imageUrl.pathname.slice(pathIndex + marker.length));
+                if (path) await supabaseClient.storage.from('menu-images').remove([path]);
+            }
+        } catch (storageError) { console.warn('La referencia fue borrada; no se pudo limpiar el archivo de almacenamiento.', storageError); }
+        Toast.ok('Imagen eliminada.');
+        cargarSlotsMenuReal();
+    } catch (err) {
+        console.error('Error eliminando imagen:', err);
+        Toast.error(`No se pudo eliminar la imagen: ${err.message || ''}`);
     }
 }
 
