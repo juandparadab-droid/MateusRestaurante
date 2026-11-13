@@ -1637,9 +1637,8 @@
                             </select>
                         </div>
                         <div>
-                            <label>Porciones disponibles hoy (opcional)</label>
-                            <input type="number" id="menu-porciones" placeholder="Sin límite" min="0" step="1" inputmode="numeric">
-                            <small style="display:block;color:var(--text-3);margin-top:4px;">Vacío = sin límite · 0 = agotado</small>
+                            <label>Nueva categoría</label>
+                            <div style="display:flex;gap:6px"><input type="text" id="menu-categoria-nueva" maxlength="40" placeholder="Ej: Parrilla" style="min-width:0"><button type="button" class="btn-ghost" onclick="crearCategoriaMenu()">Crear</button></div>
                         </div>
                         <div style="grid-column:span 2;">
                             <label>Descripción (opcional)</label>
@@ -1713,7 +1712,7 @@
                     </h3>
                     <p style="font-size:12px;color:var(--text-3);margin-top:3px;line-height:1.5;">
                         Edita lo que ven los clientes al escanear el QR (<span class="mono">carta.html</span>) y descarga el código.
-                        Los platos, precios y porciones se manejan en <strong>Control de Menú</strong>; aquí se controla el encabezado, el aviso y qué se muestra.
+                        Los platos, precios y categorías se manejan en <strong>Control de Menú</strong>; aquí se controla el encabezado, el aviso y qué se muestra.
                     </p>
                 </div>
 
@@ -3951,7 +3950,7 @@ async function cargarProductosPedido() {
     try {
         const { data: items, error } = await supabaseClient
             .from('menu_items')
-            .select('id, name, price, is_active, portions_today')
+            .select('id, name, price, is_active')
             .eq('is_active', true)
             .order('name', { ascending: true });
         if (error) throw error;
@@ -3987,7 +3986,7 @@ function filtrarProductosPedido(texto) {
                    background:${cant > 0 ? 'var(--olive-lt)' : 'var(--surface)'};cursor:pointer;
                    font-family:'DM Sans',sans-serif;transition:all .15s;">
             <span style="min-width:0;">
-                <span style="display:block;font-size:12.5px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escTp(p.name)}</span>
+                <span style="display:block;font-size:12.5px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escTp(nombreMenuBonito(p.name))}</span>
                 <span class="mono" style="font-size:11.5px;color:var(--olive);font-weight:600;">${formatCOP(p.price)}</span>
             </span>
             ${cant > 0 ? `<span style="flex-shrink:0;background:var(--olive);color:#fff;border-radius:999px;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;">${cant}</span>` : `<span class="ic ic-sm" style="flex-shrink:0;color:var(--olive);"><i data-lucide="plus"></i></span>`}

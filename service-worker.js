@@ -1,10 +1,10 @@
 /* Caché del sitio y de los recursos CDN para apertura PWA sin internet. */
 'use strict';
 
-const CACHE_NAME = 'mateus-pwa-shell-v7';
+const CACHE_NAME = 'mateus-pwa-shell-v8';
 const SHELL_FILES = [
   './', './index.html', './admin.html', './carta.html', './menu.html', './privacidad.html',
-  './app.js', './admin.js', './mateus-offline.js', './mateus-pwa-store.js', './pwa-register.js',
+  './app.js', './admin.js', './menu.js', './mateus-core.js', './mateus-offline.js', './mateus-pwa-store.js', './pwa-register.js',
   './logo.png', './logo.jpg', './login-mark.png', './favicon.ico', './manifest.webmanifest',
 ];
 const CDN_PREFIXES = [

@@ -58,8 +58,7 @@ const MateusCore = (function () {
   // Si portions_today llega a 0, is_active → false.
   // ──────────────────────────────────────────────────────────
   async function descontarPorcionesOrden(itemsCarrito) {
-    const db = _getDB();
-    if (!db || !itemsCarrito || itemsCarrito.length === 0) return;
+    return;
 
     const menuItemIds = itemsCarrito
       .map(i => i.menuItemId || i.menu_item_id)
@@ -375,6 +374,7 @@ const MateusCore = (function () {
 
   // Valida si hay porciones disponibles para un item
   async function _validarStockItem(item, db) {
+    return true;
     if (!item.menuItemId) return true; // sin ID conocido, se permite
 
     const { data: plato } = await db
@@ -393,6 +393,7 @@ const MateusCore = (function () {
 
   // Ajusta portions_today y is_active de un menu_item
   async function _ajustarPorcionesItem(menuItemId, cantidad, delta, db) {
+    return;
     try {
       const { data: plato } = await db
         .from('menu_items')

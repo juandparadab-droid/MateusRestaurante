@@ -308,8 +308,8 @@
   .card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 20px;
+    border-radius: 18px;
+    padding: 0 0 18px;
     position: relative;
     overflow: hidden;
     transition: border-color .25s, transform .25s, box-shadow .25s;
@@ -351,7 +351,22 @@
     color: var(--text-muted);
     line-height: 1.55;
     flex: 1;
+    margin: 0 18px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(48,30,18,.055);
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transform: translateY(8px);
+    transition: opacity .22s ease, max-height .28s ease, transform .22s ease;
   }
+  .card:hover .card-desc, .card:focus-within .card-desc, .card.show-description .card-desc { opacity:1; max-height:180px; transform:translateY(0); }
+  .card-img { border-radius:17px 17px 0 0; width:100%; aspect-ratio:1.5; object-fit:cover; }
+  .card-name { margin: 8px 18px 0; text-transform:capitalize; }
+  .card-footer { margin: 8px 18px 0; }
+  #carta-nombre, .cat-title { text-transform:capitalize; }
+  header { animation: fadeUp .9s cubic-bezier(.2,.8,.2,1) both; }
 
   .card-footer {
     display: flex;
@@ -763,10 +778,10 @@ function escapeCardText(value) {
 }
 
 function cardHTML(item, idx) {
-  const name  = escapeCardText(item.name || 'Sin nombre');
+  const rawName = String(item.name || 'Sin nombre').trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-CO');
+  const name  = escapeCardText(rawName ? rawName.charAt(0).toLocaleUpperCase('es-CO') + rawName.slice(1) : 'Sin nombre');
   const desc  = escapeCardText(item.description || '');
   const price = fmt(item.price);
-  const chip  = portionChip(item.portions_today);
   const imgUrl = /^https:\/\//i.test(item.image_url || '') ? escapeCardText(item.image_url) : null;
 
   return `
@@ -774,10 +789,7 @@ function cardHTML(item, idx) {
       ${imgUrl ? `<img class="card-img" src="${imgUrl}" alt="${name}" loading="lazy">` : ''}
       <h3 class="card-name">${name}</h3>
       ${desc ? `<p class="card-desc">${desc}</p>` : ''}
-      <div class="card-footer">
-        <span class="card-price"><sup>$</sup>${price}</span>
-        ${chip}
-      </div>
+      <div class="card-footer"><span class="card-price"><sup>$</sup>${price}</span></div>
     </article>
   `;
 }
@@ -814,6 +826,7 @@ function renderCarta() {
   });
 
   mainEl.innerHTML = html;
+  mainEl.querySelectorAll('.card').forEach(card => card.addEventListener('click', () => card.classList.toggle('show-description')));
 }
 
 /* ── TOAST ── */
@@ -835,16 +848,25 @@ async function fetchItems() {
   try {
     const { data, error } = await db
       .from('menu_items')
-      .select('id, name, price, item_type, description, portions_today, image_url')
+      .select('id, name, price, item_type, description, image_url, category_id')
       .eq('is_active', true);
 
     if (error) throw error;
 
-    // Sort & filter in JS
+    const { data: menuCats } = await db.from('menu_categories').select('id,name');
+    const knownNames = new Set(Object.values(CAT_NOMBRES_DEFECTO).map(n => n.toLocaleLowerCase('es-CO')));
+    const catById = new Map((menuCats || []).map(c => [String(c.id), c]));
+    (data || []).forEach(item => {
+      const cat = catById.get(String(item.category_id));
+      if (item.item_type === 'a_la_carte' && cat && !knownNames.has(String(cat.name).toLocaleLowerCase('es-CO'))) {
+        const key = `custom:${cat.id}`;
+        CATS[key] = { lbl: String(cat.name).trim().replace(/\s+/g,' ').replace(/^./u, m => m.toLocaleUpperCase('es-CO')), ico: '✦', ord: key };
+        item.item_type = key;
+      }
+    });
     allItems = (data || [])
       .filter(i => CATS[i.item_type])
       .filter(i => !(CONFIG.categorias_ocultas || []).includes(CATS[i.item_type].ord))
-      .filter(i => !(CONFIG.ocultar_agotados && i.portions_today === 0))
       .sort((a, b) => {
         const oa = catPos(CATS[a.item_type]?.ord);
         const ob = catPos(CATS[b.item_type]?.ord);

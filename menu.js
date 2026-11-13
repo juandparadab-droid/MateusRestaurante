@@ -641,7 +641,7 @@ const Menu = {
         try {
             const { data: dataRaw, error } = await db
                 .from('menu_items')
-                .select('id, name, price, item_type, is_active, description, portions_today')
+                .select('id, name, price, item_type, is_active, description')
                 .eq('restaurant_id', State.restaurantId)
                 .eq('is_active', true)
                 .order('item_type', { ascending: true })
@@ -654,8 +654,8 @@ const Menu = {
             if (!data || data.length === 0) { _activarModoDemo(); return; }
 
             State.slots = data.map(item => {
-                const tienePortions = item.portions_today !== null && item.portions_today !== undefined;
-                const porciones     = tienePortions ? Number(item.portions_today) : 999;
+                const tienePortions = false;
+                const porciones     = 999;
                 const disponible    = item.is_active === true && porciones > 0;
                 return {
                     id: item.id, menuItemId: item.id,
@@ -693,13 +693,13 @@ function _mostrarEstado(estado, msg = '') {
 
 function _activarModoDemo() {
     State.slots = [
-        { id:'demo-p1', menuItemId:null, nombre:'Pechuga a la Plancha con Salsa Criolla', precio:16000, descripcion:'Pechuga jugosa bañada en salsa criolla.', itemType:'protein', porciones:12, disponible:true,  tieneControlPorciones:false },
-        { id:'demo-p2', menuItemId:null, nombre:'Tilapia Frita con Salsa de Ajo',         precio:18000, descripcion:'Tilapia frita con salsa de ajo y limón.',  itemType:'protein', porciones:8,  disponible:true,  tieneControlPorciones:false },
-        { id:'demo-p3', menuItemId:null, nombre:'Cerdo al Horno con Salsa BBQ',           precio:17000, descripcion:'Lomo de cerdo con salsa BBQ artesanal.',   itemType:'protein', porciones:0,  disponible:false, tieneControlPorciones:false },
-        { id:'demo-s1', menuItemId:null, nombre:'Arroz Blanco',                           precio:0,     descripcion:'Acompañamiento del almuerzo.',             itemType:'side',    porciones:30, disponible:true,  tieneControlPorciones:false },
-        { id:'demo-s2', menuItemId:null, nombre:'Fríjoles Rojos con Hogao',              precio:0,     descripcion:'Fríjoles cocinados a fuego lento.',         itemType:'side',    porciones:25, disponible:true,  tieneControlPorciones:false },
-        { id:'demo-d1', menuItemId:null, nombre:'Jugo Natural del Día',                  precio:3000,  descripcion:'Fruta fresca de temporada.',                itemType:'drink',   porciones:30, disponible:true,  tieneControlPorciones:false },
-        { id:'demo-d2', menuItemId:null, nombre:'Limonada de Panela',                    precio:3500,  descripcion:'Limón con panela orgánica.',                itemType:'drink',   porciones:25, disponible:true,  tieneControlPorciones:false },
+        { id:'demo-p1', menuItemId:null, nombre:'Pechuga a la Plancha con Salsa Criolla', precio:16000, descripcion:'Pechuga jugosa bañada en salsa criolla.', itemType:'protein', porciones:999, disponible:true,  tieneControlPorciones:false },
+        { id:'demo-p2', menuItemId:null, nombre:'Tilapia Frita con Salsa de Ajo',         precio:18000, descripcion:'Tilapia frita con salsa de ajo y limón.',  itemType:'protein', porciones:999,  disponible:true,  tieneControlPorciones:false },
+        { id:'demo-p3', menuItemId:null, nombre:'Cerdo al Horno con Salsa BBQ',           precio:17000, descripcion:'Lomo de cerdo con salsa BBQ artesanal.',   itemType:'protein', porciones:999,  disponible:true, tieneControlPorciones:false },
+        { id:'demo-s1', menuItemId:null, nombre:'Arroz Blanco',                           precio:0,     descripcion:'Acompañamiento del almuerzo.',             itemType:'side',    porciones:999, disponible:true,  tieneControlPorciones:false },
+        { id:'demo-s2', menuItemId:null, nombre:'Fríjoles Rojos con Hogao',              precio:0,     descripcion:'Fríjoles cocinados a fuego lento.',         itemType:'side',    porciones:999, disponible:true,  tieneControlPorciones:false },
+        { id:'demo-d1', menuItemId:null, nombre:'Jugo Natural del Día',                  precio:3000,  descripcion:'Fruta fresca de temporada.',                itemType:'drink',   porciones:999, disponible:true,  tieneControlPorciones:false },
+        { id:'demo-d2', menuItemId:null, nombre:'Limonada de Panela',                    precio:3500,  descripcion:'Limón con panela orgánica.',                itemType:'drink',   porciones:999, disponible:true,  tieneControlPorciones:false },
     ];
     _renderizarMenu();
     _mostrarEstado('menu');
@@ -1114,6 +1114,7 @@ function _resetFormularioPedido() {
 // para nunca ir a negativo.
 // ============================================================
 async function _descontarPorciones(cartSnapshot) {
+    return;
     // cartSnapshot = copia del carrito en el momento de confirmar
     // [{slotId, cantidad}]
 
@@ -1449,8 +1450,8 @@ function _actualizarSlotDesdeRealtime(item) {
     const idx = State.slots.findIndex(s => s.id === item.id);
     if (idx === -1) { Menu.cargar(); return; }
 
-    const tienePortions = item.portions_today !== null && item.portions_today !== undefined;
-    const porciones     = tienePortions ? Number(item.portions_today) : 999;
+    const tienePortions = false;
+    const porciones     = 999;
     const disponible    = item.is_active === true && porciones > 0;
 
     State.slots[idx] = {

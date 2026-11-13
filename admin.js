@@ -182,6 +182,42 @@ const OPCIONES_TIPO_MENU = [
     ['drink', 'Bebidas'], ['a_la_carte', 'A la Carta'], ['soup', 'Sopas'],
     ['dessert', 'Postres'], ['sauce', 'Salsas'],
 ];
+let categoriasPersonalizadasMenu = [];
+
+function nombreMenuBonito(valor) {
+    const limpio = String(valor || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-CO');
+    return limpio ? limpio.charAt(0).toLocaleUpperCase('es-CO') + limpio.slice(1) : '';
+}
+
+async function cargarCategoriasPersonalizadasMenu() {
+    try {
+        const { data } = await supabaseClient.from('menu_categories').select('id,name').order('display_order').order('name');
+        categoriasPersonalizadasMenu = data || [];
+        const select = document.getElementById('menu-tipo');
+        if (select) {
+            select.querySelectorAll('option[data-custom-category]').forEach(o => o.remove());
+            categoriasPersonalizadasMenu.forEach(c => {
+                if (select.querySelector(`option[value="cat:${c.id}"]`)) return;
+                const option = document.createElement('option'); option.value = `cat:${c.id}`; option.textContent = nombreMenuBonito(c.name); option.dataset.customCategory = '1'; select.append(option);
+            });
+        }
+    } catch (e) { console.warn('No se pudieron leer las categorías personalizadas', e); }
+}
+
+async function crearCategoriaMenu() {
+    const input = document.getElementById('menu-categoria-nueva');
+    const name = nombreMenuBonito(input?.value);
+    if (!name) { Toast.error('Escribe el nombre de la categoría.'); return; }
+    try {
+        const { data: restaurant, error: er } = await supabaseClient.from('restaurants').select('id').limit(1).maybeSingle();
+        if (er) throw er; if (!restaurant?.id) throw new Error('No se encontró el restaurante.');
+        const { data, error } = await supabaseClient.from('menu_categories').insert([{ restaurant_id: restaurant.id, name, slot_type: 'single', display_order: 50 }]).select('id,name').single();
+        if (error) throw error;
+        categoriasPersonalizadasMenu.push(data);
+        const select = document.getElementById('menu-tipo'); const option = new Option(name, `cat:${data.id}`); option.dataset.customCategory = '1'; select.add(option); select.value = option.value;
+        input.value = ''; Toast.ok(`Categoría creada: ${name}.`);
+    } catch (e) { Toast.error(`No se pudo crear la categoría: ${e.message || ''}`); }
+}
 
 function getRangoByCodigo(codigo) {
     const n = parseInt(codigo) || 0;
@@ -1509,7 +1545,7 @@ async function cargarSlotsMenuReal() {
     try {
         let query = supabaseClient
             .from('menu_items')
-            .select('id, name, description, price, item_type, is_active, portions_today, restaurant_id, category_id, created_at, image_url')
+            .select('id, name, description, price, item_type, is_active, restaurant_id, category_id, created_at, image_url')
             .eq('is_active', _vistaMenuAdmin === 'activos')
             .order('name', { ascending: true });
 
@@ -1519,6 +1555,7 @@ async function cargarSlotsMenuReal() {
 
         const { data: items, error } = await query;
         if (error) throw error;
+        await cargarCategoriasPersonalizadasMenu();
 
         contenedor.innerHTML = '';
 
@@ -1550,26 +1587,16 @@ async function cargarSlotsMenuReal() {
                         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
                             <select aria-label="Categoría de ${_escTicket(item.name || 'producto')}" onchange="actualizarCategoriaPlatoReal('${item.id}', this.value)" style="max-width:100%;font-size:11px;font-weight:700;padding:6px 9px;border-radius:999px;">
                                 ${OPCIONES_TIPO_MENU.map(([tipo, etiqueta]) => `<option value="${tipo}" ${item.item_type === tipo ? 'selected' : ''}>${etiqueta}</option>`).join('')}
+                                ${categoriasPersonalizadasMenu.map(c => `<option value="cat:${c.id}" ${item.category_id === c.id ? 'selected' : ''}>${_escTicket(nombreMenuBonito(c.name))}</option>`).join('')}
                             </select>
                         </div>
                     </div>
 
-                    <div><label style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Nombre del producto</label><input type="text" maxlength="160" value="${_escTicket(item.name || '')}" onchange="actualizarNombrePlatoReal('${item.id}', this.value)" style="font-weight:600;"></div>
+                    <div><label style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Nombre del producto</label><input type="text" maxlength="160" value="${_escTicket(nombreMenuBonito(item.name || ''))}" onchange="actualizarNombrePlatoReal('${item.id}', this.value)" style="font-weight:600;"></div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:12px;">
-                        <div>
-                            <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Precio ($)</p>
-                            <input type="number" value="${item.price}"
-                                onchange="actualizarPrecioPlatoReal('${item.id}', this.value)"
-                                class="card-input" style="color:var(--olive);">
-                        </div>
-                        <div>
-                            <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Porciones disponibles hoy</p>
-                            <input type="number" min="0" step="1" inputmode="numeric" placeholder="Sin límite" aria-label="Porciones disponibles hoy para ${_escTicket(item.name || 'producto')}" value="${item.portions_today ?? ''}"
-                                onchange="actualizarPorcionesHoy('${item.id}', this.value)"
-                                class="card-input" style="color:var(--amber);">
-                            <small style="display:block;color:var(--text-3);font-size:9px;margin-top:3px;">Vacío: sin límite · 0: agotado</small>
-                        </div>
+                    <div style="background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:12px;">
+                        <p style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Precio ($)</p>
+                        <input type="number" value="${item.price}" onchange="actualizarPrecioPlatoReal('${item.id}', this.value)" class="card-input" style="color:var(--olive);">
                     </div>
 
                     <div style="background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;">
@@ -1634,16 +1661,17 @@ function filtrarMenuComponente(cat) {
 // REGISTRAR NUEVO PLATO
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+    cargarCategoriasPersonalizadasMenu();
     const formNuevoPlato = document.getElementById('form-nuevo-plato');
     if (formNuevoPlato) {
         formNuevoPlato.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const name           = document.getElementById('menu-nombre').value.trim();
+            const name           = nombreMenuBonito(document.getElementById('menu-nombre').value);
             const price          = parseFloat(document.getElementById('menu-precio').value);
-            const item_type      = document.getElementById('menu-tipo').value;
-            const portionsValue  = document.getElementById('menu-porciones').value.trim();
-            const portions_today = portionsValue === '' ? null : Number(portionsValue);
+            const tipoSeleccionado = document.getElementById('menu-tipo').value;
+            const customCategoryId = tipoSeleccionado.startsWith('cat:') ? tipoSeleccionado.slice(4) : null;
+            const item_type = customCategoryId ? 'a_la_carte' : tipoSeleccionado;
             const description    = document.getElementById('menu-descripcion').value.trim();
             const imageFile       = document.getElementById('menu-imagen').files?.[0] || null;
 
@@ -1651,11 +1679,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 Toast.error('La foto debe ser PNG, JPG o WebP y pesar menos de 8 MB.');
                 return;
             }
-            if (portions_today !== null && (!Number.isInteger(portions_today) || portions_today < 0)) {
-                Toast.error('Las porciones deben ser un número entero igual o mayor que cero.');
-                return;
-            }
-
             if (item_type === 'sauce') {
                 Toast.error('El tipo "sauce" no está disponible como tipo independiente.');
                 return;
@@ -1718,10 +1741,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     name,
                     price,
                     item_type,
-                    is_active: portions_today !== 0,
+                    is_active: true,
                     description,
                 };
-                payload.portions_today = portions_today;
+                if (customCategoryId) payload.category_id = customCategoryId;
 
                 const { data: itemCreado, error: errItem } = await supabaseClient
                     .from('menu_items')
@@ -1855,7 +1878,7 @@ async function actualizarDescripcionPlato(idPlato, descripcion) {
 }
 
 async function actualizarNombrePlatoReal(idPlato, nombre) {
-    const limpio = String(nombre || '').trim();
+    const limpio = nombreMenuBonito(nombre);
     if (!limpio) { Toast.error('El nombre del producto no puede quedar vacío.'); cargarSlotsMenuReal(); return; }
     try {
         const { error } = await supabaseClient.from('menu_items').update({ name: limpio }).eq('id', idPlato);
@@ -1869,6 +1892,15 @@ async function actualizarNombrePlatoReal(idPlato, nombre) {
 }
 
 async function actualizarCategoriaPlatoReal(idPlato, tipo) {
+    if (String(tipo).startsWith('cat:')) {
+        const categoryId = String(tipo).slice(4);
+        try {
+            const { error } = await supabaseClient.from('menu_items').update({ category_id: categoryId }).eq('id', idPlato);
+            if (error) throw error;
+            Toast.ok('Categoría actualizada.'); cargarSlotsMenuReal();
+        } catch (e) { Toast.error(`No se pudo cambiar la categoría: ${e.message || ''}`); cargarSlotsMenuReal(); }
+        return;
+    }
     const etiqueta = OPCIONES_TIPO_MENU.find(([valor]) => valor === tipo)?.[1];
     if (!etiqueta) { Toast.error('Selecciona una categoría válida.'); cargarSlotsMenuReal(); return; }
     const nombreCategoria = ({
@@ -3970,7 +4002,7 @@ async function _renderEditorAdmin() {
 
     const [{ data: menuItems }, { data: tablasData }] = await Promise.all([
         supabaseClient.from('menu_items')
-            .select('id, name, price, is_active, portions_today')
+            .select('id, name, price, is_active')
             .eq('is_active', true).order('name', { ascending: true }),
         supabaseClient.from('tables').select('id, label, number').order('number', { ascending: true }),
     ]);
@@ -4087,8 +4119,7 @@ window._ecaBuscar = function (q) {
         const enPedido = _adminEditor.itemsEdit
             .filter(it => !it.eliminado && String(it.menuItemId) === String(m.id))
             .reduce((a, it) => a + it.cantidad, 0);
-        const disp = m.portions_today != null
-            ? `<span style="font-size:10.5px;color:${m.portions_today > 0 ? 'var(--text-3)' : 'var(--red)'};">${m.portions_today} disp.</span>` : '';
+        const disp = '';
         const badge = enPedido
             ? `<span style="background:var(--olive-lt);color:var(--olive);border:1.5px solid var(--olive-bd);border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:700;">×${enPedido} en pedido</span>` : '';
         return `<button type="button" onclick="_ecaAgregarProducto('${m.id}')"
